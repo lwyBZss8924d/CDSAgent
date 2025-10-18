@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun install)",
+      "Bash(cargo fmt --all)",
+      "Bash(cargo check --all)",
+      "Bash(cargo clippy --all-targets --all-features)",
+      "Bash(bun run lint)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "jina-mcp-tools",
+    "context7",
+    "DeepWiki",
+    "firecrawl-mcp"
+  ]
+}

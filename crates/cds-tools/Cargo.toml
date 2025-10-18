@@ -1,9 +1,31 @@
 [package]
 name = "cds-tools"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
+version = "0.1.0"
+edition = "2021"
+authors = ["CDSAgent Contributors"]
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "cds"
+path = "src/main.rs"
 
 [dependencies]
+# Workspace dependencies
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+clap = { workspace = true }
+reqwest = { workspace = true }
+colored = { workspace = true }
+indicatif = { workspace = true }
+
+# CLI-specific dependencies
+dirs = "5.0"
+toml = "0.8"
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.0"
+tempfile = "3.9"

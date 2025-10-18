@@ -1,9 +1,53 @@
 [package]
 name = "cds-index"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
+version = "0.1.0"
+edition = "2021"
+authors = ["CDSAgent Contributors"]
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "cds-index-service"
+path = "src/bin/cds-index-service.rs"
 
 [dependencies]
+# Workspace dependencies
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+tantivy = { workspace = true }
+tree-sitter = { workspace = true }
+tree-sitter-python = { workspace = true }
+petgraph = { workspace = true }
+dashmap = { workspace = true }
+bincode = { workspace = true }
+
+# Crate-specific dependencies
+config = "0.14"
+chrono = { version = "0.4", features = ["serde"] }
+walkdir = "2.4"
+rayon = "1.8"
+once_cell = "1.19"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+systemd = { version = "0.10", features = ["journal"] }
+
+[dev-dependencies]
+proptest = { workspace = true }
+criterion = { workspace = true }
+tempfile = "3.9"
+test-log = "0.2"
+
+[[bench]]
+name = "search_bench"
+harness = false
+
+[[bench]]
+name = "graph_bench"
+harness = false

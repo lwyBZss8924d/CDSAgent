@@ -13,9 +13,45 @@ target
 # Contains mutation testing data
 **/mutants.out*/
 
+# coding agents session sync bk logs
+.specstory/
+
+# tmp/ folder contains all dev reference files for the project
+tmp/
+
 # RustRover
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+# Node/Bun artifacts
+node_modules/
+*.log
+.DS_Store
+bun.lockb
+.env
+.env.local
+.env.*.local
+
+# TypeScript
+dist/
+*.tsbuildinfo
+
+# IDEs
+.vscode/
+.idea/
+
+# Deployment
+deployment/volumes/
+deployment/config/.env
+
+# Testing
+coverage/
+*.profraw
+*.profdata
+
+# Index artifacts
+*.graph_index
+*.bm25_index
