@@ -5,7 +5,8 @@
       "Bash(cargo fmt --all)",
       "Bash(cargo check --all)",
       "Bash(cargo clippy --all-targets --all-features)",
-      "Bash(bun run lint)"
+      "Bash(bun run lint)",
+      "Bash(git checkout -b feat/dev-environment-setup)"
     ]
   },
   "enableAllProjectMcpServers": true,

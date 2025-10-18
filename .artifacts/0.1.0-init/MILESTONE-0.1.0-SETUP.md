@@ -7,9 +7,11 @@
 ## Git Commits Created
 
 ### 1. `c9a9c3d` — docs(prd): add 0.1.0 MVP PRDs documentation suite
-**133 files changed | +25,502 insertions**
+
+133 files changed | +25,502 insertions
 
 Complete specification-driven development foundation including:
+
 - 10 comprehensive PRD documents
 - Modular technical specifications (4 major modules)
 - 30+ actionable task definitions
@@ -17,7 +19,8 @@ Complete specification-driven development foundation including:
 - Code scaffolding for Rust and TypeScript
 
 ### 2. `cadae85` — docs(ci): add git commit summary for 0.1.0 MVP initialization
-**1 file changed | +250 insertions**
+
+1 file changed | +250 insertions
 
 Documentation of all artifacts and changeset for milestone initialization.
 
@@ -26,7 +29,8 @@ Documentation of all artifacts and changeset for milestone initialization.
 ## Key Artifact Locations
 
 ### Specifications (Start Here!)
-```
+
+```tree
 spacs/
 ├── prd/0.1.0-MVP-PRDs-v0/          # 10 PRDs covering all modules
 ├── issues/04-0.1.0-mvp/            # Detailed technical specs
@@ -35,7 +39,8 @@ spacs/
 ```
 
 ### Module Organization
-```
+
+```tree
 spacs/issues/04-0.1.0-mvp/
 ├── 01-architecture-and-roadmap.md   # System design
 ├── 02-index-core/                   # Index service module
@@ -50,7 +55,8 @@ spacs/issues/04-0.1.0-mvp/
 ```
 
 ### Task Breakdown (Implementation)
-```
+
+```tree
 spacs/tasks/0.1.0-mvp/
 ├── 02-index-core/       # T-02-01 through T-02-04
 ├── 03-cli-tools/        # T-03-01 through T-03-04
@@ -61,7 +67,8 @@ spacs/tasks/0.1.0-mvp/
 ```
 
 ### Development Setup
-```
+
+```tree
 ├── AGENTS.md                        # AI engineer profiles
 ├── CLAUDE.md                        # Claude Code integration
 ├── WARP.md                          # Warp agent config
@@ -72,7 +79,8 @@ spacs/tasks/0.1.0-mvp/
 ```
 
 ### Code Structure
-```
+
+```tree
 ├── crates/cds-index/                # Rust: Core indexing service
 │   ├── src/graph/                   # Dependency graph
 │   ├── src/index/                   # Search indices
@@ -114,6 +122,7 @@ spacs/tasks/0.1.0-mvp/
 ## Getting Started with Implementation
 
 ### 1. Clone/Pull Latest
+
 ```bash
 cd /Users/arthur/dev-space/CDSAgent
 git status  # Should be clean
@@ -121,6 +130,7 @@ git log --oneline -3  # Verify commits
 ```
 
 ### 2. Review Specs & Create Branch
+
 ```bash
 # Read the PRDs and issue specs
 cat spacs/prd/0.1.0-MVP-PRDs-v0/01-system-architecture.md
@@ -130,7 +140,9 @@ git checkout -b feat/02-index-core-graph-builder origin/main
 ```
 
 ### 3. Follow Task Breakdown
+
 Each task file (`T-XX-XX.md`) contains:
+
 - **Objective**: What to build
 - **Acceptance Criteria**: How to verify completion
 - **Dependencies**: Required prior tasks
@@ -138,6 +150,7 @@ Each task file (`T-XX-XX.md`) contains:
 - **Deliverables**: Expected artifacts
 
 ### 4. Implement Following SDD Principles
+
 - **Specs First**: Refer to PRDs and specifications
 - **Tests First**: Write tests before code
 - **Reference Docs**: Link implementation back to specs
@@ -148,6 +161,7 @@ Each task file (`T-XX-XX.md`) contains:
 ## Sync with Linear & GitHub
 
 ### Create GitHub Issues from Tasks
+
 ```bash
 # Example: Create issue for first task
 gh issue create \
@@ -158,6 +172,7 @@ gh issue create \
 ```
 
 ### Link to Linear (Manual Steps)
+
 1. Create issue in Linear with same title
 2. Copy GitHub issue URL to Linear issue
 3. Map task reference (e.g., `T-02-01`) to Linear issue ID
@@ -217,11 +232,11 @@ git push origin main
 
 ## Architecture Overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────┐
 │         Claude Code Agent (cds-agent)               │
 │  ┌─────────────────────────────────────────────┐    │
-│  │ Hooks: pre-tool, post-tool, subagent-stop  │    │
+│  │ Hooks: pre-tool, post-tool, subagent-stop   │    │
 │  │ System Prompt & Prompt Templates            │    │
 │  └─────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────┘

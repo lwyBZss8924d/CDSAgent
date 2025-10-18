@@ -19,6 +19,7 @@
 ## Artifacts Included
 
 ### 1. **PRD Documentation** (`spacs/prd/0.1.0-MVP-PRDs-v0/`)
+
 Comprehensive Product Requirements Documents for all MVP components:
 
 - **01-system-architecture.md** — Overall system design and component overview
@@ -33,12 +34,15 @@ Comprehensive Product Requirements Documents for all MVP components:
 - **10-extensibility-future.md** — Future extensibility considerations
 
 ### 2. **Specification Issues & Sub-Issues** (`spacs/issues/04-0.1.0-mvp/`)
+
 Detailed technical specifications broken into modular issues:
 
 #### Architecture & Planning
+
 - **01-architecture-and-roadmap.md** — System architecture and implementation roadmap
 
 #### Index Core Module
+
 - **02-index-core/00-overview.md** — Index core overview
 - **02-index-core/01-graph-build.md** — Dependency graph builder implementation
 - **02-index-core/02-sparse-index.md** — BM25 and name-based sparse indexing
@@ -46,6 +50,7 @@ Detailed technical specifications broken into modular issues:
 - **02-index-core/04-serialization-fixtures.md** — Data serialization and fixtures
 
 #### CLI Tools Module
+
 - **03-cli-tools/00-overview.md** — CLI tools overview
 - **03-cli-tools/01-command-impl.md** — Command implementations (search, traverse, retrieve)
 - **03-cli-tools/02-output-format.md** — Output formatting (JSON, text, tree)
@@ -53,6 +58,7 @@ Detailed technical specifications broken into modular issues:
 - **03-cli-tools/04-docs.md** — CLI documentation and help text
 
 #### Agent Integration Module
+
 - **04-agent-integration/00-overview.md** — Agent integration overview
 - **04-agent-integration/01-sdk-bootstrap.md** — SDK initialization
 - **04-agent-integration/02-prompt-design.md** — Prompt engineering design
@@ -60,6 +66,7 @@ Detailed technical specifications broken into modular issues:
 - **04-agent-integration/04-sample-transcripts.md** — Sample interaction transcripts
 
 #### Cross-Cutting Concerns
+
 - **05-api-contracts.md** — JSON-RPC API contract specifications
 - **06-refactor-parity.md** — Parity requirements with previous implementation
 - **07-deployment/** — Deployment architecture and configuration
@@ -68,38 +75,45 @@ Detailed technical specifications broken into modular issues:
 - **10-extensibility.md** — Extensibility patterns and plugin architecture
 
 ### 3. **Task Breakdown** (`spacs/tasks/0.1.0-mvp/`)
+
 Actionable task documents organized by module:
 
 #### Index Core Tasks
+
 - T-02-01: Graph builder implementation
 - T-02-02: Sparse indexing (BM25 + name index)
 - T-02-03: Service layer and REST API
 - T-02-04: Data serialization and fixtures
 
 #### CLI Tools Tasks
+
 - T-03-01: Core CLI commands
 - T-03-02: Output formatting
 - T-03-03: Integration tests
 - T-03-04: Documentation
 
 #### Agent Integration Tasks
+
 - T-04-01: SDK bootstrap and initialization
 - T-04-02: Prompt design and templates
 - T-04-03: Hook implementations
 - T-04-04: Sample transcripts and examples
 
 #### API Contracts Tasks
+
 - T-05-01: JSON-RPC schema definitions
 - T-05-02: TypeScript bindings generation
 - T-05-03: Error catalogue
 
 #### Deployment Tasks
+
 - T-07-01: Docker Compose setup
 - T-07-02: Environment configuration
 - T-07-03: Monitoring and observability
 - T-07-04: Deployment documentation
 
 #### Testing Tasks
+
 - T-08-01: Unit test suite
 - T-08-02: Integration tests
 - T-08-03: Parity validation
@@ -108,17 +122,20 @@ Actionable task documents organized by module:
 ### 4. **Development Environment Setup**
 
 #### Project Configuration
+
 - **justfile** — Build automation recipes (128 lines)
 - **rust-toolchain.toml** — Rust version pinning
 - **Cargo.lock** — Locked dependency versions (3,997 lines)
 - **Cargo.toml** files — Updated for both crates
 
 #### Agent Configuration
+
 - **AGENTS.md** — AI engineer profiles and coordination (203 lines)
 - **CLAUDE.md** — Claude Code integration and memory (203 lines)
 - **WARP.md** — Warp terminal agent configuration (1 line)
 
 #### Runtime Configuration
+
 - **.env.example** — Environment variable template
 - **.cargo/config.toml** — Cargo configuration (21 lines)
 - **.claude/settings.local.json** — Claude Code local settings
@@ -128,7 +145,9 @@ Actionable task documents organized by module:
 ### 5. **Code Scaffolding**
 
 #### Rust Crates
+
 **cds-index** — Core indexing and search service
+
 - src/bin/cds-index-service.rs — Service binary entry point (43 lines)
 - src/config.rs — Configuration module (65 lines)
 - src/graph/ — Dependency graph modules
@@ -139,13 +158,16 @@ Actionable task documents organized by module:
 - tests/ — Integration tests
 
 **cds-tools** — CLI tools for interacting with index service
+
 - src/commands/ — CLI command implementations
 - src/formatters/ — Output formatting (JSON, text, tree)
 - src/client/ — Service client
 - Cargo.toml — CLI dependencies (32 lines modified)
 
 #### TypeScript Agent
+
 **cds-agent** — Claude Code agent integration
+
 - src/main.ts — Agent entry point
 - src/agent-config.ts — Configuration
 - src/system-prompt.ts — Prompt templates
@@ -158,15 +180,18 @@ Actionable task documents organized by module:
 ### 6. **Documentation & Research**
 
 #### Alignment & Planning
+
 - **spacs/issues/02-CDSAgent-Tech-Architecture-Plan.md** — Technical architecture (459 lines)
 - **spacs/issues/03-CDSAgent-PRDs-alignment.md** — PRD alignment notes (40 lines)
 - **spacs/plan/0.1.0-mvp-backlog.md** — MVP backlog (44 lines)
 
 #### Research & Notes
+
 - **spacs/research/2025-10-18-cdsagent-prds-alignment-notes.md** — Alignment notes (68 lines)
 - **spacs/research/2025-10-18-cdsagent-requirement-analysis.md** — Requirement analysis (105 lines)
 
 #### Environment Reports
+
 - **.artifacts/0.1.0-init/worklogs/report/DEV_ENVIRONMENT_STATUS.md** — Environment status (235 lines)
 - **.artifacts/0.1.0-init/worklogs/report/upgrade-report.txt** — Upgrade report (renamed)
 
@@ -207,6 +232,7 @@ c9a9c3d (HEAD -> main) docs(prd): add 0.1.0 MVP PRDs documentation suite
 ## Next Steps (Post-Commit)
 
 1. **Push to Remote**
+
    ```bash
    git push origin main
    ```
@@ -234,6 +260,7 @@ c9a9c3d (HEAD -> main) docs(prd): add 0.1.0 MVP PRDs documentation suite
 
 **Description**:
 Comprehensive suite of specification artifacts for CDSAgent v0.1.0 MVP including:
+
 - 10 Product Requirements Documents (PRDs)
 - Detailed technical specifications across 4 major modules
 - Granular task breakdown with 30+ actionable tasks
