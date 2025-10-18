@@ -55,3 +55,6 @@ coverage/
 # Index artifacts
 *.graph_index
 *.bm25_index
+
+# Git worktrees
+.worktrees/
