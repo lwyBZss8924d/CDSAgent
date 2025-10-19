@@ -1,0 +1,261 @@
+{
+  "workspace": "open2049",
+  "project_id": "3828ef78-eab8-4276-82a3-9bd81e68d57f",
+  "project_name": "CDSAgent 0.1.0-MVP",
+  "teams": {
+    "CORE": {
+      "name": "CDS Core",
+      "description": "Rust index service and graph indexing",
+      "key": "CORE",
+      "cycles_enabled": true,
+      "auto_assign": true
+    },
+    "CLI": {
+      "name": "CLI Tools",
+      "description": "Rust CLI tools and command implementation",
+      "key": "CLI",
+      "cycles_enabled": true,
+      "auto_assign": true
+    },
+    "AGT": {
+      "name": "Agent Integration",
+      "description": "TypeScript Claude Agent SDK integration",
+      "key": "AGT",
+      "cycles_enabled": true,
+      "auto_assign": true
+    },
+    "OPS": {
+      "name": "DevOps & Release",
+      "description": "Deployment, Docker, and operations",
+      "key": "OPS",
+      "cycles_enabled": true,
+      "auto_assign": true
+    },
+    "QA": {
+      "name": "QA & Testing",
+      "description": "Quality assurance, testing, and benchmarking",
+      "key": "QA",
+      "cycles_enabled": true,
+      "auto_assign": true
+    },
+    "PMO": {
+      "name": "PMO & Architecture",
+      "description": "Project management, architecture, and roadmap",
+      "key": "PMO",
+      "cycles_enabled": false,
+      "auto_assign": false
+    }
+  },
+  "cycles": [
+    {
+      "name": "MVP-C1",
+      "start_date": "2025-10-20",
+      "end_date": "2025-11-02",
+      "description": "Phase 1: Foundation (Weeks 1-2)",
+      "teams": ["CORE", "CLI", "AGT", "OPS", "QA"]
+    },
+    {
+      "name": "MVP-C2",
+      "start_date": "2025-11-03",
+      "end_date": "2025-11-16",
+      "description": "Phase 2: Core Services Part 1 (Weeks 3-4)",
+      "teams": ["CORE", "CLI", "AGT", "OPS", "QA"]
+    },
+    {
+      "name": "MVP-C3",
+      "start_date": "2025-11-17",
+      "end_date": "2025-11-30",
+      "description": "Phase 2: Core Services Part 2 (Week 5)",
+      "teams": ["CORE", "CLI", "AGT", "OPS", "QA"]
+    },
+    {
+      "name": "MVP-C4",
+      "start_date": "2025-12-01",
+      "end_date": "2025-12-14",
+      "description": "Phase 3: Integration (Weeks 6-7)",
+      "teams": ["CORE", "CLI", "AGT", "OPS", "QA"]
+    },
+    {
+      "name": "MVP-C5",
+      "start_date": "2025-12-15",
+      "end_date": "2025-12-28",
+      "description": "Phase 4: Stabilization (Weeks 8-10)",
+      "teams": ["CORE", "CLI", "AGT", "OPS", "QA"]
+    }
+  ],
+  "milestones": [
+    {
+      "id": "M1",
+      "name": "M1 Foundation",
+      "due_date": "2025-11-02",
+      "description": "Prototype: graph indexer, name/ID search, basic CLI"
+    },
+    {
+      "id": "M2",
+      "name": "M2 Core",
+      "due_date": "2025-11-23",
+      "description": "Alpha: hierarchical search, traverse, RPC service, agent SDK"
+    },
+    {
+      "id": "M3",
+      "name": "M3 Integration",
+      "due_date": "2025-12-14",
+      "description": "Beta: hooks, subagent, deployment, integration tests"
+    },
+    {
+      "id": "M4",
+      "name": "M4 Stabilization",
+      "due_date": "2025-12-28",
+      "description": "RC: full SWE-bench validation, optimization, release"
+    }
+  ],
+  "epics": [
+    {
+      "id": null,
+      "team": "PMO",
+      "title": "Architecture & Roadmap",
+      "description": "Synthesize system-level architecture documentation from all work streams",
+      "labels": ["component/architecture", "type/docs"],
+      "milestone": "M1",
+      "cycle": "MVP-C1",
+      "prd_link": "spacs/prd/0.1.0-MVP-PRDs-v0/01-system-architecture.md",
+      "source_path": "spacs/issues/04-0.1.0-mvp/01-architecture-and-roadmap.md"
+    },
+    {
+      "id": null,
+      "team": "CORE",
+      "title": "Index Core",
+      "description": "Graph construction, sparse indexing, RPC service, serialization",
+      "labels": ["component/index-core"],
+      "milestone": "M1→M2",
+      "cycle": "MVP-C1,MVP-C2,MVP-C3",
+      "prd_link": "spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md",
+      "source_path": "spacs/issues/04-0.1.0-mvp/02-index-core/00-overview.md"
+    },
+    {
+      "id": null,
+      "team": "CLI",
+      "title": "CLI Tools",
+      "description": "Command implementation, output formatting, integration tests, docs",
+      "labels": ["component/cli"],
+      "milestone": "M2",
+      "cycle": "MVP-C2,MVP-C3",
+      "prd_link": "spacs/prd/0.1.0-MVP-PRDs-v0/03-cds-tools-cli.md",
+      "source_path": "spacs/issues/04-0.1.0-mvp/03-cli-tools/00-overview.md"
+    },
+    {
+      "id": null,
+      "team": "AGT",
+      "title": "Agent Integration",
+      "description": "SDK bootstrap, prompt design, hooks, sample transcripts",
+      "labels": ["component/agent"],
+      "milestone": "M3",
+      "cycle": "MVP-C4",
+      "prd_link": "spacs/prd/0.1.0-MVP-PRDs-v0/04-cds-agent-integration.md",
+      "source_path": "spacs/issues/04-0.1.0-mvp/04-agent-integration/00-overview.md"
+    },
+    {
+      "id": null,
+      "team": "CORE",
+      "title": "API Contracts",
+      "description": "JSON-RPC schemas, error handling, TypeScript types",
+      "labels": ["component/api"],
+      "milestone": "M1→M2",
+      "cycle": "MVP-C1,MVP-C2,MVP-C3",
+      "prd_link": "spacs/prd/0.1.0-MVP-PRDs-v0/05-api-specifications.md",
+      "source_path": "spacs/issues/04-0.1.0-mvp/05-api-contracts.md"
+    },
+    {
+      "id": null,
+      "team": "CORE",
+      "title": "Refactor Parity",
+      "description": "LocAgent parity validation, tree-sitter porting, benchmarks",
+      "labels": ["component/parity", "type/refactor"],
+      "milestone": "M3→M4",
+      "cycle": "MVP-C4,MVP-C5",
+      "prd_link": "spacs/prd/0.1.0-MVP-PRDs-v0/06-rust-refactoring-plan.md",
+      "source_path": "spacs/issues/04-0.1.0-mvp/06-refactor-parity.md"
+    },
+    {
+      "id": null,
+      "team": "OPS",
+      "title": "Deployment",
+      "description": "Local daemon, Docker Compose, monitoring, deployment docs",
+      "labels": ["component/deployment"],
+      "milestone": "M3",
+      "cycle": "MVP-C4",
+      "prd_link": "spacs/prd/0.1.0-MVP-PRDs-v0/07-deployment-operations.md",
+      "source_path": "spacs/issues/04-0.1.0-mvp/07-deployment/00-overview.md"
+    },
+    {
+      "id": null,
+      "team": "QA",
+      "title": "Testing & Quality",
+      "description": "Unit tests, integration tests, parity tests, benchmarking",
+      "labels": ["component/testing", "type/test"],
+      "milestone": "M2→M4",
+      "cycle": "MVP-C2,MVP-C3,MVP-C4,MVP-C5",
+      "prd_link": "spacs/prd/0.1.0-MVP-PRDs-v0/08-testing-quality.md",
+      "source_path": "spacs/issues/04-0.1.0-mvp/08-testing/00-overview.md"
+    },
+    {
+      "id": null,
+      "team": "PMO",
+      "title": "Roadmap",
+      "description": "Track 4-phase implementation plan, milestones, exit criteria",
+      "labels": ["component/roadmap", "type/docs"],
+      "milestone": "M1",
+      "cycle": "MVP-C1",
+      "prd_link": "spacs/prd/0.1.0-MVP-PRDs-v0/09-implementation-roadmap.md",
+      "source_path": "spacs/issues/04-0.1.0-mvp/09-roadmap.md"
+    },
+    {
+      "id": null,
+      "team": "PMO",
+      "title": "Extensibility & Future",
+      "description": "v0.2.0+ roadmap (multi-language, MCP, LanceDB evaluation)",
+      "labels": ["component/extensibility", "type/spike"],
+      "milestone": "M4",
+      "cycle": "MVP-C5",
+      "prd_link": "spacs/prd/0.1.0-MVP-PRDs-v0/10-extensibility-future.md",
+      "source_path": "spacs/issues/04-0.1.0-mvp/10-extensibility.md"
+    }
+  ],
+  "stories": [
+    {
+      "parent_epic": "Index Core",
+      "title": "Graph Build",
+      "description": "AST parsing, entity extraction, heterogeneous graph construction",
+      "labels": ["area/graph", "phase/p1-foundation", "priority/p0"],
+      "cycle": "MVP-C1,MVP-C2",
+      "source_path": "spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md"
+    },
+    {
+      "parent_epic": "Index Core",
+      "title": "Sparse Index",
+      "description": "Name/ID index + BM25 hierarchical search implementation",
+      "labels": ["area/bm25", "phase/p2-core", "priority/p0"],
+      "cycle": "MVP-C2,MVP-C3",
+      "source_path": "spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md"
+    },
+    {
+      "parent_epic": "Index Core",
+      "title": "Service Layer",
+      "description": "JSON-RPC HTTP server exposing index APIs",
+      "labels": ["area/service", "phase/p2-core", "priority/p0"],
+      "cycle": "MVP-C2,MVP-C3",
+      "source_path": "spacs/issues/04-0.1.0-mvp/02-index-core/03-service-layer.md"
+    },
+    {
+      "parent_epic": "Index Core",
+      "title": "Serialization & Fixtures",
+      "description": "Persistent storage, test fixtures, validation",
+      "labels": ["area/serialization", "phase/p1-foundation", "priority/p0"],
+      "cycle": "MVP-C1,MVP-C2",
+      "source_path": "spacs/issues/04-0.1.0-mvp/02-index-core/04-serialization-fixtures.md"
+    }
+  ],
+  "version": "1.0",
+  "created_at": "2025-10-18T21:30:00Z",
+  "last_updated": "2025-10-18T21:30:00Z"
+}
