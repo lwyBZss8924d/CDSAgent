@@ -1,0 +1,13 @@
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "traverse_graph",
+  "params": {
+    "start_entities": ["src.server::process_request"],
+    "depth": 2,
+    "relations": ["invoke"],
+    "entity_types": ["function"],
+    "direction": "forward",
+    "format": "graph"
+  }
+}

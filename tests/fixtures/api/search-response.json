@@ -1,0 +1,26 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "entities": [
+      {
+        "id": "src.utils::sanitize_input",
+        "name": "sanitize_input",
+        "entity_type": "function",
+        "file_path": "src/utils.py",
+        "line_range": [10, 25],
+        "score": 0.95,
+        "snippet": {
+          "fold": "def sanitize_input(text: str) -> str:",
+          "preview": "def sanitize_input(text: str) -> str:\n    \"\"\"Remove dangerous characters from user input\"\"\"\n    return bleach.clean(text, tags=[])"
+        }
+      }
+    ],
+    "total_count": 1,
+    "query_metadata": {
+      "used_upper_index": true,
+      "used_bm25": false,
+      "execution_time_ms": 120
+    }
+  }
+}

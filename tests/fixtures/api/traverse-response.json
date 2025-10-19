@@ -1,0 +1,52 @@
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "subgraph": {
+      "nodes": [
+        {
+          "id": "src.server::process_request",
+          "name": "process_request",
+          "entity_type": "function",
+          "file_path": "src/server.py",
+          "line_range": [12, 45],
+          "depth": 0
+        },
+        {
+          "id": "src.validators::validate_input",
+          "name": "validate_input",
+          "entity_type": "function",
+          "file_path": "src/validators.py",
+          "line_range": [45, 60],
+          "depth": 1
+        },
+        {
+          "id": "src.utils::sanitize_html",
+          "name": "sanitize_html",
+          "entity_type": "function",
+          "file_path": "src/utils/sanitize.py",
+          "line_range": [15, 32],
+          "depth": 2
+        }
+      ],
+      "edges": [
+        {
+          "source": "src.server::process_request",
+          "target": "src.validators::validate_input",
+          "relation": "invoke"
+        },
+        {
+          "source": "src.validators::validate_input",
+          "target": "src.utils::sanitize_html",
+          "relation": "invoke"
+        }
+      ]
+    },
+    "metadata": {
+      "total_nodes": 3,
+      "total_edges": 2,
+      "max_depth_reached": 2,
+      "execution_time_ms": 450
+    }
+  }
+}

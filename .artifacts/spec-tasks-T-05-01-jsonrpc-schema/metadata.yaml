@@ -1,0 +1,108 @@
+# Task Metadata Template
+
+task:
+  id: "T-05-01-jsonrpc-schema"
+  title: "JSON-RPC Schema Definition & Validation"
+  status: "in_progress"  # not_started | in_progress | blocked | completed
+  priority: "P0"  # P0 | P1 | P2
+  milestone: "M1"
+  week: 1
+  duration_days: 3
+
+owner:
+  primary: "Claude Code Agent"
+  secondary:
+    - "Rust Dev 1"
+    - "TS Dev 1"
+
+dates:
+  started: "2025-10-19"  # YYYY-MM-DD
+  target_completion: "2025-10-22"  # YYYY-MM-DD
+  actual_completion: null  # YYYY-MM-DD
+
+specs:
+  prds:
+    - "spacs/prd/0.1.0-MVP-PRDs-v0/05-api-specifications.md"
+    - "spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md"
+  issues:
+    - "spacs/issues/04-0.1.0-mvp/05-api-contracts.md"
+  tasks:
+    - "spacs/tasks/0.1.0-mvp/05-api-contracts/T-05-01-jsonrpc-schema.md"
+
+git:
+  worktree: ".worktrees/T-05-01-jsonrpc-schema"
+  branch: "feat/task/T-05-01-jsonrpc-schema"
+  symlink: "~/dev-space/CDSAgent-T-05-01-jsonrpc-schema"
+  commits: []
+    # Example:
+    # - hash: "abc1234"
+    #   message: "feat(scope): description"
+    #   date: "2025-10-19"
+    #   files_changed: 5
+  pr:
+    number: null
+    url: null
+    status: null  # draft | open | merged | closed
+    merged_at: null
+
+dependencies:
+  requires: []
+    # Example: ["T-05-01-jsonrpc-schema"]
+  blocks: []
+    # Example: ["T-02-03-service-layer"]
+
+deliverables:
+  - "docs/api/README.md"
+  - "docs/api/jsonrpc-schema.json"
+  - "docs/api/error-codes.md"
+  - "docs/api/versioning.md"
+  - "crates/cds-index/tests/service_contract_tests.rs"
+  - "tests/fixtures/api/*.json"
+
+acceptance_criteria:
+  - criterion: "Schema file published and referenced from docs"
+    status: "in_progress"  # pending | in_progress | completed
+    notes: "Docs created but review flagged broken relative paths and future-dated metadata."
+  - criterion: "Service contract tests fail if response deviates from schema"
+    status: "pending"
+    notes: "Current tests only validate hard-coded examples and do not load jsonrpc-schema.json."
+  - criterion: "CLI integration test validates JSON output via schema"
+    status: "pending"
+    notes: "Integration coverage not yet implemented; fixtures added only."
+  - criterion: "Schema versioning plan recorded (v0.1.0)"
+    status: "in_progress"
+    notes: "Versioning doc drafted; needs alignment on current date and header strategy."
+
+worklog:
+  base_path: ".artifacts/spec-tasks-T-05-01-jsonrpc-schema/worklogs/"
+  entries:
+    - date: "2025-10-19"
+      summary: "worklogs/2025-10-19-work-summary.md"
+      commits: "worklogs/2025-10-19-commit-log.md"
+      notes: "worklogs/2025-10-19-notes.md"
+
+metrics:
+  estimated_hours: 24  # 3 days * 8 hours
+  actual_hours: 2
+  lines_added: 0
+  lines_deleted: 0
+  files_modified: 6
+  tests_added: 1
+  test_coverage: 0.0  # 0.0 to 1.0
+
+comments:
+  - date: "2025-10-19"
+    author: "Claude Code Agent"
+    text: "Metadata updated with review context and outstanding schema validation gaps."
+
+related_artifacts:
+  - type: "documentation"
+    path: "docs/api/README.md"
+  - type: "documentation"
+    path: "docs/api/versioning.md"
+  - type: "documentation"
+    path: "docs/api/error-codes.md"
+  - type: "schema"
+    path: "docs/api/jsonrpc-schema.json"
+  - type: "test_fixture"
+    path: "tests/fixtures/api"

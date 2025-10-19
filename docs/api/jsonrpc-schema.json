@@ -1,0 +1,687 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/lwyBZss8924d/CDSAgent/schemas/jsonrpc-v0.1.0",
+  "title": "CDSAgent JSON-RPC API Schema",
+  "description": "JSON-RPC 2.0 schema for CDSAgent CDS-Index Service",
+  "version": "0.1.0",
+  "definitions": {
+    "entityType": {
+      "type": "string",
+      "enum": ["directory", "file", "class", "function"],
+      "description": "Type of code entity"
+    },
+    "relationType": {
+      "type": "string",
+      "enum": ["contain", "import", "invoke", "inherit"],
+      "description": "Type of graph relationship"
+    },
+    "entity": {
+      "type": "object",
+      "required": ["id", "name", "entity_type", "file_path", "line_range", "score"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique entity identifier (hash or qualified name)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Entity name"
+        },
+        "entity_type": {
+          "$ref": "#/definitions/entityType"
+        },
+        "file_path": {
+          "type": "string",
+          "description": "Relative file path from repository root"
+        },
+        "line_range": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Start and end line numbers [start, end]"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Relevance score (1.0 = exact match)"
+        },
+        "snippet": {
+          "type": "object",
+          "description": "Code snippet at varying detail levels. Fields present depend on snippet_mode parameter: 'fold' returns only fold, 'preview' returns fold+preview, 'full' returns all three",
+          "properties": {
+            "fold": {
+              "type": "string",
+              "description": "One-line summary (always present)"
+            },
+            "preview": {
+              "type": "string",
+              "description": "~5 lines of code preview (present when snippet_mode is 'preview' or 'full')"
+            },
+            "full": {
+              "type": "string",
+              "description": "Complete entity code (only present when snippet_mode is 'full')"
+            }
+          },
+          "required": ["fold"]
+        }
+      }
+    },
+    "graphNode": {
+      "type": "object",
+      "required": ["id", "name", "entity_type", "file_path", "depth"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "entity_type": {
+          "$ref": "#/definitions/entityType"
+        },
+        "file_path": {
+          "type": "string"
+        },
+        "line_range": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Distance from start node"
+        }
+      }
+    },
+    "graphEdge": {
+      "type": "object",
+      "required": ["source", "target", "relation"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Source entity ID"
+        },
+        "target": {
+          "type": "string",
+          "description": "Target entity ID"
+        },
+        "relation": {
+          "$ref": "#/definitions/relationType"
+        }
+      }
+    },
+    "entityDetails": {
+      "type": "object",
+      "required": ["id", "name", "entity_type", "file_path", "line_range", "code"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "entity_type": {
+          "$ref": "#/definitions/entityType"
+        },
+        "file_path": {
+          "type": "string"
+        },
+        "line_range": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "code": {
+          "type": "string",
+          "description": "Full entity code"
+        },
+        "context_before": {
+          "type": "string",
+          "description": "Lines before entity"
+        },
+        "context_after": {
+          "type": "string",
+          "description": "Lines after entity"
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "parameters": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Function parameters"
+            },
+            "return_type": {
+              "type": "string",
+              "description": "Function return type"
+            },
+            "docstring": {
+              "type": "string",
+              "description": "Entity documentation"
+            },
+            "decorators": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Python decorators"
+            },
+            "parent_class": {
+              "type": "string",
+              "description": "Parent class for methods"
+            }
+          }
+        }
+      }
+    },
+    "indexError": {
+      "type": "object",
+      "required": ["file_path", "error"],
+      "properties": {
+        "file_path": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "line": {
+          "type": "integer"
+        }
+      }
+    },
+    "jsonrpcRequest": {
+      "type": "object",
+      "required": ["jsonrpc", "method", "id"],
+      "properties": {
+        "jsonrpc": {
+          "type": "string",
+          "const": "2.0"
+        },
+        "method": {
+          "type": "string"
+        },
+        "params": {
+          "type": "object"
+        },
+        "id": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "jsonrpcResponse": {
+      "type": "object",
+      "required": ["jsonrpc", "id"],
+      "properties": {
+        "jsonrpc": {
+          "type": "string",
+          "const": "2.0"
+        },
+        "id": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "result": {
+          "description": "Result object (present on success)"
+        },
+        "error": {
+          "type": "object",
+          "required": ["code", "message"],
+          "properties": {
+            "code": {
+              "type": "integer",
+              "description": "JSON-RPC error code"
+            },
+            "message": {
+              "type": "string",
+              "description": "Error message"
+            },
+            "data": {
+              "description": "Additional error information"
+            }
+          }
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["result"]
+        },
+        {
+          "required": ["error"]
+        }
+      ]
+    }
+  },
+  "methods": {
+    "search_entities": {
+      "description": "Hierarchical code search using upper index (name/ID) and lower index (BM25)",
+      "params": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Search keywords"
+          },
+          "entity_types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/entityType"
+            },
+            "description": "Filter by entity types"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10,
+            "description": "Maximum number of results"
+          },
+          "use_bm25": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable BM25 fallback for semantic search"
+          },
+          "snippet_mode": {
+            "type": "string",
+            "enum": ["fold", "preview", "full"],
+            "default": "preview",
+            "description": "Level of code detail to return"
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "required": ["entities", "total_count", "query_metadata"],
+        "properties": {
+          "entities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/entity"
+            }
+          },
+          "total_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total number of entities found"
+          },
+          "query_metadata": {
+            "type": "object",
+            "required": ["used_upper_index", "used_bm25", "execution_time_ms"],
+            "properties": {
+              "used_upper_index": {
+                "type": "boolean",
+                "description": "Whether upper index (name/ID) was used"
+              },
+              "used_bm25": {
+                "type": "boolean",
+                "description": "Whether BM25 content search was used"
+              },
+              "execution_time_ms": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Query execution time in milliseconds"
+              }
+            }
+          }
+        }
+      }
+    },
+    "traverse_graph": {
+      "description": "BFS graph traversal from starting entities",
+      "params": {
+        "type": "object",
+        "required": ["start_entities"],
+        "properties": {
+          "start_entities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "Entity IDs to start traversal from"
+          },
+          "depth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 1,
+            "description": "Maximum traversal depth (number of hops)"
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/relationType"
+            },
+            "description": "Filter by edge types"
+          },
+          "entity_types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/entityType"
+            },
+            "description": "Filter by node types"
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["forward", "backward", "bidirectional"],
+            "default": "forward",
+            "description": "Traversal direction"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["graph", "tree"],
+            "default": "graph",
+            "description": "Output structure format"
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "required": ["subgraph", "metadata"],
+        "properties": {
+          "subgraph": {
+            "type": "object",
+            "required": ["nodes", "edges"],
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/graphNode"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/graphEdge"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "required": ["total_nodes", "total_edges", "max_depth_reached", "execution_time_ms"],
+            "properties": {
+              "total_nodes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "total_edges": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "max_depth_reached": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "execution_time_ms": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "retrieve_entity": {
+      "description": "Retrieve full entity details with optional context",
+      "params": {
+        "type": "object",
+        "required": ["entity_ids"],
+        "properties": {
+          "entity_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "description": "Entity IDs to retrieve"
+          },
+          "include_context": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 50,
+            "default": 0,
+            "description": "Number of lines before/after entity to include"
+          },
+          "include_metadata": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include AST metadata (parameters, return types, etc.)"
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "required": ["entities"],
+        "properties": {
+          "entities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/entityDetails"
+            }
+          }
+        }
+      }
+    },
+    "rebuild_index": {
+      "description": "Rebuild graph and BM25 indices for a repository",
+      "params": {
+        "type": "object",
+        "required": ["repo_path"],
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Path to repository root"
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["python", "typescript", "javascript", "rust"]
+            },
+            "description": "Languages to parse (auto-detected if omitted)"
+          },
+          "incremental": {
+            "type": "boolean",
+            "default": false,
+            "description": "Update only changed files"
+          },
+          "output_path": {
+            "type": "string",
+            "description": "Index directory (defaults to repo/.cds-index)"
+          }
+        }
+      },
+      "result": {
+        "type": "object",
+        "required": ["success", "stats"],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "stats": {
+            "type": "object",
+            "required": ["files_indexed", "entities_found", "edges_created", "build_time_ms"],
+            "properties": {
+              "files_indexed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "entities_found": {
+                "type": "object",
+                "required": ["directories", "files", "classes", "functions"],
+                "properties": {
+                  "directories": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "files": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "classes": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "functions": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              },
+              "edges_created": {
+                "type": "object",
+                "required": ["contain", "import", "invoke", "inherit"],
+                "properties": {
+                  "contain": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "import": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "invoke": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "inherit": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              },
+              "build_time_ms": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/indexError"
+            },
+            "description": "List of files that failed to parse"
+          }
+        }
+      }
+    }
+  },
+  "errors": {
+    "standard": {
+      "-32700": {
+        "message": "Parse error",
+        "description": "Invalid JSON was received by the server"
+      },
+      "-32600": {
+        "message": "Invalid Request",
+        "description": "The JSON sent is not a valid Request object"
+      },
+      "-32601": {
+        "message": "Method not found",
+        "description": "The method does not exist / is not available"
+      },
+      "-32602": {
+        "message": "Invalid params",
+        "description": "Invalid method parameter(s)"
+      },
+      "-32603": {
+        "message": "Internal error",
+        "description": "Internal JSON-RPC error"
+      }
+    },
+    "custom": {
+      "-32001": {
+        "message": "Index not found",
+        "description": "GRAPH_INDEX_DIR missing or corrupted",
+        "data_schema": {
+          "type": "object",
+          "properties": {
+            "index_path": {
+              "type": "string"
+            },
+            "suggestion": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "-32002": {
+        "message": "Entity not found",
+        "description": "Entity ID doesn't exist in the index",
+        "data_schema": {
+          "type": "object",
+          "properties": {
+            "entity_id": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "-32003": {
+        "message": "Parse error",
+        "description": "Code parsing failed",
+        "data_schema": {
+          "type": "object",
+          "properties": {
+            "file_path": {
+              "type": "string"
+            },
+            "error_message": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "-32004": {
+        "message": "Query timeout",
+        "description": "Search operation exceeded timeout limit",
+        "data_schema": {
+          "type": "object",
+          "properties": {
+            "timeout_ms": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "search_entities",
+  "params": {
+    "query": "sanitize input",
+    "entity_types": ["function"],
+    "limit": 10,
+    "use_bm25": true,
+    "snippet_mode": "preview"
+  }
+}

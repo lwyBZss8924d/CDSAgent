@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude when working with code in this "CDSAgent" repository.
 
+📌 @["CDSAgent" codebase Spec-Tasks DEV-COOKING Workflow SOP](docs/WORKTREE_WORKFLOW.md)
+
 ## Repository Overview
 
 CDSAgent is a graph-based code retrieval system built with Rust (core indexing) and TypeScript (LLM orchestration). The repository contains:

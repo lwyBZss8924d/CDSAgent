@@ -43,6 +43,7 @@ proptest = { workspace = true }
 criterion = { workspace = true }
 tempfile = "3.9"
 test-log = "0.2"
+jsonschema = "0.18"
 
 [[bench]]
 name = "search_bench"

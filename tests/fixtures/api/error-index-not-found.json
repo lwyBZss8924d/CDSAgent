@@ -1,0 +1,12 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32001,
+    "message": "Index not found",
+    "data": {
+      "index_path": "/path/to/repo/.cds-index",
+      "suggestion": "Run 'cds init /path/to/repo' to create an index"
+    }
+  }
+}
