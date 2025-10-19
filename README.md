@@ -199,6 +199,11 @@ just test-all
 
 ## Documentation
 
+- **API Documentation**: `docs/api/` - JSON-RPC API specifications and schemas
+  - [API Overview](docs/api/README.md) - Complete API documentation
+  - [JSON-RPC Schema](docs/api/jsonrpc-schema.json) - Machine-readable schema
+  - [Error Codes](docs/api/error-codes.md) - Error code catalogue
+  - [Versioning](docs/api/versioning.md) - API versioning strategy
 - **PRDs**: `spacs/prd/0.1.0-MVP-PRDs-v0/` - Product requirements (10 PRDs)
 - **Issues**: `spacs/issues/04-0.1.0-mvp/` - Detailed issue breakdown
 - **Tasks**: `spacs/tasks/0.1.0-mvp/` - Implementation task tracking
@@ -207,6 +212,7 @@ just test-all
 
 ### Key Documents
 
+- [API Documentation](docs/api/README.md) - JSON-RPC API reference
 - [Tech Architecture Plan](spacs/issues/02-CDSAgent-Tech-Architecture-Plan.md)
 - [0.1.0-MVP Backlog](spacs/plan/0.1.0-mvp-backlog.md)
 - [LocAgent Parity Validation](spacs/issues/04-0.1.0-mvp/06-refactor-parity.md)
