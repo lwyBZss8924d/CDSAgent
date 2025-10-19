@@ -2,20 +2,58 @@
 
 This file provides guidance to Claude when working with code in this "CDSAgent" repository.
 
-## Repository overview
+## Repository Overview
 
-This repo aggregates two active, code-bearing subprojects plus documentation:
+CDSAgent is a graph-based code retrieval system built with Rust (core indexing) and TypeScript (LLM orchestration). The repository contains:
 
-- Python: tmp/LocAgent — graph-guided LLM agent for code localization (primary runnable code here)
-- TypeScript/Bun demo: tmp/claude-agent-sdk/claude-code-sdk-demos/email-agent — Claude Agent SDK demo (local-only)
-- Docs: tmp/claude-code-cli-docs — reference docs for Claude Code CLI (no build/run required)
+- **Rust**: `crates/cds-index/` — Core indexing service with graph builder and sparse search
+- **Rust**: `crates/cds-tools/` — CLI tools for search, traverse, and retrieve operations
+- **TypeScript/Bun**: `cds-agent/` — Claude Agent SDK integration with hooks and prompts
+- **Documentation**: `spacs/` — PRDs, issues, tasks, and planning documents
+- **Reference**: `tmp/LocAgent/` — Original Python implementation for parity validation
 
-## CDSAgent Core Tech methods References from Paper & Repo !!! IMPORTANT
+## CDSAgent Core Tech Methods References from Paper & Repo !!! IMPORTANT
 
-- CDSAgent build fllow LocAgent Paper: @tmp/LocAgent/arXiv-2503.09089v2
-- LocAgent paper source: <https://arxiv.org/html/2503.09089v2>
-- CDSAgent build fllow LocAgent Paper's Repo: @tmp/LocAgent/
-- LocAgent paper's Repo source: <https://github.com/gersteinlab/LocAgent>
+- **CDSAgent follows LocAgent Paper**: `tmp/LocAgent/arXiv-2503.09089v2`
+- **LocAgent paper source**: <https://arxiv.org/html/2503.09089v2>
+- **CDSAgent refactors LocAgent Repo**: `tmp/LocAgent/`
+- **LocAgent repo source**: <https://github.com/gersteinlab/LocAgent>
+
+## Project Structure
+
+```tree
+CDSAgent/
+├── crates/
+│   ├── cds-index/          # Rust: Index Service
+│   │   ├── src/
+│   │   │   ├── graph/      # AST parsing & graph building
+│   │   │   ├── index/      # Name index + BM25 search
+│   │   │   ├── service/    # JSON-RPC server
+│   │   │   └── bin/        # cds-index-service binary
+│   │   └── tests/          # Integration tests
+│   └── cds-tools/          # Rust: CLI Tools
+│       ├── src/
+│       │   ├── commands/   # search, traverse, retrieve
+│       │   ├── client/     # JSON-RPC client
+│       │   └── formatters/ # JSON, text, tree output
+│       └── tests/          # CLI integration tests
+├── cds-agent/              # TypeScript/Bun: Agent
+│   ├── src/
+│   │   ├── agent-config.ts
+│   │   ├── system-prompt.ts
+│   │   └── hooks/          # PreToolUse, PostToolUse, SubagentStop
+│   └── .claude/agents/     # Subagent configurations
+├── spacs/                  # Specifications
+│   ├── prd/                # Product requirements
+│   ├── issues/             # Technical specs
+│   ├── tasks/              # Implementation tasks
+│   └── plan/               # Backlog and roadmap
+├── tmp/                    # Reference implementations
+│   └── LocAgent/           # Original Python code (parity reference)
+├── justfile                # Build automation
+├── Cargo.toml              # Rust workspace
+└── README.md               # Development guide
+```
 
 ## Commands and workflows
 

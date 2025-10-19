@@ -13,18 +13,21 @@ CDSAgent 0.1.0-MVP is a graph-based code retrieval system refactored from LocAge
 ### Key Achievements
 
 ✅ **Planning Complete** (Week 0)
+
 - 10 PRD documents defining system architecture
 - 32 technical issues with detailed specifications
 - 30 implementation tasks with acceptance criteria
 - 4-phase roadmap with milestones
 
 ✅ **Infrastructure Ready** (Week 1)
+
 - Rust workspace configured with all dependencies
 - TypeScript agent skeleton with Claude SDK
 - Git worktree workflow for parallel development
 - 7 task branches ready for development
 
 ✅ **Documentation Foundation** (Week 1)
+
 - Architecture diagrams and design principles
 - API specifications and data models
 - Development workflow guides
@@ -33,12 +36,14 @@ CDSAgent 0.1.0-MVP is a graph-based code retrieval system refactored from LocAge
 ### Current State
 
 **Codebase**: Skeleton structure only (~66 lines in core modules)
+
 - Module structure defined
 - Dependencies configured
 - Placeholder types in place
 - Build system operational
 
 **Development Environment**: Fully operational
+
 - Cargo workspace: ✅ Compiles
 - Bun/TypeScript: ✅ Configured
 - LocAgent reference: ✅ Available at `tmp/LocAgent/`
@@ -48,7 +53,7 @@ CDSAgent 0.1.0-MVP is a graph-based code retrieval system refactored from LocAge
 
 ## Repository Structure
 
-```
+```tree
 CDSAgent/
 ├── crates/                          # Rust implementation
 │   ├── cds-index/                   # Core indexing service
@@ -133,6 +138,7 @@ git branch --show-current  # feat/task/T-05-01-jsonrpc-schema
    - **Deliverables**: <500ms p95 search latency
 
 **Success Criteria:**
+
 - Graph + Index prototypes functional
 - Parity with LocAgent validated on 3 sample repos
 - <5s index time for 1K files
@@ -147,6 +153,7 @@ git branch --show-current  # feat/task/T-05-01-jsonrpc-schema
 7. **T-04-02: Prompt Design** (Week 5)
 
 **Success Criteria:**
+
 - Service exposes all endpoints
 - CLI can query via JSON-RPC
 - Agent executes basic searches

@@ -16,7 +16,7 @@ CDSAgent uses git worktrees to enable parallel development on multiple tasks wit
 
 ## Directory Structure
 
-```
+```tree
 CDSAgent/                              # Main repository (feat/dev-environment-setup)
 ├── .worktrees/                        # Worktree storage (gitignored)
 │   ├── T-02-01-graph-builder/         # Task branch worktree
