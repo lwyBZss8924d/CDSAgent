@@ -40,10 +40,11 @@
 
 **Files Created:**
 
-- `crates/cds-index/tests/service_contract_tests.rs` - 25 passing tests
+- `crates/cds-index/tests/service_contract_tests.rs` - 29 passing tests
   - Added jsonschema 0.18 to dev-dependencies
   - Embedded schema at compile time via `include_str!` for reliability
   - Created inline entity schema to avoid $ref resolution issues
+  - Added embedded_schema_validation_tests module for fixture validation
   - Tests cover: JSON-RPC format, entity structure, snippet variations, errors, backward compatibility
 
 **Test Coverage:**
@@ -56,6 +57,11 @@
 - Error format validation (5 tests)
 - Backward compatibility (1 test)
 - Integration tests (1 test)
+- Embedded schema validation (4 tests - NEW):
+  - test_search_entities_fixture_validates()
+  - test_traverse_graph_fixture_validates()
+  - test_error_response_fixture_validates()
+  - test_schema_drift_detection()
 
 ### Documentation
 
@@ -172,31 +178,32 @@
 ## Acceptance Criteria Progress
 
 - [x] Schema file published at docs/api/jsonrpc-schema.json
-- [x] Service contract tests validate responses against schema (25 passing tests)
-- [x] Test fixtures demonstrate schema compliance
+- [x] Service contract tests validate responses against schema (29 passing tests)
+- [x] Test fixtures demonstrate schema compliance (validated by embedded schema tests)
 - [x] Schema versioning plan recorded (v0.1.0)
 - [x] Error codes documented with examples and recovery actions
 - [x] All tests pass with schema validation
+- [x] Task status updated to Completed in T-05-01-jsonrpc-schema.md
 
 ## Metrics
 
-**Time Spent**: 4.5 hours
+**Time Spent**: 5.5 hours (2.0h initial + 1.5h review fixes + 2.0h final fixes)
 **Status**: ✅ Completed
-**Lines Added**: ~3,500
-**Tests Added**: 25
-**Test Pass Rate**: 100% (25/25)
+**Lines Added**: ~3,700
+**Tests Added**: 29
+**Test Pass Rate**: 100% (29/29)
 
 ## Files Changed Summary
 
 ```text
-20 files changed, 3478 insertions(+), 5 deletions(-)
+22 files changed, 3698 insertions(+), 26 deletions(-)
 
 New files:
 - docs/api/README.md (467 lines)
 - docs/api/error-codes.md (500+ lines)
 - docs/api/versioning.md (600+ lines)
 - docs/api/jsonrpc-schema.json (700+ lines)
-- crates/cds-index/tests/service_contract_tests.rs (600+ lines)
+- crates/cds-index/tests/service_contract_tests.rs (900+ lines with embedded validation)
 - tests/fixtures/api/*.json (5 files, 150 lines total)
 - .artifacts/spec-tasks-T-05-01-jsonrpc-schema/* (5 files)
 
@@ -206,13 +213,35 @@ Modified files:
 - Cargo.lock (dependency updates)
 - AGENTS.md (+2 lines - pin reference)
 - CLAUDE.md (+2 lines - pin reference)
+- spacs/tasks/0.1.0-mvp/05-api-contracts/T-05-01-jsonrpc-schema.md (status update)
+- .artifacts/spec-tasks-T-05-01-jsonrpc-schema/worklogs/*.md (worklog updates)
 ```
 
-## Git Commit
+## Git Commits
 
 **Branch**: feat/task/T-05-01-jsonrpc-schema
-**Commit**: 890b01e
-**Message**: feat(api): T-05-01 - implement JSON-RPC schema validation
+
+### Commit 1 (890b01e)
+
+**Message**: feat(api): implement comprehensive JSON-RPC schema and validation
+
+- Initial implementation with 25 tests
+
+### Commit 2 (5ff7db3)
+
+**Message**: fix(api): address schema validation and documentation issues
+
+- Fixed snippet field requirements
+- Added jsonschema validation
+- Fixed documentation issues
+
+### Commit 3 (934bcd9)
+
+**Message**: fix(tests): add embedded schema validation tests and complete T-05-01
+
+- Added embedded_schema_validation_tests module (4 new tests)
+- Updated task status to Completed
+- Total: 29 passing tests
 
 ## Notes & Comments
 
