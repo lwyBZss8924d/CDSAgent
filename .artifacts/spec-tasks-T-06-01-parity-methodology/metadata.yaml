@@ -1,0 +1,90 @@
+# Task Metadata Template
+
+task:
+  id: "T-06-01-parity-methodology"
+  title: "LocAgent Parity Validation Methodology"
+  status: "not_started"  # not_started | in_progress | blocked | completed
+  priority: "P0"  # P0 | P1 | P2
+  milestone: "{MILESTONE_ID}"
+  week: 1
+  duration_days: 3
+
+owner:
+  primary: "Claude Code Agent"
+  secondary: []
+
+dates:
+  started: null  # YYYY-MM-DD
+  target_completion: null  # YYYY-MM-DD
+  actual_completion: null  # YYYY-MM-DD
+
+specs:
+  prds:
+    - "spacs/prd/0.1.0-MVP-PRDs-v0/{PRD_FILE}.md"
+  issues:
+    - "spacs/issues/04-0.1.0-mvp/{ISSUE_FILE}.md"
+  tasks:
+    - "spacs/tasks/0.1.0-mvp/T-06-01-parity-methodology/{TASK_FILE}.md"
+
+git:
+  worktree: ".worktrees/T-06-01-parity-methodology"
+  branch: "feat/task/T-06-01-parity-methodology"
+  symlink: "~/dev-space/CDSAgent-T-06-01-parity-methodology"
+  commits: []
+    # Example:
+    # - hash: "abc1234"
+    #   message: "feat(scope): description"
+    #   date: "2025-10-19"
+    #   files_changed: 5
+  pr:
+    number: null
+    url: null
+    status: null  # draft | open | merged | closed
+    merged_at: null
+
+dependencies:
+  requires: []
+    # Example: ["T-05-01-jsonrpc-schema"]
+  blocks: []
+    # Example: ["T-02-03-service-layer"]
+
+deliverables:
+  - "path/to/file1.rs"
+  - "path/to/file2.ts"
+
+acceptance_criteria:
+  - criterion: "Description of criterion 1"
+    status: "pending"  # pending | in_progress | completed
+    notes: ""
+  - criterion: "Description of criterion 2"
+    status: "pending"
+    notes: ""
+
+worklog:
+  base_path: ".artifacts/spec-tasks-T-06-01-parity-methodology/worklogs/"
+  entries: []
+    # Example:
+    # - date: "2025-10-19"
+    #   summary: "worklogs/2025-10-19-work-summary.md"
+    #   commits: "worklogs/2025-10-19-commit-log.md"
+    #   notes: "worklogs/2025-10-19-notes.md"
+
+metrics:
+  estimated_hours: 24  # 3 days * 8 hours
+  actual_hours: 0
+  lines_added: 0
+  lines_deleted: 0
+  files_modified: 0
+  tests_added: 0
+  test_coverage: 0.0  # 0.0 to 1.0
+
+comments:
+  - date: "2025-10-19"
+    author: "Claude Code Agent"
+    text: "Initial metadata created"
+
+related_artifacts:
+  - type: "documentation"
+    path: "docs/api/schema.md"
+  - type: "test_fixture"
+    path: "tests/fixtures/sample.json"
