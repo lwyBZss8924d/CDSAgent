@@ -788,6 +788,46 @@ mod integration_tests {
 mod embedded_schema_validation_tests {
     use super::*;
 
+    /// Compile schema validator for a specific method result by inlining all definitions
+    /// This avoids $ref resolution issues by creating a self-contained schema
+    fn compile_method_result_validator(method_name: &str) -> JSONSchema {
+        let schema = load_jsonrpc_schema();
+        let method_result = schema
+            .get("methods")
+            .and_then(|m| m.get(method_name))
+            .and_then(|m| m.get("result"))
+            .expect(&format!("{} result schema not found", method_name));
+
+        // Get all definitions to inline
+        let definitions = schema.get("definitions").expect("definitions not found");
+
+        // Create a new schema with the method result as root and all definitions
+        let inline_schema = json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "definitions": definitions,
+            "type": method_result.get("type"),
+            "required": method_result.get("required"),
+            "properties": method_result.get("properties")
+        });
+
+        JSONSchema::options()
+            .with_draft(Draft::Draft7)
+            .compile(&inline_schema)
+            .expect(&format!("Failed to compile {} result schema", method_name))
+    }
+
+    fn compile_search_result_validator() -> JSONSchema {
+        compile_method_result_validator("search_entities")
+    }
+
+    fn compile_traverse_result_validator() -> JSONSchema {
+        compile_method_result_validator("traverse_graph")
+    }
+
+    fn compile_retrieve_result_validator() -> JSONSchema {
+        compile_method_result_validator("retrieve_entity")
+    }
+
     #[test]
     fn test_search_entities_fixture_validates() {
         // Load actual fixture (embedded at compile time)
@@ -798,26 +838,30 @@ mod embedded_schema_validation_tests {
         // Validate JSON-RPC wrapper
         assert!(validate_jsonrpc_response(&response).is_ok());
 
-        // Validate result structure matches schema expectations
+        // Compile schema and validate result against actual schema
+        let validator = compile_search_result_validator();
         let result = response.get("result").unwrap();
-        assert!(result.get("entities").is_some());
-        assert!(result.get("total_count").is_some());
-        assert!(result.get("query_metadata").is_some());
 
-        // Validate each entity against schema
+        let validation_result = validator.validate(result);
+        if let Err(errors) = validation_result {
+            let error_messages: Vec<String> = errors
+                .map(|e| format!("{} at {}", e, e.instance_path))
+                .collect();
+            panic!(
+                "search-response.json failed schema validation:\n{}",
+                error_messages.join("\n")
+            );
+        }
+
+        // Additionally validate each entity against inline entity schema
+        // (this catches entity-level regressions)
         let entities = result.get("entities").unwrap().as_array().unwrap();
         for entity in entities {
             assert!(
                 validate_entity_schema(entity).is_ok(),
-                "Entity in search response failed schema validation"
+                "Entity in search response failed inline entity schema validation"
             );
         }
-
-        // Validate query_metadata structure
-        let metadata = result.get("query_metadata").unwrap();
-        assert!(metadata.get("used_upper_index").is_some());
-        assert!(metadata.get("used_bm25").is_some());
-        assert!(metadata.get("execution_time_ms").is_some());
     }
 
     #[test]
@@ -826,21 +870,67 @@ mod embedded_schema_validation_tests {
         let response: Value = serde_json::from_str(fixture)
             .expect("Failed to parse traverse-response.json");
 
+        // Validate JSON-RPC wrapper
         assert!(validate_jsonrpc_response(&response).is_ok());
 
+        // Compile schema and validate result against actual schema
+        let validator = compile_traverse_result_validator();
         let result = response.get("result").unwrap();
-        let subgraph = result.get("subgraph").unwrap();
-        let metadata = result.get("metadata").unwrap();
 
-        // Validate subgraph structure
-        assert!(subgraph.get("nodes").is_some());
-        assert!(subgraph.get("edges").is_some());
+        let validation_result = validator.validate(result);
+        if let Err(errors) = validation_result {
+            let error_messages: Vec<String> = errors
+                .map(|e| format!("{} at {}", e, e.instance_path))
+                .collect();
+            panic!(
+                "traverse-response.json failed schema validation:\n{}",
+                error_messages.join("\n")
+            );
+        }
+    }
 
-        // Validate metadata structure
-        assert!(metadata.get("total_nodes").is_some());
-        assert!(metadata.get("total_edges").is_some());
-        assert!(metadata.get("max_depth_reached").is_some());
-        assert!(metadata.get("execution_time_ms").is_some());
+    #[test]
+    fn test_retrieve_entity_fixture_validates() {
+        // Create a synthetic retrieve_entity response for validation
+        let response = json!({
+            "jsonrpc": "2.0",
+            "id": 3,
+            "result": {
+                "entities": [
+                    {
+                        "id": "entity_abc",
+                        "name": "sanitize_html",
+                        "entity_type": "function",
+                        "file_path": "src/utils.py",
+                        "line_range": [15, 32],
+                        "code": "def sanitize_html(input):\n    return input.strip()",
+                        "metadata": {
+                            "docstring": "Sanitize HTML input",
+                            "parameters": ["input"],
+                            "return_type": "str"
+                        }
+                    }
+                ]
+            }
+        });
+
+        // Validate JSON-RPC wrapper
+        assert!(validate_jsonrpc_response(&response).is_ok());
+
+        // Compile schema and validate result against actual schema
+        let validator = compile_retrieve_result_validator();
+        let result = response.get("result").unwrap();
+
+        let validation_result = validator.validate(result);
+        if let Err(errors) = validation_result {
+            let error_messages: Vec<String> = errors
+                .map(|e| format!("{} at {}", e, e.instance_path))
+                .collect();
+            panic!(
+                "retrieve_entity response failed schema validation:\n{}",
+                error_messages.join("\n")
+            );
+        }
     }
 
     #[test]
@@ -852,8 +942,47 @@ mod embedded_schema_validation_tests {
         // Validate JSON-RPC error format
         assert!(validate_jsonrpc_response(&response).is_ok());
 
-        // Verify error code matches documented custom error
+        // Verify error structure matches schema
         let error = response.get("error").unwrap();
+
+        // Create inline error schema (JSON-RPC 2.0 standard error object)
+        let error_schema = json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "description": "Error code (standard or custom)"
+                },
+                "message": {
+                    "type": "string",
+                    "description": "Human-readable error message"
+                },
+                "data": {
+                    "type": "object",
+                    "description": "Additional error data (optional)"
+                }
+            }
+        });
+
+        let validator = JSONSchema::options()
+            .with_draft(Draft::Draft7)
+            .compile(&error_schema)
+            .expect("Failed to compile error schema");
+
+        let validation_result = validator.validate(error);
+        if let Err(errors) = validation_result {
+            let error_messages: Vec<String> = errors
+                .map(|e| format!("{} at {}", e, e.instance_path))
+                .collect();
+            panic!(
+                "error-index-not-found.json failed schema validation:\n{}",
+                error_messages.join("\n")
+            );
+        }
+
+        // Verify error code matches documented custom error
         assert_eq!(error.get("code").unwrap().as_i64().unwrap(), -32001);
         assert_eq!(
             error.get("message").unwrap().as_str().unwrap(),
