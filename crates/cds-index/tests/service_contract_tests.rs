@@ -783,3 +783,124 @@ mod integration_tests {
         assert!(serde_json::from_str::<Value>(&json_str).is_ok());
     }
 }
+
+#[cfg(test)]
+mod embedded_schema_validation_tests {
+    use super::*;
+
+    #[test]
+    fn test_search_entities_fixture_validates() {
+        // Load actual fixture (embedded at compile time)
+        let fixture = include_str!("../../../tests/fixtures/api/search-response.json");
+        let response: Value = serde_json::from_str(fixture)
+            .expect("Failed to parse search-response.json");
+
+        // Validate JSON-RPC wrapper
+        assert!(validate_jsonrpc_response(&response).is_ok());
+
+        // Validate result structure matches schema expectations
+        let result = response.get("result").unwrap();
+        assert!(result.get("entities").is_some());
+        assert!(result.get("total_count").is_some());
+        assert!(result.get("query_metadata").is_some());
+
+        // Validate each entity against schema
+        let entities = result.get("entities").unwrap().as_array().unwrap();
+        for entity in entities {
+            assert!(
+                validate_entity_schema(entity).is_ok(),
+                "Entity in search response failed schema validation"
+            );
+        }
+
+        // Validate query_metadata structure
+        let metadata = result.get("query_metadata").unwrap();
+        assert!(metadata.get("used_upper_index").is_some());
+        assert!(metadata.get("used_bm25").is_some());
+        assert!(metadata.get("execution_time_ms").is_some());
+    }
+
+    #[test]
+    fn test_traverse_graph_fixture_validates() {
+        let fixture = include_str!("../../../tests/fixtures/api/traverse-response.json");
+        let response: Value = serde_json::from_str(fixture)
+            .expect("Failed to parse traverse-response.json");
+
+        assert!(validate_jsonrpc_response(&response).is_ok());
+
+        let result = response.get("result").unwrap();
+        let subgraph = result.get("subgraph").unwrap();
+        let metadata = result.get("metadata").unwrap();
+
+        // Validate subgraph structure
+        assert!(subgraph.get("nodes").is_some());
+        assert!(subgraph.get("edges").is_some());
+
+        // Validate metadata structure
+        assert!(metadata.get("total_nodes").is_some());
+        assert!(metadata.get("total_edges").is_some());
+        assert!(metadata.get("max_depth_reached").is_some());
+        assert!(metadata.get("execution_time_ms").is_some());
+    }
+
+    #[test]
+    fn test_error_response_fixture_validates() {
+        let fixture = include_str!("../../../tests/fixtures/api/error-index-not-found.json");
+        let response: Value = serde_json::from_str(fixture)
+            .expect("Failed to parse error-index-not-found.json");
+
+        // Validate JSON-RPC error format
+        assert!(validate_jsonrpc_response(&response).is_ok());
+
+        // Verify error code matches documented custom error
+        let error = response.get("error").unwrap();
+        assert_eq!(error.get("code").unwrap().as_i64().unwrap(), -32001);
+        assert_eq!(
+            error.get("message").unwrap().as_str().unwrap(),
+            "Index not found"
+        );
+    }
+
+    #[test]
+    fn test_schema_drift_detection() {
+        // This test ensures the embedded schema is parseable and has expected structure
+        let schema = load_jsonrpc_schema();
+
+        // Verify top-level schema structure
+        assert!(schema.get("$schema").is_some());
+        assert!(schema.get("definitions").is_some());
+        assert!(schema.get("methods").is_some());
+        assert!(schema.get("errors").is_some());
+
+        // Verify all 4 methods are defined
+        let methods = schema.get("methods").unwrap();
+        assert!(methods.get("search_entities").is_some());
+        assert!(methods.get("traverse_graph").is_some());
+        assert!(methods.get("retrieve_entity").is_some());
+        assert!(methods.get("rebuild_index").is_some());
+
+        // Verify entity definition exists
+        let entity_def = schema
+            .get("definitions")
+            .and_then(|d| d.get("entity"));
+        assert!(entity_def.is_some(), "Entity definition missing from schema");
+
+        // Verify snippet is properly defined with fold as required
+        let snippet_def = entity_def
+            .unwrap()
+            .get("properties")
+            .and_then(|p| p.get("snippet"));
+        assert!(snippet_def.is_some());
+
+        let snippet_required = snippet_def
+            .unwrap()
+            .get("required")
+            .and_then(|r| r.as_array());
+        assert!(snippet_required.is_some());
+        assert_eq!(
+            snippet_required.unwrap().len(),
+            1,
+            "Snippet should only require 'fold' field"
+        );
+    }
+}

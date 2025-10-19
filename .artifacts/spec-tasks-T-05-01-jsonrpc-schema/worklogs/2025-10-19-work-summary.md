@@ -19,6 +19,7 @@
 ### Schema Definition
 
 **Files Created:**
+
 - `docs/api/jsonrpc-schema.json` - Complete JSON Schema (Draft 7) with all type definitions
   - Defined 4 JSON-RPC methods: search_entities, traverse_graph, retrieve_entity, rebuild_index
   - Enumerated all entity types (directory, file, class, function)
@@ -27,6 +28,7 @@
   - Made snippet fields conditional based on snippet_mode parameter
 
 **Key Design Decisions:**
+
 1. **Snippet Field Optionality**: Changed required fields from `["fold", "preview", "full"]` to `["fold"]` only
    - Rationale: snippet_mode parameter controls which fields are present
    - 'fold' mode returns only fold field
@@ -37,6 +39,7 @@
 ### Schema Validation Tests
 
 **Files Created:**
+
 - `crates/cds-index/tests/service_contract_tests.rs` - 25 passing tests
   - Added jsonschema 0.18 to dev-dependencies
   - Embedded schema at compile time via `include_str!` for reliability
@@ -44,6 +47,7 @@
   - Tests cover: JSON-RPC format, entity structure, snippet variations, errors, backward compatibility
 
 **Test Coverage:**
+
 - JSON-RPC 2.0 protocol validation (5 tests)
 - Entity schema validation (7 tests - including fold-only, preview, full variations)
 - Search entities contract (2 tests)
@@ -56,6 +60,7 @@
 ### Documentation
 
 **Files Created:**
+
 - `docs/api/README.md` - Complete API documentation (467 lines)
   - Quick links to all documentation
   - Detailed method specifications with examples
@@ -80,11 +85,13 @@
   - Schema evolution examples
 
 **Files Modified:**
+
 - `README.md` - Added API documentation section to main README
 
 ### Test Fixtures
 
 **Files Created:**
+
 - `tests/fixtures/api/search-request.json` - Example search request
 - `tests/fixtures/api/search-response.json` - Example search response (with fold+preview)
 - `tests/fixtures/api/traverse-request.json` - Example traverse request
@@ -94,6 +101,7 @@
 ### Worklog & Tracking
 
 **Files Created:**
+
 - `.artifacts/spec-tasks-T-05-01-jsonrpc-schema/metadata.yaml` - Task metadata
 - `.artifacts/spec-tasks-T-05-01-jsonrpc-schema/git-refs.txt` - Git references
 - `.artifacts/spec-tasks-T-05-01-jsonrpc-schema/worklogs/2025-10-19-work-summary.md` - This file
@@ -180,7 +188,7 @@
 
 ## Files Changed Summary
 
-```
+```text
 20 files changed, 3478 insertions(+), 5 deletions(-)
 
 New files:
