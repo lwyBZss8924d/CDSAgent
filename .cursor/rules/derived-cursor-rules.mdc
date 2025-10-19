@@ -14,7 +14,15 @@ globs: *
 ## TECH STACK
 
 ## PROJECT DOCUMENTATION & CONTEXT SYSTEM
+- When creating table of contents entries in markdown files, always ensure the link fragments (`#anchor`) match the actual headers in the document.
+- If the fragment link does not match the header, update the table of contents to precisely match the existing section headers, correcting the anchor links and removing non-existent sections.
+- The reference section link needs to be modified to match the exact header text, using a hyphenated lowercase format for the anchor link. This ensures users can correctly navigate to the intended section when using the table of contents.
 
 ## DEBUGGING
+- An `MD051/link-fragments` error occurs when table of contents links reference anchors that don't exist in the document.
+- To resolve `MD051/link-fragments` errors, either:
+  - Modify the headers to match the link fragments
+  - Update the link fragments to match the existing headers
+  - Ensure all referenced sections actually exist in the document
 
 ## REFERENCES
