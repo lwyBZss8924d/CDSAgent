@@ -1,0 +1,829 @@
+# CDSAgent 0.1.0-MVP Task Tracking
+# Version: 1.0
+# Last Updated: 2025-10-19
+#
+# This file tracks all implementation tasks with metadata, dependencies, and status.
+# Each task links to PRDs, Issues, and detailed task specifications.
+
+project:
+  name: CDSAgent
+  version: 0.1.0-MVP
+  start_date: 2025-10-19
+  target_release: 2025-12-31
+  repository: https://github.com/lwyBZss8924d/CDSAgent
+
+# Milestone definitions
+milestones:
+  M0:
+    name: "Foundation Setup"
+    target_date: "2025-10-19"
+    status: completed
+    description: "Infrastructure, worktrees, documentation framework"
+    deliverables:
+      - Git worktree infrastructure
+      - PRD documentation suite
+      - Task specifications
+      - Development environment
+
+  M1:
+    name: "API Contracts & Parity"
+    target_date: "2025-10-26"  # Week 1
+    status: not_started
+    description: "Define all interfaces and validation methodology"
+    critical_path:
+      - T-05-01-jsonrpc-schema
+      - T-06-01-parity-methodology
+    deliverables:
+      - JSON-RPC API schemas
+      - LocAgent parity methodology
+      - TypeScript type bindings
+
+  M2:
+    name: "Core Indexing Prototype"
+    target_date: "2025-11-09"  # Week 2-3
+    status: not_started
+    description: "Working graph builder and sparse index"
+    critical_path:
+      - T-02-01-graph-builder
+      - T-02-02-sparse-index
+    deliverables:
+      - Python AST parsing with tree-sitter
+      - Graph construction (4 nodes, 4 edges)
+      - BM25 + name/ID search index
+
+  M3:
+    name: "Service & CLI Alpha"
+    target_date: "2025-11-23"  # Week 4-5
+    status: not_started
+    description: "JSON-RPC service and CLI tools"
+    critical_path:
+      - T-02-03-service-layer
+      - T-03-01-core-commands
+    deliverables:
+      - JSON-RPC server (4 endpoints)
+      - CLI tools (search, traverse, retrieve)
+      - Basic integration tests
+
+  M4:
+    name: "Agent Integration Beta"
+    target_date: "2025-12-07"  # Week 6-7
+    status: not_started
+    description: "Claude Agent SDK integration with hooks"
+    critical_path:
+      - T-04-01-agent-sdk
+      - T-04-02-prompt-design
+      - T-04-03-hooks
+    deliverables:
+      - Agent SDK bootstrap
+      - Code localization prompts
+      - PreToolUse/PostToolUse hooks
+      - Sample transcripts
+
+  M5:
+    name: "Production Release Candidate"
+    target_date: "2025-12-31"  # Week 8-10
+    status: not_started
+    description: "Deployment, testing, and optimization"
+    critical_path:
+      - T-07-01-docker-compose
+      - T-08-03-parity-validation
+      - T-08-04-benchmark-testing
+    deliverables:
+      - Docker Compose setup
+      - Parity validation (>80% accuracy)
+      - Performance benchmarks
+      - Deployment documentation
+
+# Task definitions with full metadata
+tasks:
+  # ==================== Phase 0: Foundation (Complete) ====================
+
+  T-00-01-worktree-setup:
+    title: "Git Worktree Development Infrastructure"
+    milestone: M0
+    week: 0
+    priority: P0
+    status: completed
+    owner: Tech Lead
+    branch: feat/dev-environment-setup
+    worktree: null  # Main repo task
+    completed_date: "2025-10-19"
+    pr: "https://github.com/lwyBZss8924d/CDSAgent/pull/2"
+    git_commits:
+      - bd887f6: "feat(infra): setup git worktree development workflow"
+      - 6c1b45a: "chore(infra): finalize worktree setup and sync planning artifacts"
+    artifacts:
+      - .worktrees/ (7 task branches)
+      - scripts/worktree-symlink.sh
+      - docs/WORKTREE_WORKFLOW.md
+      - DEVELOPMENT_STATUS.md
+
+  # ==================== Phase 1: API Contracts & Parity (Week 1) ====================
+
+  T-05-01-jsonrpc-schema:
+    title: "JSON-RPC Schema Definition & Validation"
+    milestone: M1
+    week: 1
+    priority: P0
+    status: not_started
+    owner: [Rust Dev 1, TS Dev 1]
+    duration_days: 3
+    worktree: .worktrees/T-05-01-jsonrpc-schema
+    branch: feat/task/T-05-01-jsonrpc-schema
+    symlink: ~/dev-space/CDSAgent-T-05-01-jsonrpc-schema
+
+    specs:
+      prds:
+        - spacs/prd/0.1.0-MVP-PRDs-v0/05-api-specifications.md
+        - spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+      issues:
+        - spacs/issues/04-0.1.0-mvp/05-api-contracts.md
+      tasks:
+        - spacs/tasks/0.1.0-mvp/05-api-contracts/T-05-01-jsonrpc-schema.md
+        - spacs/tasks/0.1.0-mvp/05-api-contracts/README.md
+
+    dependencies:
+      requires: []  # No prerequisites
+      blocks:
+        - T-02-03-service-layer
+        - T-05-02-typescript-bindings
+
+    deliverables:
+      - docs/api/jsonrpc-schema.json
+      - crates/cds-index/tests/service_contract_tests.rs
+      - tests/fixtures/api/*
+
+    acceptance_criteria:
+      - Schema file published and referenced from docs
+      - Service contract tests fail if response deviates from schema
+      - CLI integration test validates JSON output via schema
+      - Schema versioning plan recorded (v0.1.0)
+
+    worklog_path: .artifacts/spec-tasks-T-05-01/worklogs/
+
+  T-05-02-typescript-bindings:
+    title: "TypeScript Client Types & SDK Bindings"
+    milestone: M1
+    week: 1
+    priority: P0
+    status: not_started
+    owner: TS Dev 1
+    duration_days: 2
+    worktree: .worktrees/T-05-01-jsonrpc-schema  # Same worktree as T-05-01
+    branch: feat/task/T-05-01-jsonrpc-schema
+
+    specs:
+      prds:
+        - spacs/prd/0.1.0-MVP-PRDs-v0/05-api-specifications.md
+      issues:
+        - spacs/issues/04-0.1.0-mvp/05-api-contracts.md
+      tasks:
+        - spacs/tasks/0.1.0-mvp/05-api-contracts/T-05-02-typescript-bindings.md
+
+    dependencies:
+      requires:
+        - T-05-01-jsonrpc-schema
+      blocks:
+        - T-04-01-agent-sdk
+
+    deliverables:
+      - cds-agent/src/client/jsonrpc.ts
+      - cds-agent/src/types/generated.ts (auto-generated from Rust)
+      - Unit tests for TypeScript types
+
+  T-06-01-parity-methodology:
+    title: "LocAgent Parity Validation Methodology"
+    milestone: M1
+    week: 1
+    priority: P0
+    status: not_started
+    owner: Rust Lead
+    duration_days: 2
+    worktree: null  # Documentation task in main repo
+    branch: main
+
+    specs:
+      prds:
+        - spacs/prd/0.1.0-MVP-PRDs-v0/06-rust-refactoring-plan.md
+      issues:
+        - spacs/issues/04-0.1.0-mvp/06-refactor-parity.md
+      tasks:
+        - spacs/tasks/0.1.0-mvp/06-refactor-parity/ (to be created)
+
+    dependencies:
+      requires: []
+      blocks:
+        - T-02-01-graph-builder
+
+    deliverables:
+      - docs/parity-validation-methodology.md
+      - scripts/parity-check.sh
+      - Baseline data from LocAgent (3 sample repos)
+
+  T-05-03-error-catalogue:
+    title: "Error Code Catalogue & Documentation"
+    milestone: M1
+    week: 1
+    priority: P1
+    status: not_started
+    owner: PM/Tech Writer
+    duration_days: 1
+    worktree: null
+    branch: main
+
+    specs:
+      tasks:
+        - spacs/tasks/0.1.0-mvp/05-api-contracts/T-05-03-error-catalogue.md
+
+    dependencies:
+      requires:
+        - T-05-01-jsonrpc-schema
+      blocks: []
+
+    deliverables:
+      - docs/api/error-codes.md
+      - Updated README with error handling
+
+  # ==================== Phase 2: Core Indexing (Week 2-3) ====================
+
+  T-02-01-graph-builder:
+    title: "Graph Builder - AST Parsing & Construction"
+    milestone: M2
+    week: 2
+    priority: P0
+    status: not_started
+    owner: Rust Dev 1
+    duration_days: 5
+    worktree: .worktrees/T-02-01-graph-builder
+    branch: feat/task/T-02-01-graph-builder
+    symlink: ~/dev-space/CDSAgent-T-02-01-graph-builder
+
+    specs:
+      prds:
+        - spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+        - spacs/prd/0.1.0-MVP-PRDs-v0/06-rust-refactoring-plan.md
+      issues:
+        - spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md
+      tasks:
+        - spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md
+
+    dependencies:
+      requires:
+        - T-06-01-parity-methodology
+      blocks:
+        - T-02-02-sparse-index
+        - T-03-01-core-commands
+
+    deliverables:
+      - crates/cds-index/src/graph/parser.rs
+      - crates/cds-index/src/graph/builder.rs
+      - crates/cds-index/src/graph/traversal.rs
+      - Unit tests (>80% coverage)
+      - Parity validation (<= 2% variance from LocAgent)
+
+    acceptance_criteria:
+      - Parses Python repos with 4 node types + 4 edge types
+      - Fully-qualified names match LocAgent format
+      - Unit tests cover edge cases
+      - Graph parity script reports ≤2% variance
+
+    worklog_path: .artifacts/spec-tasks-T-02-01/worklogs/
+
+  T-02-02-sparse-index:
+    title: "Sparse Index - Name/ID + BM25 Search"
+    milestone: M2
+    week: 2
+    priority: P0
+    status: not_started
+    owner: Rust Dev 2
+    duration_days: 4
+    worktree: .worktrees/T-02-02-sparse-index
+    branch: feat/task/T-02-02-sparse-index
+    symlink: ~/dev-space/CDSAgent-T-02-02-sparse-index
+
+    specs:
+      prds:
+        - spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+      issues:
+        - spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md
+      tasks:
+        - spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md
+
+    dependencies:
+      requires:
+        - T-02-01-graph-builder
+      blocks:
+        - T-02-03-service-layer
+        - T-03-01-core-commands
+
+    deliverables:
+      - crates/cds-index/src/index/name_index.rs
+      - crates/cds-index/src/index/bm25.rs
+      - Performance benchmarks (<500ms p95 search latency)
+
+    acceptance_criteria:
+      - Upper index (name/ID HashMap) with prefix matching
+      - Lower index (BM25 k1=1.5, b=0.75)
+      - Search latency <500ms p95
+      - Index build <5s for 1K files
+
+    worklog_path: .artifacts/spec-tasks-T-02-02/worklogs/
+
+  T-02-04-serialization:
+    title: "Graph & Index Serialization"
+    milestone: M2
+    week: 3
+    priority: P1
+    status: not_started
+    owner: Rust Dev 2
+    duration_days: 2
+    worktree: .worktrees/T-02-02-sparse-index  # Same worktree
+    branch: feat/task/T-02-02-sparse-index
+
+    specs:
+      issues:
+        - spacs/issues/04-0.1.0-mvp/02-index-core/04-serialization-fixtures.md
+      tasks:
+        - spacs/tasks/0.1.0-mvp/02-index-core/T-02-04-serialization.md
+
+    dependencies:
+      requires:
+        - T-02-01-graph-builder
+        - T-02-02-sparse-index
+      blocks:
+        - T-03-03-integration-tests
+        - T-07-02-env-config
+
+    deliverables:
+      - crates/cds-index/src/persistence/
+      - Test fixtures under tests/fixtures/
+
+  # ==================== Phase 3: Service & CLI (Week 3-4) ====================
+
+  T-02-03-service-layer:
+    title: "JSON-RPC Service Layer Implementation"
+    milestone: M3
+    week: 3
+    priority: P0
+    status: not_started
+    owner: Rust Dev 1
+    duration_days: 4
+    worktree: .worktrees/T-02-03-service-layer
+    branch: feat/task/T-02-03-service-layer
+    symlink: ~/dev-space/CDSAgent-T-02-03-service-layer
+
+    specs:
+      prds:
+        - spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+      issues:
+        - spacs/issues/04-0.1.0-mvp/02-index-core/03-service-layer.md
+      tasks:
+        - spacs/tasks/0.1.0-mvp/02-index-core/T-02-03-service-layer.md
+
+    dependencies:
+      requires:
+        - T-02-01-graph-builder
+        - T-02-02-sparse-index
+        - T-05-01-jsonrpc-schema
+      blocks:
+        - T-03-01-core-commands
+        - T-04-01-agent-sdk
+
+    deliverables:
+      - crates/cds-index/src/service/handlers.rs
+      - crates/cds-index/src/service/server.rs
+      - Integration tests
+
+    acceptance_criteria:
+      - JSON-RPC service with 4 endpoints
+      - Error handling per schema
+      - Integration tests pass
+
+    worklog_path: .artifacts/spec-tasks-T-02-03/worklogs/
+
+  T-03-01-core-commands:
+    title: "CLI Core Commands Implementation"
+    milestone: M3
+    week: 4
+    priority: P0
+    status: not_started
+    owner: Rust Dev 2
+    duration_days: 3
+    worktree: .worktrees/T-03-01-cli-commands
+    branch: feat/task/T-03-01-cli-commands
+    symlink: ~/dev-space/CDSAgent-T-03-01-cli-commands
+
+    specs:
+      prds:
+        - spacs/prd/0.1.0-MVP-PRDs-v0/03-cds-tools-cli.md
+      issues:
+        - spacs/issues/04-0.1.0-mvp/03-cli-tools/01-command-impl.md
+      tasks:
+        - spacs/tasks/0.1.0-mvp/03-cli-tools/T-03-01-core-commands.md
+
+    dependencies:
+      requires:
+        - T-02-03-service-layer
+      blocks:
+        - T-04-01-agent-sdk
+
+    deliverables:
+      - crates/cds-tools/src/commands/ (search, traverse, retrieve)
+      - crates/cds-tools/src/client/jsonrpc_client.rs
+      - Output formatters (JSON, text, tree)
+
+    worklog_path: .artifacts/spec-tasks-T-03-01/worklogs/
+
+  T-03-02-output-format:
+    title: "CLI Output Formatting"
+    milestone: M3
+    week: 4
+    priority: P1
+    status: not_started
+    owner: Rust Dev 2
+    duration_days: 2
+    worktree: .worktrees/T-03-01-cli-commands
+    branch: feat/task/T-03-01-cli-commands
+
+    specs:
+      tasks:
+        - spacs/tasks/0.1.0-mvp/03-cli-tools/T-03-02-output-format.md
+
+    dependencies:
+      requires:
+        - T-03-01-core-commands
+      blocks: []
+
+    deliverables:
+      - Output formatters (JSON, tree, text)
+      - Color-coded terminal output
+
+  # ==================== Phase 4: Agent Integration (Week 5-7) ====================
+
+  T-04-01-agent-sdk:
+    title: "Agent SDK Bootstrap"
+    milestone: M4
+    week: 5
+    priority: P0
+    status: not_started
+    owner: TS Dev 1
+    duration_days: 2
+    worktree: .worktrees/T-04-01-agent-sdk
+    branch: feat/task/T-04-01-agent-sdk
+    symlink: ~/dev-space/CDSAgent-T-04-01-agent-sdk
+
+    specs:
+      prds:
+        - spacs/prd/0.1.0-MVP-PRDs-v0/04-cds-agent-integration.md
+      issues:
+        - spacs/issues/04-0.1.0-mvp/04-agent-integration/01-sdk-bootstrap.md
+      tasks:
+        - spacs/tasks/0.1.0-mvp/04-agent-integration/T-04-01-sdk-bootstrap.md
+
+    dependencies:
+      requires:
+        - T-03-01-core-commands
+        - T-05-02-typescript-bindings
+      blocks:
+        - T-04-02-prompt-design
+        - T-04-03-hooks
+
+    deliverables:
+      - cds-agent/src/agent-config.ts
+      - cds-agent/src/tools/ (CLI tool wrappers)
+      - Basic agent configuration
+
+    worklog_path: .artifacts/spec-tasks-T-04-01/worklogs/
+
+  T-04-02-prompt-design:
+    title: "Agent Prompt Design"
+    milestone: M4
+    week: 5
+    priority: P0
+    status: not_started
+    owner: TS Dev 1
+    duration_days: 2
+    worktree: .worktrees/T-04-02-prompt-design
+    branch: feat/task/T-04-02-prompt-design
+    symlink: ~/dev-space/CDSAgent-T-04-02-prompt-design
+
+    specs:
+      tasks:
+        - spacs/tasks/0.1.0-mvp/04-agent-integration/T-04-02-prompt-design.md
+
+    dependencies:
+      requires:
+        - T-04-01-agent-sdk
+      blocks:
+        - T-04-04-sample-transcripts
+
+    deliverables:
+      - cds-agent/src/system-prompt.ts
+      - Tool descriptions and examples
+      - Multi-step reasoning patterns
+
+    worklog_path: .artifacts/spec-tasks-T-04-02/worklogs/
+
+  T-04-03-hooks:
+    title: "Agent Hooks Implementation"
+    milestone: M4
+    week: 6
+    priority: P0
+    status: not_started
+    owner: TS Dev 1
+    duration_days: 3
+    worktree: .worktrees/T-04-01-agent-sdk  # Same as T-04-01
+    branch: feat/task/T-04-01-agent-sdk
+
+    specs:
+      tasks:
+        - spacs/tasks/0.1.0-mvp/04-agent-integration/T-04-03-hooks.md
+
+    dependencies:
+      requires:
+        - T-04-01-agent-sdk
+        - T-03-01-core-commands
+      blocks:
+        - T-04-04-sample-transcripts
+        - T-08-02-integration-tests
+
+    deliverables:
+      - cds-agent/src/hooks/pre-tool-use.ts
+      - cds-agent/src/hooks/post-tool-use.ts
+      - Context compression logic
+
+    worklog_path: .artifacts/spec-tasks-T-04-03/worklogs/
+
+  T-04-04-sample-transcripts:
+    title: "Sample Agent Transcripts"
+    milestone: M4
+    week: 7
+    priority: P1
+    status: not_started
+    owner: TS Dev 1
+    duration_days: 2
+    worktree: .worktrees/T-04-02-prompt-design
+    branch: feat/task/T-04-02-prompt-design
+
+    specs:
+      tasks:
+        - spacs/tasks/0.1.0-mvp/04-agent-integration/T-04-04-sample-transcripts.md
+
+    dependencies:
+      requires:
+        - T-04-02-prompt-design
+        - T-04-03-hooks
+      blocks:
+        - T-08-02-integration-tests
+
+    deliverables:
+      - docs/transcripts/ (5 sample sessions)
+      - Annotated agent workflows
+
+  # ==================== Phase 5: Testing (Week 6-10, Continuous) ====================
+
+  T-08-01-unit-tests:
+    title: "Unit Tests (Continuous)"
+    milestone: M2-M5
+    week: 6-10
+    priority: P1
+    status: not_started
+    owner: All Devs
+    duration_days: continuous
+    worktree: null  # Happens in all worktrees
+    branch: all
+
+    specs:
+      tasks:
+        - spacs/tasks/0.1.0-mvp/08-testing/T-08-01-unit-tests.md
+
+    dependencies:
+      requires: []
+      blocks: []
+
+    acceptance_criteria:
+      - Code coverage >80%
+      - All unit tests pass
+      - Property-based tests for critical paths
+
+  T-08-02-integration-tests:
+    title: "Integration Tests"
+    milestone: M4
+    week: 7
+    priority: P0
+    status: not_started
+    owner: Rust Dev 2
+    duration_days: 3
+    worktree: null
+    branch: main
+
+    specs:
+      tasks:
+        - spacs/tasks/0.1.0-mvp/08-testing/T-08-02-integration-tests.md
+
+    dependencies:
+      requires:
+        - T-04-03-hooks
+        - T-04-04-sample-transcripts
+      blocks: []
+
+    deliverables:
+      - End-to-end integration tests
+      - CLI workflow tests
+      - Agent workflow tests
+
+  T-08-03-parity-validation:
+    title: "LocAgent Parity Validation"
+    milestone: M5
+    week: 9
+    priority: P0
+    status: not_started
+    owner: Rust Lead
+    duration_days: 3
+    worktree: null
+    branch: main
+
+    specs:
+      tasks:
+        - spacs/tasks/0.1.0-mvp/08-testing/T-08-03-parity-validation.md
+
+    dependencies:
+      requires:
+        - T-02-01-graph-builder
+        - T-02-02-sparse-index
+        - T-06-01-parity-methodology
+      blocks: []
+
+    acceptance_criteria:
+      - Graph variance ≤2% from LocAgent
+      - Search overlap@10 ≥90% on 50 queries
+      - Achieves >80% of LocAgent accuracy on SWE-bench Lite
+
+  T-08-04-benchmark-testing:
+    title: "Performance Benchmark Testing"
+    milestone: M5
+    week: 10
+    priority: P0
+    status: not_started
+    owner: Rust Lead
+    duration_days: 2
+    worktree: null
+    branch: main
+
+    specs:
+      tasks:
+        - spacs/tasks/0.1.0-mvp/08-testing/T-08-04-benchmark-testing.md
+
+    dependencies:
+      requires:
+        - T-02-01-graph-builder
+        - T-02-02-sparse-index
+      blocks: []
+
+    acceptance_criteria:
+      - Index build <5s for 1K files
+      - Search latency <500ms p95
+      - Traverse latency <1s p95
+      - 2-5x faster than LocAgent Python
+
+  # ==================== Phase 6: Deployment (Week 8-10) ====================
+
+  T-07-01-docker-compose:
+    title: "Docker Compose Setup"
+    milestone: M5
+    week: 8
+    priority: P1
+    status: not_started
+    owner: DevOps/Rust Dev 1
+    duration_days: 2
+    worktree: .worktrees/T-07-01-docker-compose  # If needed
+    branch: main
+
+    specs:
+      tasks:
+        - spacs/tasks/0.1.0-mvp/07-deployment/T-07-01-docker-compose.md
+
+    dependencies:
+      requires:
+        - T-02-03-service-layer
+        - T-03-01-core-commands
+      blocks: []
+
+    deliverables:
+      - docker-compose.yml
+      - Dockerfile for cds-index service
+      - Dockerfile for cds-tools
+
+  T-07-02-env-config:
+    title: "Environment Configuration"
+    milestone: M5
+    week: 8
+    priority: P1
+    status: not_started
+    owner: DevOps
+    duration_days: 1
+    worktree: null
+    branch: main
+
+    specs:
+      tasks:
+        - spacs/tasks/0.1.0-mvp/07-deployment/T-07-02-env-config.md
+
+    dependencies:
+      requires:
+        - T-02-04-serialization
+      blocks: []
+
+    deliverables:
+      - .env.example
+      - docs/deployment/configuration.md
+
+  T-07-03-monitoring:
+    title: "Monitoring & Health Checks"
+    milestone: M5
+    week: 9
+    priority: P1
+    status: not_started
+    owner: DevOps
+    duration_days: 2
+    worktree: null
+    branch: main
+
+    specs:
+      tasks:
+        - spacs/tasks/0.1.0-mvp/07-deployment/T-07-03-monitoring.md
+
+    dependencies:
+      requires:
+        - T-02-03-service-layer
+      blocks: []
+
+    deliverables:
+      - Health check endpoint
+      - Logging infrastructure
+      - Metrics collection
+
+  T-07-04-deployment-docs:
+    title: "Deployment Documentation"
+    milestone: M5
+    week: 10
+    priority: P1
+    status: not_started
+    owner: Tech Writer
+    duration_days: 1
+    worktree: null
+    branch: main
+
+    specs:
+      tasks:
+        - spacs/tasks/0.1.0-mvp/07-deployment/T-07-04-docs.md
+
+    dependencies:
+      requires:
+        - T-07-01-docker-compose
+        - T-07-02-env-config
+        - T-07-03-monitoring
+      blocks: []
+
+    deliverables:
+      - docs/deployment/README.md
+      - Quick start guide
+      - Troubleshooting guide
+
+# Workflow metadata tracking
+workflows:
+  current_phase: "M1 - API Contracts & Parity"
+  active_tasks:
+    - T-05-01-jsonrpc-schema  # Next to start
+
+  completed_tasks:
+    - T-00-01-worktree-setup
+
+  blocked_tasks: []
+
+  next_up:
+    - T-05-01-jsonrpc-schema  # Week 1, Day 1
+    - T-06-01-parity-methodology  # Week 1, Day 1 (parallel)
+    - T-05-02-typescript-bindings  # Week 1, Day 4
+    - T-02-01-graph-builder  # Week 2, Day 1
+
+# Artifact tracking
+artifacts:
+  worklogs_base: .artifacts/spec-tasks-*/worklogs/
+  git_notes_prefix: "spec-tasks/"
+
+  template:
+    worklog_structure: |
+      .artifacts/spec-tasks-{TASK_ID}/
+      ├── worklogs/
+      │   ├── {date}-work-summary.md
+      │   ├── {date}-commit-log.md
+      │   └── {date}-notes.md
+      ├── metadata.yaml
+      └── git-refs.txt
+
+# Comments and notes
+comments:
+  - "2025-10-19: Initial TODO.yaml created with all task definitions"
+  - "2025-10-19: M0 milestone completed - worktree infrastructure ready"
+  - "Next action: Start T-05-01 in ~/dev-space/CDSAgent-T-05-01-jsonrpc-schema"

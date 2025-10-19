@@ -50,69 +50,222 @@ Each task file includes:
 Follow this order to respect critical path dependencies:
 
 ```text
-09-roadmap (P0 - Foundation)
+M0: Foundation Setup (Week 0) - COMPLETED ✅
     ↓
-06-refactor-parity (P1 - Methodology)
+M1: API Contracts & Parity (Week 1)
+    ├─ T-05-01: JSON-RPC Schema (P0, 3 days)
+    ├─ T-06-01: Parity Methodology (P0, 2 days) [parallel]
+    ├─ T-05-02: TypeScript Bindings (P0, 2 days)
+    └─ T-05-03: Error Catalogue (P1, 1 day)
     ↓
-05-api-contracts (P1 - Interfaces)
+M2: Core Indexing Prototype (Week 2-3)
+    ├─ T-02-01: Graph Builder (P0, 5 days) [requires T-06-01]
+    ├─ T-02-02: Sparse Index (P0, 4 days) [requires T-02-01]
+    └─ T-02-04: Serialization (P1, 2 days) [requires T-02-01, T-02-02]
     ↓
-02-index-core (P1 - Core Services)
+M3: Service & CLI Alpha (Week 3-5)
+    ├─ T-02-03: Service Layer (P0, 4 days) [requires T-02-01, T-02-02, T-05-01]
+    ├─ T-03-01: Core Commands (P0, 3 days) [requires T-02-03]
+    └─ T-03-02: Output Format (P1, 2 days) [requires T-03-01]
     ↓
-03-cli-tools (P1 - CLI Layer)
+M4: Agent Integration Beta (Week 5-7)
+    ├─ T-04-01: Agent SDK (P0, 2 days) [requires T-03-01, T-05-02]
+    ├─ T-04-02: Prompt Design (P0, 2 days) [requires T-04-01]
+    ├─ T-04-03: Hooks (P0, 3 days) [requires T-04-01]
+    └─ T-04-04: Sample Transcripts (P1, 2 days) [requires T-04-02, T-04-03]
     ↓
-04-agent-integration (P1 - Orchestration)
-    ↓
-07-deployment (P1 - Production Ready)
-    ↓
-08-testing (P1 - Quality Gates)
+M5: Production RC (Week 8-10)
+    ├─ T-07-01: Docker Compose (P1, 2 days)
+    ├─ T-08-03: Parity Validation (P0, 3 days)
+    └─ T-08-04: Benchmark Testing (P0, 2 days)
 ```
 
 ## Quick Reference
 
-### Phase 1 (Weeks 1-2): Foundational Spike
+### Milestone M0: Foundation Setup (Week 0) ✅ COMPLETED
 
-**Milestone**: M1 - Prototype
+**Status**: Completed 2025-10-19
 
-- [ ] T-09-01: Timeline finalization (Week 1)
-- [ ] T-06-01: Parity methodology definition (Week 1)
-- [ ] T-02-01: Graph builder prototype (Week 2)
-- [ ] T-02-02: Sparse index prototype (Week 2)
+**Deliverables**:
 
-### Phase 2 (Weeks 3-5): Service + SDK Integration
+- [x] Git worktree infrastructure (7 task branches)
+- [x] PRD documentation suite (10 PRDs)
+- [x] Task specifications (30 tasks)
+- [x] Development environment setup
 
-**Milestone**: M2 - Alpha
+**PR**: [#2 - Complete development environment setup](https://github.com/lwyBZss8924d/CDSAgent/pull/2)
 
-- [ ] T-02-03: Service layer implementation (Week 3-4)
-- [ ] T-03-01: CLI commands implementation (Week 4)
-- [ ] T-04-01: Agent SDK bootstrap (Week 5)
-- [ ] T-04-02: Prompt design (Week 5)
+---
 
-### Phase 3 (Weeks 6-7): Agentization & Hooks
+### Milestone M1: API Contracts & Parity (Week 1)
 
-**Milestone**: M3 - Beta
+**Target**: 2025-10-26 (1 week from start)
+**Status**: 🏗 Ready to Start
 
-- [ ] T-04-03: Hooks implementation (Week 6)
-- [ ] T-08-01: Unit tests (Week 6-8, continuous)
-- [ ] T-08-02: Integration tests (Week 7)
-- [ ] T-04-04: Sample transcripts (Week 7)
+**Critical Path Tasks**:
 
-### Phase 4 (Weeks 8-10): Production & Optimization
+- [ ] **T-05-01**: JSON-RPC Schema Definition (3 days, P0) ← START HERE
+- [ ] **T-06-01**: LocAgent Parity Methodology (2 days, P0) [parallel with T-05-01]
+- [ ] **T-05-02**: TypeScript Client Bindings (2 days, P0) [after T-05-01]
+- [ ] **T-05-03**: Error Code Catalogue (1 day, P1) [after T-05-01]
 
-**Milestone**: M4 - v1.0 RC
+**Success Criteria**:
 
-- [ ] T-07-01: Docker Compose setup (Week 8)
-- [ ] T-07-02: Environment configuration (Week 8)
-- [ ] T-07-03: Monitoring & health checks (Week 9)
-- [ ] T-08-03: Parity validation (Week 9)
-- [ ] T-08-04: Benchmark testing (Week 10)
-- [ ] T-07-04: Deployment documentation (Week 10)
+- JSON-RPC API fully specified and validated
+- LocAgent parity baseline established (3 sample repos)
+- TypeScript types auto-generated from Rust
+- All error codes documented
+
+---
+
+### Milestone M2: Core Indexing Prototype (Week 2-3)
+
+**Target**: 2025-11-09
+**Status**: ⏸ Blocked (waiting for M1)
+
+**Critical Path Tasks**:
+
+- [ ] **T-02-01**: Graph Builder - AST Parsing (5 days, P0)
+- [ ] **T-02-02**: Sparse Index - BM25 + Name (4 days, P0) [parallel after day 3]
+- [ ] **T-02-04**: Serialization (2 days, P1) [after T-02-01, T-02-02]
+
+**Success Criteria**:
+
+- Graph parity ≤2% variance from LocAgent
+- Search latency <500ms p95
+- Index build <5s for 1K files
+- Unit test coverage >80%
+
+---
+
+### Milestone M3: Service & CLI Alpha (Week 3-5)
+
+**Target**: 2025-11-23
+**Status**: ⏸ Blocked (waiting for M2)
+
+**Critical Path Tasks**:
+
+- [ ] **T-02-03**: Service Layer - JSON-RPC Server (4 days, P0)
+- [ ] **T-03-01**: CLI Core Commands (3 days, P0)
+- [ ] **T-03-02**: Output Formatting (2 days, P1)
+
+**Success Criteria**:
+
+- JSON-RPC service exposes all 4 endpoints
+- CLI can query service (search, traverse, retrieve)
+- Integration tests pass
+- Service contract tests validate schema compliance
+
+---
+
+### Milestone M4: Agent Integration Beta (Week 5-7)
+
+**Target**: 2025-12-07
+**Status**: ⏸ Blocked (waiting for M3)
+
+**Critical Path Tasks**:
+
+- [ ] **T-04-01**: Agent SDK Bootstrap (2 days, P0)
+- [ ] **T-04-02**: Prompt Design (2 days, P0)
+- [ ] **T-04-03**: Hooks Implementation (3 days, P0)
+- [ ] **T-04-04**: Sample Transcripts (2 days, P1)
+- [ ] **T-08-01**: Unit Tests (continuous, P1)
+- [ ] **T-08-02**: Integration Tests (3 days, P0)
+
+**Success Criteria**:
+
+- Agent executes multi-step code localization
+- PreToolUse/PostToolUse hooks functional
+- 5+ sample transcripts documented
+- Integration tests pass
+
+---
+
+### Milestone M5: Production Release Candidate (Week 8-10)
+
+**Target**: 2025-12-31
+**Status**: ⏸ Blocked (waiting for M4)
+
+**Critical Path Tasks**:
+
+- [ ] **T-07-01**: Docker Compose Setup (2 days, P1)
+- [ ] **T-07-02**: Environment Configuration (1 day, P1)
+- [ ] **T-07-03**: Monitoring & Health Checks (2 days, P1)
+- [ ] **T-08-03**: Parity Validation (3 days, P0)
+- [ ] **T-08-04**: Benchmark Testing (2 days, P0)
+- [ ] **T-07-04**: Deployment Documentation (1 day, P1)
+
+**Success Criteria**:
+
+- LocAgent parity >80% accuracy on SWE-bench Lite
+- 2-5x performance improvement over Python
+- Docker Compose deployment works
+- All documentation complete
+
+---
+
+## Task Metadata & Tracking
+
+### TODO.yaml - Central Task Registry
+
+All tasks are tracked in **[TODO.yaml](./TODO.yaml)** with complete metadata:
+
+- Task specifications (PRDs, Issues, Tasks)
+- Git worktree information
+- Dependencies and blockers
+- Acceptance criteria
+- Worklog paths
+- Status tracking
+
+**Usage:**
+
+```bash
+# View all task metadata
+cat spacs/tasks/0.1.0-mvp/TODO.yaml
+
+# Check current milestone
+yq '.milestones.M1' spacs/tasks/0.1.0-mvp/TODO.yaml
+
+# List active tasks
+yq '.workflows.active_tasks' spacs/tasks/0.1.0-mvp/TODO.yaml
+```
+
+### Worklog Structure
+
+Each task maintains a worklog in `.artifacts/spec-tasks-{TASK_ID}/worklogs/`:
+
+```tree
+.artifacts/spec-tasks-T-05-01/
+├── worklogs/
+│   ├── 2025-10-19-work-summary.md
+│   ├── 2025-10-19-commit-log.md
+│   └── 2025-10-19-notes.md
+├── metadata.yaml
+└── git-refs.txt
+```
+
+**Worklog Metadata:**
+
+- PRD references
+- Issue references
+- Task specifications
+- Worktree branch
+- Git commits
+- PR links
+- Status updates
+- Comments
+
+---
 
 ## Related Documents
 
+- **TODO.yaml**: `spacs/tasks/0.1.0-mvp/TODO.yaml` - Central task registry with metadata
 - **Issues**: `spacs/issues/04-0.1.0-mvp/` - Detailed issue breakdown
 - **PRDs**: `spacs/prd/0.1.0-MVP-PRDs-v0/` - Requirements documentation
 - **Backlog**: `spacs/plan/0.1.0-mvp-backlog.md` - Master backlog plan
 - **Architecture**: `spacs/issues/02-CDSAgent-Tech-Architecture-Plan.md` - System design
+- **Development Status**: `DEVELOPMENT_STATUS.md` - Current project state
+- **Worktree Workflow**: `docs/WORKTREE_WORKFLOW.md` - Git worktree guide
 
 ## Task Tracking Tools
 
