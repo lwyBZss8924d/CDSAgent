@@ -1,0 +1,10 @@
+Review 2025-10-19 – T-05-01 JSON-RPC Schema
+
+Findings:
+1. docs/api/jsonrpc-schema.json requires all snippet fields even when snippet_mode requests fold-only payloads; update schema to make preview/full optional or conditionally emitted.
+2. service_contract_tests.rs never loads docs/api/jsonrpc-schema.json, so acceptance criteria for schema-driven validation remain unmet.
+3. docs/api/README.md links to ../../../tests/fixtures/api (resolves outside repo). Correct path and align docs/api timestamps (currently 2025-10-20) with actual edit date.
+4. Top-level schema bundle is documentation-only; decide on schemars/jsonschema integration and document CLI validation path before closing T-05-01.
+
+Next Steps:
+- Adjust schema + fixtures, wire validator into contract tests, and refresh docs per above before merging.
