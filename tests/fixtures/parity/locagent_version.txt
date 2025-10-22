@@ -1,0 +1,41 @@
+# LocAgent Baseline Version Information
+
+## Source Repository
+- **Original Repository**: https://github.com/gersteinlab/LocAgent
+- **Paper**: https://arxiv.org/abs/2503.09089 (arXiv-2503.09089v2)
+- **Datasets**:
+  - SWE-bench Lite: czlll/SWE-bench_Lite
+  - Loc-Bench V1: czlll/Loc-Bench_V1
+
+## Local Copy Information
+- **Location**: tmp/LocAgent/
+- **Copy Date**: 2025-10-18 (from CDSAgent project setup)
+- **Note**: Copied without .git history for reference purposes
+
+## Python Environment
+- **Python Version**: 3.12 (recommended by LocAgent README)
+- **System Python**: 3.14.0 (macOS, /opt/homebrew/bin/python3)
+- **Dependencies**: requirements.txt from LocAgent repository
+
+## Graph Index Version
+- **Version**: v2.3 (from LocAgent README §2.3)
+- **Configuration**:
+  - Node types: 4 (directory, file, class, function)
+  - Edge types: 4 (contain, import, invoke, inherit)
+
+## BM25 Configuration
+- **Parameters** (from PRD-06 §2.2):
+  - k1: 1.5
+  - b: 0.75
+- **Tokenization**: camelCase/snake_case splitting with stop words
+
+## Baseline Extraction Date
+- **Date**: 2025-10-20
+- **Extracted By**: Claude Code Agent
+- **Purpose**: Parity validation for CDSAgent 0.1.0-MVP Rust refactoring
+
+## Notes
+- LocAgent paper published: March 2025 (arXiv:2503.09089v2)
+- Graph version 2.3 is the latest stable version used in paper benchmarks
+- All baseline data extracted using LocAgent's own codebase as ground truth
+- Additional sample repos selected from SWE-bench Lite for comprehensive validation
