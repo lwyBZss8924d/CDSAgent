@@ -215,14 +215,15 @@ run_traverse_parity_check() {
         local exact_matches=$(grep "Exact matches:" /tmp/traverse_parity.log | awk '{print $3}' | cut -d'/' -f1 | awk '{sum+=$1} END {print sum}' || echo "0")
         local total_scenarios=$(grep "Exact matches:" /tmp/traverse_parity.log | awk '{print $3}' | cut -d'/' -f2 | awk '{sum+=$1} END {print sum}' || echo "10")
 
-        if [ "$exact_matches" -eq "$TRAVERSE_EXACT_MATCH_THRESHOLD" ]; then
+        # Compare: all scenarios must pass (100% match rate)
+        if [ "$exact_matches" -eq "$total_scenarios" ] && [ "$total_scenarios" -gt 0 ]; then
             print_pass "Traverse Parity Check: PASSED"
-            print_info "Exact matches: ${exact_matches}/${total_scenarios} scenarios"
+            print_info "Exact matches: ${exact_matches}/${total_scenarios} scenarios (100%)"
             CHECKS_PASSED=$((CHECKS_PASSED + 1))
         else
             print_fail "Traverse Parity Check: FAILED"
             print_info "Exact matches: ${exact_matches}/${total_scenarios} scenarios"
-            print_info "Expected: ${TRAVERSE_EXACT_MATCH_THRESHOLD}/${total_scenarios}"
+            print_info "Expected: 100% match rate (all scenarios must pass exactly)"
 
             # List failing scenarios
             grep "FAILED:" /tmp/traverse_parity.log | while read -r line; do
