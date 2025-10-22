@@ -5,4 +5,5 @@ Branch: feat/task/T-06-01-parity-methodology
 Worktree: .worktrees/T-06-01-parity-methodology
 Symlink: ~/dev-space/CDSAgent-T-06-01-parity-methodology
 
-# Commits will be listed here as they are made
+# Commits
+- a77bea48be891d229faa7878c04befb320972186 | 2025-10-20 | feat(validation): T-06-01 - Establish LocAgent parity validation methodology
