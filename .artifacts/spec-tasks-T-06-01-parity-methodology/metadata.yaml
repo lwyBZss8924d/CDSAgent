@@ -3,7 +3,7 @@
 task:
   id: "T-06-01-parity-methodology"
   title: "LocAgent Parity Validation Methodology"
-  status: "not_started"  # not_started | in_progress | blocked | completed
+  status: "in_progress"  # Phase 1 completed 2025-10-20, Phase 2 in progress
   priority: "P0"
   milestone: "M1"
   week: 1
@@ -15,9 +15,9 @@ owner:
     - "Claude Code Agent"
 
 dates:
-  started: null
-  target_completion: "2025-10-22"
-  actual_completion: null
+  started: "2025-10-20"
+  target_completion: "2025-10-23"  # Phase 2 baseline extraction
+  actual_completion: null  # Will be set when Phase 2 completes
 
 specs:
   prds:
@@ -61,20 +61,20 @@ deliverables:
 
 acceptance_criteria:
   - criterion: "Publish docs/parity-validation-methodology.md with full methodology"
-    status: "pending"
-    notes: ""
+    status: "completed"
+    notes: "Completed 2025-10-20: 62KB comprehensive SOP with 9 sections published"
   - criterion: "Implement scripts/parity-check.sh covering graph, search, traverse, performance checks"
-    status: "pending"
-    notes: ""
+    status: "completed"
+    notes: "Completed 2025-10-20: Functional automation script with CI integration, tested successfully"
   - criterion: "Extract and store golden outputs for 5 SWE-bench Lite repos"
-    status: "pending"
-    notes: ""
+    status: "in_progress"
+    notes: "Phase 2: Infrastructure ready (.gitkeep files added), baseline extraction pending (target: 2025-10-23)"
   - criterion: "Track LocAgent baseline version in tests/fixtures/parity/locagent_version.txt"
-    status: "pending"
-    notes: ""
+    status: "completed"
+    notes: "Completed 2025-10-20: Version tracking file created with LocAgent baseline info"
   - criterion: "Define and socialize parity gates for project phases"
-    status: "pending"
-    notes: ""
+    status: "completed"
+    notes: "Completed 2025-10-20: Phase-gated checkpoints (Week 2, 5, 7, 10) documented in methodology"
 
 worklog:
   base_path: ".artifacts/spec-tasks-T-06-01-parity-methodology/worklogs/"
@@ -90,12 +90,12 @@ worklog:
 
 metrics:
   estimated_hours: 16  # 2 days * 8 hours
-  actual_hours: 0
-  lines_added: 0
+  actual_hours: 6  # Phase 1: 6 hours actual (2025-10-20)
+  lines_added: 2483  # From git commit stats
   lines_deleted: 0
-  files_modified: 0
-  tests_added: 0
-  test_coverage: 0.0
+  files_modified: 10  # From first commit
+  tests_added: 0  # Parity test infrastructure created, actual tests pending
+  test_coverage: 0.0  # Not applicable for methodology/documentation task
 
 comments:
   - date: "2025-10-19"

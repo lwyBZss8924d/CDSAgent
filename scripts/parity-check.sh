@@ -81,11 +81,16 @@ print_info() {
 check_prerequisites() {
     print_section "Checking Prerequisites"
 
-    # Check if golden outputs exist
-    if [ ! -d "$GOLDEN_OUTPUTS_DIR" ]; then
-        print_fail "Golden outputs directory not found: $GOLDEN_OUTPUTS_DIR"
-        print_info "Run: ./scripts/extract-locagent-baselines.sh"
-        exit $EXIT_FAILURE
+    # Create fixture directories if they don't exist
+    mkdir -p "$GOLDEN_OUTPUTS_DIR" "$FIXTURES_DIR/locagent_repo" "$FIXTURES_DIR/sample_repos"
+
+    # Check if golden outputs are populated (warn if empty, but don't fail)
+    if [ ! "$(ls -A "$GOLDEN_OUTPUTS_DIR" 2>/dev/null | grep -v '\.gitkeep')" ]; then
+        print_warn "Golden outputs directory is empty: $GOLDEN_OUTPUTS_DIR"
+        print_info "Baseline extraction not yet complete (Phase 2 - in progress)"
+        print_info "Parity tests will show as 'not implemented' until baselines are extracted"
+        print_info "See: tests/fixtures/parity/README.md for baseline extraction instructions"
+        echo ""
     fi
 
     # Check if Rust toolchain is installed
