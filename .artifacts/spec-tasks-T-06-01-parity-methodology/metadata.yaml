@@ -84,13 +84,13 @@ worklog:
       commits: "worklogs/2025-10-20-commit-log.md"
       notes: "worklogs/2025-10-20-notes.md"
     - date: "2025-10-22"
-      summary: null
-      commits: null
-      notes: "worklogs/2025-10-22-review.md"
+      summary: "worklogs/2025-10-22-work-summary.md"
+      commits: "worklogs/2025-10-22-commit-log.md"
+      notes: "worklogs/2025-10-22-notes.md"
 
 metrics:
   estimated_hours: 16  # 2 days * 8 hours
-  actual_hours: 6  # Phase 1: 6 hours actual (2025-10-20)
+  actual_hours: 10  # Phase 1: 6 hours (2025-10-20), Review fixes: 4 hours (2025-10-22)
   lines_added: 2483  # From git commit stats
   lines_deleted: 0
   files_modified: 10  # From first commit
