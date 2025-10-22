@@ -128,8 +128,10 @@ run_graph_parity_check() {
     echo "Running graph parity tests..."
     if cargo test --test graph_parity_tests --release -- --nocapture 2>&1 | tee /tmp/graph_parity.log; then
         # Extract metrics from test output (take max variance across all repos)
-        local node_variance=$(grep "Node count variance:" /tmp/graph_parity.log | awk '{print $4}' | tr -d '%' | sort -nr | head -1 || echo "0.0")
-        local edge_variance=$(grep "Edge count variance:" /tmp/graph_parity.log | awk '{print $4}' | tr -d '%' | sort -nr | head -1 || echo "0.0")
+        local node_variance
+        node_variance=$(grep "Node count variance:" /tmp/graph_parity.log | awk '{print $4}' | tr -d '%' | sort -nr | head -1 || echo "0.0")
+        local edge_variance
+        edge_variance=$(grep "Edge count variance:" /tmp/graph_parity.log | awk '{print $4}' | tr -d '%' | sort -nr | head -1 || echo "0.0")
 
         if (( $(echo "$node_variance <= $GRAPH_VARIANCE_THRESHOLD" | bc -l) )) && \
            (( $(echo "$edge_variance <= $GRAPH_VARIANCE_THRESHOLD" | bc -l) )); then
@@ -170,9 +172,19 @@ run_search_parity_check() {
     echo "Running search parity tests..."
     if cargo test --test search_parity_tests --release -- --nocapture 2>&1 | tee /tmp/search_parity.log; then
         # Extract metrics (aggregate across all repos: sum matches / sum total)
-        local overlap=$(grep "Search overlap@10:" /tmp/search_parity.log | awk '{print $3}' | cut -d'/' -f1 | awk '{sum+=$1} END {print sum}' || echo "0")
-        local total=$(grep "Search overlap@10:" /tmp/search_parity.log | awk '{print $3}' | cut -d'/' -f2 | awk '{sum+=$1} END {print sum}' || echo "50")
-        local overlap_rate=$(echo "scale=2; $overlap / $total" | bc)
+        local overlap
+        overlap=$(grep "Search overlap@10:" /tmp/search_parity.log | awk '{print $3}' | cut -d'/' -f1 | awk '{sum+=$1} END {print sum}' || echo "0")
+        local total
+        total=$(grep "Search overlap@10:" /tmp/search_parity.log | awk '{print $3}' | cut -d'/' -f2 | awk '{sum+=$1} END {print sum}' || echo "50")
+
+        # Guard against division by zero
+        local overlap_rate
+        if [ -z "$total" ] || [ "$total" -eq 0 ]; then
+            overlap_rate="0.0"
+            print_warn "Search total is zero, defaulting overlap_rate to 0.0"
+        else
+            overlap_rate=$(echo "scale=2; $overlap / $total" | bc)
+        fi
 
         if (( $(echo "$overlap_rate >= $SEARCH_OVERLAP_THRESHOLD" | bc -l) )); then
             print_pass "Search Parity Check: PASSED"
@@ -212,8 +224,10 @@ run_traverse_parity_check() {
     echo "Running traverse parity tests..."
     if cargo test --test traverse_parity_tests --release -- --nocapture 2>&1 | tee /tmp/traverse_parity.log; then
         # Extract metrics (aggregate across all repos: sum matches / sum total)
-        local exact_matches=$(grep "Exact matches:" /tmp/traverse_parity.log | awk '{print $3}' | cut -d'/' -f1 | awk '{sum+=$1} END {print sum}' || echo "0")
-        local total_scenarios=$(grep "Exact matches:" /tmp/traverse_parity.log | awk '{print $3}' | cut -d'/' -f2 | awk '{sum+=$1} END {print sum}' || echo "10")
+        local exact_matches
+        exact_matches=$(grep "Exact matches:" /tmp/traverse_parity.log | awk '{print $3}' | cut -d'/' -f1 | awk '{sum+=$1} END {print sum}' || echo "0")
+        local total_scenarios
+        total_scenarios=$(grep "Exact matches:" /tmp/traverse_parity.log | awk '{print $3}' | cut -d'/' -f2 | awk '{sum+=$1} END {print sum}' || echo "10")
 
         # Compare: all scenarios must pass (100% match rate) AND minimum threshold met
         if [ "$exact_matches" -eq "$total_scenarios" ] && \
@@ -267,9 +281,12 @@ run_performance_check() {
     echo "Running performance benchmarks..."
     if cargo bench --all 2>&1 | tee /tmp/performance_bench.log; then
         # Extract metrics (simplified - actual implementation would parse Criterion output)
-        local index_time=$(grep "graph_build_bench" /tmp/performance_bench.log | awk '{print $2}' || echo "0")
-        local search_time=$(grep "search_bench" /tmp/performance_bench.log | awk '{print $2}' || echo "0")
-        local traverse_time=$(grep "traverse_bench" /tmp/performance_bench.log | awk '{print $2}' || echo "0")
+        local index_time
+        index_time=$(grep "graph_build_bench" /tmp/performance_bench.log | awk '{print $2}' || echo "0")
+        local search_time
+        search_time=$(grep "search_bench" /tmp/performance_bench.log | awk '{print $2}' || echo "0")
+        local traverse_time
+        traverse_time=$(grep "graph_build_bench" /tmp/performance_bench.log | awk '{print $2}' || echo "0")
 
         # For now, just report that benchmarks ran
         print_pass "Performance Benchmarks: COMPLETED"
