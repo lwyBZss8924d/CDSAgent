@@ -6,7 +6,7 @@
 
 **Owner**: Rust Lead (with All Rust Developers)
 
-**Status**: ☐ Not Started | **Week**: 1 (Target: 2025-10-21)
+**Status**: 🔨 In Progress | **Week**: 1 (Target: 2025-10-23, Started: 2025-10-20)
 
 ---
 
@@ -102,7 +102,8 @@ Establish a comprehensive parity validation methodology to ensure CDSAgent's Rus
 ### Phase 4: Test Fixtures Setup (Day 2, 2 hours)
 
 1. **Create Directory Structure**
-   ```
+
+   ```tree
    tests/fixtures/parity/
    ├── locagent_repo/           # LocAgent's own codebase
    ├── sample_repos/            # 5 repos from SWE-bench Lite
@@ -134,17 +135,23 @@ Establish a comprehensive parity validation methodology to ensure CDSAgent's Rus
 
 ## Acceptance Criteria
 
-- [ ] `docs/parity-validation-methodology.md` published with comprehensive SOP
-- [ ] `scripts/parity-check.sh` automation script functional and tested
-- [ ] `tests/fixtures/parity/` directory created with golden outputs
+### Phase 1: Documentation & Infrastructure (Completed 2025-10-20)
+
+- [x] `docs/parity-validation-methodology.md` published with comprehensive SOP
+- [x] `scripts/parity-check.sh` automation script functional and tested
+- [x] `tests/fixtures/parity/` directory structure created
+- [x] LocAgent version tracked in `locagent_version.txt`
+- [x] All LocAgent Python modules mapped to Rust equivalents (from PRD-06 §2)
+- [x] Performance targets documented (index, search, traverse, memory)
+- [x] Parity gates defined for Phases 1-4
+- [x] README.md includes instructions for regenerating baselines
+
+### Phase 2: Baseline Extraction (In Progress - Target: 2025-10-23)
+
 - [ ] LocAgent baseline data extracted for 5 sample repos
 - [ ] 50 search queries documented with expected top-10 results
 - [ ] 10 traversal scenarios documented with expected outputs
-- [ ] LocAgent version tracked in `locagent_version.txt`
-- [ ] All LocAgent Python modules mapped to Rust equivalents (from PRD-06 §2)
-- [ ] Performance targets documented (index, search, traverse, memory)
-- [ ] Parity gates defined for Phases 1-4
-- [ ] README.md includes instructions for regenerating baselines
+- [ ] Golden outputs populated in `tests/fixtures/parity/golden_outputs/`
 
 ## Dependencies
 
