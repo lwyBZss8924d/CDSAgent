@@ -127,9 +127,9 @@ run_graph_parity_check() {
     # Run graph parity tests
     echo "Running graph parity tests..."
     if cargo test --test graph_parity_tests --release -- --nocapture 2>&1 | tee /tmp/graph_parity.log; then
-        # Extract metrics from test output
-        local node_variance=$(grep "Node count variance:" /tmp/graph_parity.log | awk '{print $4}' | tr -d '%' || echo "0.0")
-        local edge_variance=$(grep "Edge count variance:" /tmp/graph_parity.log | awk '{print $4}' | tr -d '%' || echo "0.0")
+        # Extract metrics from test output (take max variance across all repos)
+        local node_variance=$(grep "Node count variance:" /tmp/graph_parity.log | awk '{print $4}' | tr -d '%' | sort -nr | head -1 || echo "0.0")
+        local edge_variance=$(grep "Edge count variance:" /tmp/graph_parity.log | awk '{print $4}' | tr -d '%' | sort -nr | head -1 || echo "0.0")
 
         if (( $(echo "$node_variance <= $GRAPH_VARIANCE_THRESHOLD" | bc -l) )) && \
            (( $(echo "$edge_variance <= $GRAPH_VARIANCE_THRESHOLD" | bc -l) )); then
@@ -169,9 +169,9 @@ run_search_parity_check() {
     # Run search parity tests
     echo "Running search parity tests..."
     if cargo test --test search_parity_tests --release -- --nocapture 2>&1 | tee /tmp/search_parity.log; then
-        # Extract metrics
-        local overlap=$(grep "Search overlap@10:" /tmp/search_parity.log | awk '{print $3}' | cut -d'/' -f1 || echo "0")
-        local total=$(grep "Search overlap@10:" /tmp/search_parity.log | awk '{print $3}' | cut -d'/' -f2 || echo "50")
+        # Extract metrics (aggregate across all repos: sum matches / sum total)
+        local overlap=$(grep "Search overlap@10:" /tmp/search_parity.log | awk '{print $3}' | cut -d'/' -f1 | awk '{sum+=$1} END {print sum}' || echo "0")
+        local total=$(grep "Search overlap@10:" /tmp/search_parity.log | awk '{print $3}' | cut -d'/' -f2 | awk '{sum+=$1} END {print sum}' || echo "50")
         local overlap_rate=$(echo "scale=2; $overlap / $total" | bc)
 
         if (( $(echo "$overlap_rate >= $SEARCH_OVERLAP_THRESHOLD" | bc -l) )); then
@@ -211,9 +211,9 @@ run_traverse_parity_check() {
     # Run traverse parity tests
     echo "Running traverse parity tests..."
     if cargo test --test traverse_parity_tests --release -- --nocapture 2>&1 | tee /tmp/traverse_parity.log; then
-        # Extract metrics
-        local exact_matches=$(grep "Exact matches:" /tmp/traverse_parity.log | awk '{print $3}' | cut -d'/' -f1 || echo "0")
-        local total_scenarios=$(grep "Exact matches:" /tmp/traverse_parity.log | awk '{print $3}' | cut -d'/' -f2 || echo "10")
+        # Extract metrics (aggregate across all repos: sum matches / sum total)
+        local exact_matches=$(grep "Exact matches:" /tmp/traverse_parity.log | awk '{print $3}' | cut -d'/' -f1 | awk '{sum+=$1} END {print sum}' || echo "0")
+        local total_scenarios=$(grep "Exact matches:" /tmp/traverse_parity.log | awk '{print $3}' | cut -d'/' -f2 | awk '{sum+=$1} END {print sum}' || echo "10")
 
         if [ "$exact_matches" -eq "$TRAVERSE_EXACT_MATCH_THRESHOLD" ]; then
             print_pass "Traverse Parity Check: PASSED"
