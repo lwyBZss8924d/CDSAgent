@@ -231,10 +231,12 @@ run_traverse_parity_check() {
                 print_info "Expected: 100% match rate (all scenarios must pass exactly)"
             fi
 
-            # List failing scenarios
-            grep "FAILED:" /tmp/traverse_parity.log | while read -r line; do
-                print_info "  - $line"
-            done
+            # List failing scenarios (if any exist)
+            if grep -q "FAILED:" /tmp/traverse_parity.log 2>/dev/null; then
+                grep "FAILED:" /tmp/traverse_parity.log | while read -r line; do
+                    print_info "  - $line"
+                done
+            fi
 
             CHECKS_FAILED=$((CHECKS_FAILED + 1))
         fi
