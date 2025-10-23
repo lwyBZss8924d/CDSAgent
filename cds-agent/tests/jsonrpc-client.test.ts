@@ -7,6 +7,7 @@ import {
 } from "../src/types/api";
 import { JSONRPCClient, NetworkError } from "../src/client/jsonrpc";
 
+
 const createJsonResponse = (body: unknown, init?: ResponseInit): Response =>
   new Response(JSON.stringify(body), {
     status: init?.status ?? 200,
@@ -19,7 +20,7 @@ const createJsonResponse = (body: unknown, init?: ResponseInit): Response =>
 describe("JSONRPCClient", () => {
   test("searchEntities returns typed results", async () => {
     let receivedBody: string | undefined;
-    const fetchMock: typeof fetch = async (_input, init) => {
+    const fetchMock = async (_input: RequestInfo | URL, init?: RequestInit) => {
       receivedBody = init?.body?.toString();
       return createJsonResponse({
         jsonrpc: "2.0",
@@ -47,7 +48,7 @@ describe("JSONRPCClient", () => {
     };
 
     const client = new JSONRPCClient("http://localhost:9876/rpc", {
-      fetchImplementation: fetchMock,
+      fetchImplementation: fetchMock as unknown as typeof fetch,
       retryDelaysMs: [],
     });
 
@@ -61,7 +62,7 @@ describe("JSONRPCClient", () => {
   });
 
   test("maps JSON-RPC errors to typed exceptions", async () => {
-    const fetchMock: typeof fetch = async () =>
+    const fetchMock = async () =>
       createJsonResponse({
         jsonrpc: "2.0",
         id: 1,
@@ -73,7 +74,7 @@ describe("JSONRPCClient", () => {
       });
 
     const client = new JSONRPCClient("http://localhost:9876/rpc", {
-      fetchImplementation: fetchMock,
+      fetchImplementation: fetchMock as unknown as typeof fetch,
       retryDelaysMs: [],
     });
 
@@ -107,7 +108,7 @@ describe("JSONRPCClient", () => {
       },
     ];
 
-    const fetchMock: typeof fetch = async () => {
+    const fetchMock = async () => {
       const responder = responses.shift();
       if (!responder) {
         throw new Error("unexpected extra retry");
@@ -120,7 +121,7 @@ describe("JSONRPCClient", () => {
     };
 
     const client = new JSONRPCClient("http://localhost:9876/rpc", {
-      fetchImplementation: fetchMock,
+      fetchImplementation: fetchMock as unknown as typeof fetch,
       retryDelaysMs: [0, 0, 0],
     });
 
@@ -130,7 +131,7 @@ describe("JSONRPCClient", () => {
   });
 
   test("getEntityDetails throws when entity missing", async () => {
-    const fetchMock: typeof fetch = async () =>
+    const fetchMock = async () =>
       createJsonResponse({
         jsonrpc: "2.0",
         id: 1,
@@ -140,7 +141,7 @@ describe("JSONRPCClient", () => {
       });
 
     const client = new JSONRPCClient("http://localhost:9876/rpc", {
-      fetchImplementation: fetchMock,
+      fetchImplementation: fetchMock as unknown as typeof fetch,
       retryDelaysMs: [],
     });
 
@@ -149,13 +150,13 @@ describe("JSONRPCClient", () => {
   });
 
   test("propagates network timeout errors", async () => {
-    const fetchMock: typeof fetch = async () =>
+    const fetchMock = async () =>
       new Promise<Response>((resolve, reject) => {
         setTimeout(() => reject(new DOMException("The operation timed out.", "AbortError")), 1);
       });
 
     const client = new JSONRPCClient("http://localhost:9876/rpc", {
-      fetchImplementation: fetchMock,
+      fetchImplementation: fetchMock as unknown as typeof fetch,
       retryDelaysMs: [],
       timeoutMs: 5,
     });
@@ -164,7 +165,7 @@ describe("JSONRPCClient", () => {
   });
 
   test("maps query timeout error code", async () => {
-    const fetchMock: typeof fetch = async () =>
+    const fetchMock = async () =>
       createJsonResponse({
         jsonrpc: "2.0",
         id: 1,
@@ -175,7 +176,7 @@ describe("JSONRPCClient", () => {
       });
 
     const client = new JSONRPCClient("http://localhost:9876/rpc", {
-      fetchImplementation: fetchMock,
+      fetchImplementation: fetchMock as unknown as typeof fetch,
       retryDelaysMs: [],
     });
 
@@ -183,14 +184,14 @@ describe("JSONRPCClient", () => {
   });
 
   test("throws on invalid JSON response", async () => {
-    const fetchMock: typeof fetch = async () =>
+    const fetchMock = async () =>
       new Response("not-json", {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
 
     const client = new JSONRPCClient("http://localhost:9876/rpc", {
-      fetchImplementation: fetchMock,
+      fetchImplementation: fetchMock as unknown as typeof fetch,
       retryDelaysMs: [],
     });
 
@@ -201,7 +202,7 @@ describe("JSONRPCClient", () => {
 
   test("initializeIndex forwards parameters", async () => {
     let receivedBody: string | undefined;
-    const fetchMock: typeof fetch = async (_input, init) => {
+    const fetchMock = async (_input: RequestInfo | URL, init?: RequestInit) => {
       receivedBody = init?.body?.toString();
       return createJsonResponse({
         jsonrpc: "2.0",
@@ -229,7 +230,7 @@ describe("JSONRPCClient", () => {
     };
 
     const client = new JSONRPCClient("http://localhost:9876/rpc", {
-      fetchImplementation: fetchMock,
+      fetchImplementation: fetchMock as unknown as typeof fetch,
       retryDelaysMs: [],
     });
 
@@ -252,7 +253,7 @@ describe("JSONRPCClient", () => {
   });
 
   test("traverseGraph handles complex graph structures", async () => {
-    const fetchMock: typeof fetch = async () =>
+    const fetchMock = async () =>
       createJsonResponse({
         jsonrpc: "2.0",
         id: 1,
@@ -294,7 +295,7 @@ describe("JSONRPCClient", () => {
       });
 
     const client = new JSONRPCClient("http://localhost:9876/rpc", {
-      fetchImplementation: fetchMock,
+      fetchImplementation: fetchMock as unknown as typeof fetch,
       retryDelaysMs: [],
     });
 
@@ -311,7 +312,7 @@ describe("JSONRPCClient", () => {
   });
 
   test("retrieveEntity handles multiple entities with context", async () => {
-    const fetchMock: typeof fetch = async () =>
+    const fetchMock = async () =>
       createJsonResponse({
         jsonrpc: "2.0",
         id: 1,
@@ -337,7 +338,7 @@ describe("JSONRPCClient", () => {
       });
 
     const client = new JSONRPCClient("http://localhost:9876/rpc", {
-      fetchImplementation: fetchMock,
+      fetchImplementation: fetchMock as unknown as typeof fetch,
       retryDelaysMs: [],
     });
 
@@ -354,9 +355,36 @@ describe("JSONRPCClient", () => {
     expect(entity.context_before).toBeDefined();
   });
 
+  test("rejects responses with mismatched ids", async () => {
+    const fetchMock = async () =>
+      createJsonResponse({
+        jsonrpc: "2.0",
+        id: 999, // Wrong ID - should be 1
+        result: {
+          entities: [],
+          total_count: 0,
+          query_metadata: {
+            used_upper_index: false,
+            used_bm25: false,
+            execution_time_ms: 1,
+          },
+        },
+      });
+
+    const client = new JSONRPCClient("http://localhost:9876/rpc", {
+      fetchImplementation: fetchMock as unknown as typeof fetch,
+      retryDelaysMs: [],
+    });
+
+    await expect(client.searchEntities({ query: "test" })).rejects.toThrow(
+      "JSON-RPC response id mismatch"
+    );
+  });
+
   test("handles different snippet modes in search results", async () => {
-    const fetchMock: typeof fetch = async (_input, init) => {
+    const fetchMock = async (_input: RequestInfo | URL, init?: RequestInit) => {
       const body = JSON.parse((init?.body ?? "{}").toString()) as {
+        id?: number;
         params?: { snippet_mode?: string };
       };
       const snippetMode = body.params?.snippet_mode;
@@ -371,7 +399,7 @@ describe("JSONRPCClient", () => {
 
       return createJsonResponse({
         jsonrpc: "2.0",
-        id: 1,
+        id: body.id ?? 1,
         result: {
           entities: [
             {
@@ -395,7 +423,7 @@ describe("JSONRPCClient", () => {
     };
 
     const client = new JSONRPCClient("http://localhost:9876/rpc", {
-      fetchImplementation: fetchMock,
+      fetchImplementation: fetchMock as unknown as typeof fetch,
       retryDelaysMs: [],
     });
 

@@ -2,8 +2,8 @@
 
 This file provides guidance to Claude when working with code in this "CDSAgent" repository.
 
-📌 @docs/WORKTREE_WORKFLOW.md ["CDSAgent" codebase Spec-Tasks DEV-COOKING Workflow SOP](docs/WORKTREE_WORKFLOW.md)
-📌 @docs/NEXT_TASK_CHECKLIST.md ["Next Task Selection & Environment Setup Checklist](docs/NEXT_TASK_CHECKLIST.md)
+📌 @docs/WORKTREE_WORKFLOW.md ["CDSAgent" codebase Spec-Tasks DEV-COOKING Workflow SOP"](docs/WORKTREE_WORKFLOW.md)
+📌 @docs/NEXT_TASK_CHECKLIST.md ["Next Task Selection & Environment Setup Checklist"](docs/NEXT_TASK_CHECKLIST.md)
 
 ---
 

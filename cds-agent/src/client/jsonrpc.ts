@@ -7,6 +7,7 @@ import {
   JsonRpcError,
   JsonRpcErrorCode,
   JsonRpcErrorObject,
+  JsonRpcId,
   JsonRpcFailureSchema,
   JsonRpcSuccessFactory,
   QueryTimeoutError,
@@ -175,6 +176,7 @@ export class JSONRPCClient {
         const payload = await this.parseJson(response);
         const failure = JsonRpcFailureSchema.safeParse(payload);
         if (failure.success) {
+          this.assertMatchingId(failure.data.id, id);
           throw this.mapJsonRpcError(failure.data.error);
         }
 
@@ -184,6 +186,7 @@ export class JSONRPCClient {
           throw new UnexpectedResponseError("JSON-RPC response validation failed");
         }
 
+        this.assertMatchingId(success.data.id, id);
         const result = schema.parse(success.data.result);
         this.log("response", { method, result, id, attempt });
         return result;
@@ -287,6 +290,14 @@ export class JSONRPCClient {
       }
       return acc;
     }, {});
+  }
+
+  private assertMatchingId(responseId: JsonRpcId, requestId: number): void {
+    if (responseId === null || responseId !== requestId) {
+      throw new UnexpectedResponseError(
+        `JSON-RPC response id mismatch: expected ${requestId}, received ${String(responseId)}`,
+      );
+    }
   }
 
   private nextId(): number {
