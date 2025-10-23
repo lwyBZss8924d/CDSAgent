@@ -14,6 +14,14 @@
 - Authored Zod-backed type definitions and exported config helpers
 - Expanded unit test suite to 11 scenarios and updated agent entrypoint wiring
 
+### 38c1e75 fix(agent): add JSON-RPC response ID validation per PR review
+
+- Added assertMatchingId method to validate response IDs match request IDs
+- Added test case for ID mismatch rejection (security validation)
+- Fixed TypeScript configuration to include tests directory
+- Fixed fetch mock typing issues in tests
+- All 12 tests passing with clean TypeScript compilation
+
 ## Git Commands Used
 
 - git status --short
@@ -32,6 +40,6 @@ Branch heads contain the new TypeScript client commit; additional integration an
 
 ---
 
-**Total Commits Today**: 1
-**Lines Added**: +3041
-**Lines Deleted**: -287
+**Total Commits Today**: 2
+**Lines Added**: +3060
+**Lines Deleted**: -295
