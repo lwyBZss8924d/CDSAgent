@@ -1,1 +1,3 @@
 Review 2025-10-23: Verified commit 3549909. Main finding: agent entrypoint was still reading LOG_LEVEL/env vars manually, so new config helper, retry/timeout envs, and request logging toggle had no effect. Updated main.ts to call loadConfig(), wire timeout/retry/logging options, and guard request/response logging behind CDS_ENABLE_REQUEST_LOGGING. Re-ran bun test and bun run typecheck.
+
+Review 2025-10-23 (follow-up): Updated main.ts to consume loadConfig() so timeout/retry/logging env vars take effect and request logging respects CDS_ENABLE_REQUEST_LOGGING. Documentation imports now reference the package entrypoint. Test suite (bun test) and typecheck rerun successfully.
