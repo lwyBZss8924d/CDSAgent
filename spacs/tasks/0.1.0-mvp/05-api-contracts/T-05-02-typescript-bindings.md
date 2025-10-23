@@ -6,7 +6,7 @@
 
 **Owner**: TypeScript Dev 1
 
-**Status**: ☐ Not Started | **Week**: 3
+**Status**: ✅ Completed (2025-10-23) | **Week**: 1
 
 ---
 
@@ -29,10 +29,19 @@ Generate strongly typed client methods for the JSON-RPC API so the agent can cal
 
 ## Acceptance Criteria
 
-- [ ] Client methods `searchEntities`, `traverseGraph`, `retrieveEntity` compile and work.
-- [ ] TypeScript types align with PRD-05 schemas; no `any` usage.
-- [ ] Unit tests cover success + error scenarios.
-- [ ] Client used by agent entrypoint (`main.ts`).
+- [x] Client methods `searchEntities`, `traverseGraph`, `retrieveEntity`, `rebuildIndex` compile and work with typed wrappers.
+- [x] TypeScript types align with PRD-05 schemas; no `any` usage (validated via Zod schemas).
+- [x] Unit tests cover success + error scenarios (11 Bun tests across happy/error/retry cases).
+- [x] Client integrated with agent entrypoint (`main.ts`) via configuration-driven bootstrap.
+
+## Completion Summary (2025-10-23)
+
+- Implemented `JSONRPCClient` with retry/backoff, error mapping, and logging hooks (`cds-agent/src/client/jsonrpc.ts`).
+- Authored manual Zod-backed schemas and exported type definitions (`cds-agent/src/types/api.ts`).
+- Added configuration helper for service URL, timeouts, retries, and logging (`cds-agent/src/utils/config.ts`).
+- Updated entrypoint to consume configuration and expose the shared client (`cds-agent/src/main.ts`).
+- Wrote 11 Bun unit tests covering all API methods, error codes, snippet modes, and retry behaviour (`cds-agent/tests/jsonrpc-client.test.ts`).
+- Documented usage, configuration, and error handling in `cds-agent/README.md` and `.env.example`.
 
 ## Dependencies
 

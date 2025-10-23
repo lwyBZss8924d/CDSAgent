@@ -1,6 +1,6 @@
 # CDSAgent 0.1.0-MVP Task Tracking
 # Version: 1.0
-# Last Updated: 2025-10-19
+# Last Updated: 2025-10-23
 #
 # This file tracks all implementation tasks with metadata, dependencies, and status.
 # Each task links to PRDs, Issues, and detailed task specifications.
@@ -188,11 +188,12 @@ tasks:
     milestone: M1
     week: 1
     priority: P0
-    status: not_started
-    owner: TS Dev 1
-    duration_days: 2
-    worktree: .worktrees/T-05-01-jsonrpc-schema  # Same worktree as T-05-01
-    branch: feat/task/T-05-01-jsonrpc-schema
+    status: completed
+    owner: TypeScript Dev 1
+    duration_days: 3
+    worktree: .worktrees/T-05-02-typescript-bindings
+    branch: feat/task/T-05-02-typescript-bindings
+    completed_date: "2025-10-23"
 
     specs:
       prds:
@@ -210,8 +211,9 @@ tasks:
 
     deliverables:
       - cds-agent/src/client/jsonrpc.ts
-      - cds-agent/src/types/generated.ts (auto-generated from Rust)
-      - Unit tests for TypeScript types
+      - cds-agent/src/types/api.ts
+      - cds-agent/src/utils/config.ts
+      - cds-agent/tests/jsonrpc-client.test.ts
 
   T-06-01-parity-methodology:
     title: "LocAgent Parity Validation Methodology"

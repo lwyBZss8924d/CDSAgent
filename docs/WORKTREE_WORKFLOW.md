@@ -1,7 +1,7 @@
 # Spec-Tasks DEV-COOKING Workflow - Standard Operating Procedure (SOP)
 
-**Version**: 1.1
-**Last Updated**: 2025-10-19
+**Version**: 1.2
+**Last Updated**: 2025-10-23
 **Audience**: All CDSAgent Development Team Members
 
 ---
@@ -42,6 +42,70 @@ A **Spec-Task** is a fully-specified development task with:
 - ✅ **No Context Switching**: Keep different branches checked out at once
 - ✅ **Clean History**: Each task branch remains focused and organized
 - ✅ **Audit Trail**: Complete development history per task
+
+---
+
+## Quick Decision Flowchart
+
+**Question: Which task should I start next?**
+
+```text
+START
+  ↓
+┌─────────────────────────────────────────┐
+│ 1. Check Current Milestone              │
+│    • spacs/tasks/0.1.0-mvp/README.md    │
+│    • Current phase: M1, M2, M3, etc.?   │
+└──────────────┬──────────────────────────┘
+               ↓
+┌─────────────────────────────────────────┐
+│ 2. List Candidate Tasks                 │
+│    • Status: "not_started"              │
+│    • In current milestone               │
+│    • yq '.milestones.MX.critical_path'  │
+└──────────────┬──────────────────────────┘
+               ↓
+┌─────────────────────────────────────────┐
+│ 3. Check Dependencies                   │
+│    For each candidate:                  │
+│    • yq '.tasks.T-XX-XX.dependencies'   │
+│    • All 'requires' tasks MERGED?       │
+└──────────────┬──────────────────────────┘
+               ↓
+┌─────────────────────────────────────────┐
+│ 4. Apply Priority Filter                │
+│    • P0 (critical) > P1 > P2            │
+│    • On critical_path?                  │
+│    • Deadline urgency?                  │
+└──────────────┬──────────────────────────┘
+               ↓
+┌─────────────────────────────────────────┐
+│ 5. Verify Prerequisites                 │
+│    • gh pr list --state merged          │
+│    • Sync main: git pull origin main    │
+└──────────────┬──────────────────────────┘
+               ↓
+            SELECT TASK ✅
+               ↓
+       Go to "Task Development Lifecycle"
+```
+
+**Quick Commands:**
+
+```bash
+# Check current milestone
+cat spacs/tasks/0.1.0-mvp/README.md | grep -A 10 "Milestone M"
+
+# List ready tasks
+yq '.tasks | to_entries | map(select(.value.status == "not_started"))' \
+  spacs/tasks/0.1.0-mvp/TODO.yaml
+
+# Check specific task dependencies
+yq '.tasks.T-XX-XX.dependencies' spacs/tasks/0.1.0-mvp/TODO.yaml
+
+# Verify PRs merged
+gh pr list --state merged --limit 10
+```
 
 ---
 
@@ -146,6 +210,189 @@ code .  # or your preferred IDE
 
 ---
 
+## Next Task Selection Procedure
+
+**Purpose**: Systematically identify which Spec-Task to begin next based on dependencies, priorities, and milestone targets.
+
+### Step 1: Review Current Milestone Status
+
+**Check milestone completion**:
+
+```bash
+# View current milestone status
+cat spacs/tasks/0.1.0-mvp/README.md | grep -A 30 "Milestone M"
+
+# Check TODO.yaml milestone tracking
+yq '.milestones' spacs/tasks/0.1.0-mvp/TODO.yaml
+```
+
+**Key questions**:
+
+- Which milestone is currently active? (M0, M1, M2, M3, M4, M5)
+- What is the target completion date?
+- How many critical-path tasks remain?
+- What is the completion percentage?
+
+### Step 2: Query TODO.yaml for Candidate Tasks
+
+**List all not-started tasks in current milestone**:
+
+```bash
+# Example: List M1 tasks
+yq '.tasks | to_entries |
+    map(select(.value.milestone == "M1" and .value.status == "not_started")) |
+    .[].key' \
+  spacs/tasks/0.1.0-mvp/TODO.yaml
+```
+
+**Filter by critical path**:
+
+```bash
+# Check critical-path tasks for current milestone
+yq '.milestones.M1.critical_path' spacs/tasks/0.1.0-mvp/TODO.yaml
+```
+
+### Step 3: Verify Dependencies
+
+**For each candidate task, check dependencies**:
+
+```bash
+# Check what a task requires
+yq '.tasks.T-XX-XX.dependencies.requires' spacs/tasks/0.1.0-mvp/TODO.yaml
+
+# Check what tasks this would unblock
+yq '.tasks.T-XX-XX.dependencies.blocks' spacs/tasks/0.1.0-mvp/TODO.yaml
+```
+
+**⚠️ CRITICAL RULE**: All `requires` tasks must be **MERGED** (not just completed)
+
+**Verify prerequisites merged**:
+
+```bash
+# Check recent merged PRs
+gh pr list --state merged --limit 10
+
+# Check specific task PR status
+gh pr view <PR-number>
+```
+
+### Step 4: Apply Priority Filter
+
+**Priority order**:
+
+1. **P0 (Critical)** - Blocks other work, milestone deadlines
+2. **P1 (Important)** - Core functionality, integration work
+3. **P2 (Nice-to-have)** - Documentation, polish, extensions
+
+**Additional considerations**:
+
+- **Critical path**: Tasks on `milestone.critical_path` list
+- **Deadline urgency**: Days until `milestone.target_date`
+- **Parallel ready**: Tasks with no dependencies (can work in parallel with others)
+
+**Example decision matrix**:
+
+| Task | Priority | On Critical Path? | Dependencies Met? | Deadline | Score |
+|------|----------|-------------------|-------------------|----------|-------|
+| T-05-02 | P0 | Yes | ✅ T-05-01 merged | 4 days | ⭐⭐⭐ |
+| T-06-01 | P0 | Yes | ✅ No deps | 4 days | ⭐⭐⭐ |
+| T-05-03 | P1 | No | ✅ T-05-01 merged | 6 days | ⭐⭐ |
+| T-02-01 | P0 | Yes | ❌ T-06-01 pending | 14 days | ⏸ BLOCKED |
+
+### Step 5: Final Verification Checklist
+
+**Before starting the selected task:**
+
+- [ ] **Specs exist**: Task file in `spacs/tasks/0.1.0-mvp/` exists
+- [ ] **Worktree ready**: Check if worktree already created (from M0)
+- [ ] **Dependencies merged**: All `requires` tasks have merged PRs
+- [ ] **Main synced**: Latest `git pull origin main` completed
+- [ ] **Time available**: Sufficient time before milestone deadline
+- [ ] **Resources available**: Dependencies (LocAgent, test data) accessible
+
+### Common Scenarios
+
+#### Scenario 1: Starting Fresh Milestone
+
+**Situation**: Just completed M1, starting M2
+
+**Steps**:
+
+1. Update TODO.yaml: Mark M1 as `completed`
+2. Review M2 critical-path tasks
+3. Select first task with no dependencies (typically graph/index foundations)
+4. Verify baseline data ready (if parity task)
+
+#### Scenario 2: Parallel Development
+
+**Situation**: Multiple developers, want to work in parallel
+
+**Steps**:
+
+1. Identify tasks with no mutual dependencies
+2. Coordinate with team on Slack/GitHub
+3. Each developer takes different critical-path task
+4. Example: T-05-01 (API) + T-06-01 (Parity) can run in parallel
+
+#### Scenario 3: Blocked by Dependencies
+
+**Situation**: Want to start T-02-01, but T-06-01 not complete
+
+**Steps**:
+
+1. Check `TODO.yaml` for alternative tasks with dependencies met
+2. Consider working on P1 tasks (docs, tests, tooling)
+3. Update TODO.yaml: Set blocked task status to `blocked`
+4. Add comment explaining blocker
+
+**Example**:
+
+```yaml
+T-02-01-graph-builder:
+  status: blocked
+  comments:
+    - date: "2025-10-23"
+      author: "Developer"
+      text: "Blocked on T-06-01 parity methodology - waiting for baseline data"
+```
+
+### Decision Flowchart Quick Reference
+
+```text
+┌──────────────────────────────────┐
+│   Review Milestone Status        │
+└─────────┬────────────────────────┘
+          ↓
+┌──────────────────────────────────┐
+│   List Not-Started Tasks         │
+│   (current milestone)            │
+└─────────┬────────────────────────┘
+          ↓
+┌──────────────────────────────────┐
+│   Check Dependencies             │
+│   All 'requires' merged?         │
+└─────────┬────────────────────────┘
+          ↓
+    YES ┌─┴─┐ NO
+        │   │
+        ↓   └──→ Try other task or BLOCK
+┌──────────────────────────────────┐
+│   Apply Priority Filter          │
+│   P0 > P1 > P2                   │
+└─────────┬────────────────────────┘
+          ↓
+┌──────────────────────────────────┐
+│   Verify Prerequisites           │
+│   Main synced? Specs ready?      │
+└─────────┬────────────────────────┘
+          ↓
+       SELECT ✅
+          ↓
+   Go to "Worktree Preparation"
+```
+
+---
+
 ## Task Development Lifecycle
 
 ### Phase 0: Task Assignment
@@ -180,35 +427,180 @@ cat spacs/issues/04-0.1.0-mvp/05-api-contracts.md
 cat spacs/tasks/0.1.0-mvp/05-api-contracts/T-05-01-jsonrpc-schema.md
 ```
 
-### Phase 1: Task Initialization
+### Phase 1: Worktree Environment Preparation
 
-**Initialize worklog and environment:**
+**⚠️ CRITICAL STEPS - Follow in order!**
+
+#### Step 1: Sync Main Branch FIRST
+
+> **ALWAYS sync main BEFORE creating worktree to get latest merged changes**
 
 ```shell
-# 1. Create task worklog structure
-./scripts/create-task-worklog.sh <TASK_ID> "<TASK_TITLE>" "<YOUR_NAME>"
+# 1. Navigate to main repository
+cd ~/dev-space/CDSAgent
+
+# 2. Switch to main
+git checkout main
+
+# 3. Pull latest changes (includes all merged PRs)
+git pull origin main
+
+# 4. Verify latest commit (should match GitHub main branch)
+git rev-parse HEAD
+git log -1 --oneline
+```
+
+#### Step 2: Create Worktree from Synced Main
+
+```shell
+# Create worktree branch from latest main
+git worktree add .worktrees/T-XX-XX-task-name \
+  -b feat/task/T-XX-XX-task-name main
 
 # Example:
-./scripts/create-task-worklog.sh T-05-01-jsonrpc-schema \
-  "JSON-RPC Schema Definition & Validation" \
-  "Rust Dev 1"
+git worktree add .worktrees/T-05-02-typescript-bindings \
+  -b feat/task/T-05-02-typescript-bindings main
+```
 
-# This creates:
-# - .artifacts/spec-tasks-T-05-01-jsonrpc-schema/metadata.yaml
-# - .artifacts/spec-tasks-T-05-01-jsonrpc-schema/git-refs.txt
-# - .artifacts/spec-tasks-T-05-01-jsonrpc-schema/worklogs/
+#### Step 3: Create IDE-Friendly Symlink
 
-# 2. Review and customize metadata.yaml
-vim .artifacts/spec-tasks-T-05-01-jsonrpc-schema/metadata.yaml
+```shell
+# Create symlink for easier navigation
+./scripts/worktree-symlink.sh create T-XX-XX-task-name
 
-# 3. Create daily worklog (do this every day)
-./scripts/create-daily-worklog.sh T-05-01-jsonrpc-schema
+# Or manually:
+ln -s $(pwd)/.worktrees/T-XX-XX-task-name \
+  ~/dev-space/CDSAgent-T-XX-XX-task-name
 
-# 4. Navigate to task worktree
-cd ~/dev-space/CDSAgent-T-05-01-jsonrpc-schema
+# Verify symlink
+ls -la ~/dev-space/CDSAgent-T-XX-XX-task-name
+```
 
-# 5. Verify branch
-git branch --show-current  # Should show: feat/task/T-05-01-jsonrpc-schema
+#### Step 4: Initialize Artifacts FROM WORKTREE
+
+> **⚠️ CRITICAL: Worktree file system isolation issue**
+
+**Problem**: Worktrees have **independent file snapshots** (different inodes). If you run `create-task-worklog.sh` from main repository AFTER creating the worktree, the artifacts will be created in main's `.artifacts/` directory but will NOT be visible in the worktree.
+
+**Solution**: ALWAYS run artifact initialization FROM the worktree itself
+
+```shell
+# ✅ CORRECT: Run FROM worktree
+cd ~/dev-space/CDSAgent-T-XX-XX-task-name
+
+# Run script using absolute path
+/Users/arthur/dev-space/CDSAgent/scripts/create-task-worklog.sh \
+  T-XX-XX-task-name "Task Title" "Your Name"
+
+# Verify artifacts created in worktree
+ls -la .artifacts/spec-tasks-T-XX-XX-task-name/
+
+# ❌ WRONG: Running from main after worktree creation
+# cd ~/dev-space/CDSAgent  # DON'T DO THIS
+# ./scripts/create-task-worklog.sh ...  # Artifacts won't appear in worktree!
+```
+
+**Why this happens**:
+
+- Worktree snapshots main's file tree at creation time (inode: 310602118)
+- Main repository continues on different file tree (inode: 313565709)
+- Files created in main AFTER worktree creation don't exist in worktree's snapshot
+- Solution: Create artifacts IN the worktree's file tree directly
+
+#### Step 5: Troubleshooting - If Artifacts Missing
+
+> **Symptoms**: `.artifacts/spec-tasks-T-XX-XX/` exists in main but not in worktree
+
+**Three solutions** (in order of preference):
+
+##### Option 1: Re-run from worktree (Recommended)
+
+```shell
+cd ~/dev-space/CDSAgent-T-XX-XX-task-name
+/Users/arthur/dev-space/CDSAgent/scripts/create-task-worklog.sh \
+  T-XX-XX-task-name "Task Title" "Your Name"
+```
+
+##### Option 2: Copy artifacts from main to worktree
+
+```shell
+# Copy from main's artifacts to worktree
+cp -r /Users/arthur/dev-space/CDSAgent/.artifacts/spec-tasks-T-XX-XX-task-name \
+  ~/dev-space/CDSAgent-T-XX-XX-task-name/.artifacts/
+
+# Verify
+ls -la ~/dev-space/CDSAgent-T-XX-XX-task-name/.artifacts/spec-tasks-T-XX-XX-task-name
+```
+
+##### Option 3: Delete and recreate worktree (Nuclear option)
+
+```shell
+# Remove worktree
+cd ~/dev-space/CDSAgent
+git worktree remove .worktrees/T-XX-XX-task-name
+rm ~/dev-space/CDSAgent-T-XX-XX-task-name
+
+# Recreate worktree
+git worktree add .worktrees/T-XX-XX-task-name \
+  -b feat/task/T-XX-XX-task-name main
+
+# Create symlink
+./scripts/worktree-symlink.sh create T-XX-XX-task-name
+
+# Initialize artifacts FROM worktree
+cd ~/dev-space/CDSAgent-T-XX-XX-task-name
+/Users/arthur/dev-space/CDSAgent/scripts/create-task-worklog.sh \
+  T-XX-XX-task-name "Task Title" "Your Name"
+```
+
+#### Step 6: Update Task-Specific CLAUDE.md (Optional but Recommended)
+
+**Purpose**: Add task-specific development guidance for AI-assisted development
+
+```shell
+cd ~/dev-space/CDSAgent-T-XX-XX-task-name
+
+# Edit CLAUDE.md to add task context
+vim CLAUDE.md
+```
+
+**What to add**:
+
+- Current task objective and deliverables
+- Task-specific commands (type generation, testing, etc.)
+- Implementation checklist (5-7 steps)
+- API reference quick links
+- Testing strategy
+
+**See example**: `.worktrees/T-05-02-typescript-bindings/CLAUDE.md` (commit 0b4181d)
+
+#### Step 7: Create Daily Worklog
+
+```shell
+# Navigate to worktree
+cd ~/dev-space/CDSAgent-T-XX-XX-task-name
+
+# Create today's worklog
+/Users/arthur/dev-space/CDSAgent/scripts/create-daily-worklog.sh T-XX-XX-task-name
+
+# Verify worklogs created
+ls -la .artifacts/spec-tasks-T-XX-XX-task-name/worklogs/
+```
+
+#### Step 8: Verify Environment Ready
+
+```shell
+# Check branch
+git branch --show-current  # Should show: feat/task/T-XX-XX-task-name
+
+# Check artifacts exist
+ls -la .artifacts/spec-tasks-T-XX-XX-task-name/metadata.yaml
+
+# Read task specification
+cat spacs/tasks/0.1.0-mvp/{category}/T-XX-XX-task-name.md
+
+# Ready to code!
+code .  # Or your preferred IDE
 ```
 
 ### Phase 2: Daily Development
@@ -716,6 +1108,34 @@ git checkout main
 ./scripts/create-daily-worklog.sh T-05-01 2025-10-18
 ```
 
+#### Issue: Artifacts not visible in worktree
+
+**Symptoms**: `.artifacts/spec-tasks-T-XX-XX/` exists in main but not in worktree
+
+**Root cause**: Worktree file system isolation - worktrees snapshot main's file tree at creation time. Files created in main AFTER worktree creation don't exist in the worktree's independent file system.
+
+**Solution**:
+
+See detailed explanation in [Phase 1: Step 4 - Initialize Artifacts FROM WORKTREE](#step-4-initialize-artifacts-from-worktree)
+
+**Quick fix**:
+
+```bash
+# Option 1: Re-run from worktree (Recommended)
+cd ~/dev-space/CDSAgent-T-XX-XX-task-name
+/Users/arthur/dev-space/CDSAgent/scripts/create-task-worklog.sh \
+  T-XX-XX-task-name "Task Title" "Your Name"
+
+# Option 2: Copy from main
+cp -r /Users/arthur/dev-space/CDSAgent/.artifacts/spec-tasks-T-XX-XX-task-name \
+  ~/dev-space/CDSAgent-T-XX-XX-task-name/.artifacts/
+
+# Verify
+ls -la ~/dev-space/CDSAgent-T-XX-XX-task-name/.artifacts/spec-tasks-T-XX-XX-task-name/
+```
+
+**Prevention**: Always run `create-task-worklog.sh` FROM the worktree, not from main.
+
 #### Issue: Accidentally committed to main
 
 **Solution**:
@@ -935,6 +1355,13 @@ vim .artifacts/spec-tasks-T-05-01/metadata.yaml
 
 **Version History**:
 
+- **v1.2** (2025-10-23): Enhanced workflow with next task selection and worktree preparation procedures
+  - Added "Quick Decision Flowchart" for task selection
+  - Added "Next Task Selection Procedure" (5-step methodology)
+  - Expanded "Phase 1: Worktree Environment Preparation" (8 steps)
+  - Documented worktree file system isolation issue and solutions
+  - Added task-specific CLAUDE.md update guidance
+  - Enhanced troubleshooting section with artifacts visibility issue
 - **v1.1** (2025-10-19): Complete SOP with TODO.yaml and worklog system
 - **v1.0** (2025-10-19): Initial SOP based on git worktrees
 

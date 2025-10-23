@@ -3,6 +3,22 @@
   "version": "0.1.0",
   "description": "CDSAgent - LLM orchestration layer for code retrieval",
   "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    },
+    "./client": {
+      "import": "./src/client/jsonrpc.ts",
+      "types": "./src/client/jsonrpc.ts"
+    },
+    "./types": {
+      "import": "./src/types/api.ts",
+      "types": "./src/types/api.ts"
+    }
+  },
   "scripts": {
     "dev": "bun run src/main.ts",
     "start": "bun run src/main.ts",
@@ -13,7 +29,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "latest"
+    "@anthropic-ai/claude-agent-sdk": "latest",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bun": "latest",
