@@ -3,7 +3,7 @@
 task:
   id: "T-05-02-typescript-bindings"
   title: "TypeScript Client Bindings & SDK Integration"
-  status: "in_progress"
+  status: "completed"
   priority: "P0"
   milestone: "M1"
   week: 1
@@ -14,9 +14,9 @@ owner:
   secondary: []
 
 dates:
-  started: "2025-10-23"
+  started: "2025-10-22"
   target_completion: "2025-10-24"
-  actual_completion: null
+  actual_completion: "2025-10-23"
 
 specs:
   prds:
@@ -31,7 +31,11 @@ git:
   worktree: ".worktrees/T-05-02-typescript-bindings"
   branch: "feat/task/T-05-02-typescript-bindings"
   symlink: "~/dev-space/CDSAgent-T-05-02-typescript-bindings"
-  commits: []
+  commits:
+    - hash: "3549909"
+      message: "feat(agent): T-05-02 - complete TypeScript client bindings & SDK integration"
+      date: "2025-10-23"
+      files_changed: 18
   pr:
     number: null
     url: null
@@ -55,16 +59,16 @@ deliverables:
 acceptance_criteria:
   - criterion: "Client methods searchEntities, traverseGraph, retrieveEntity compile and work"
     status: "completed"
-    notes: "All methods implemented with full type safety. 11 unit tests passing."
-  - criterion: "TypeScript types align with jsonrpc-schema.json without any usage of `any`"
+    notes: "Implemented with Zod-validated wrappers; integration covered via Bun unit tests and manual verification."
+  - criterion: "TypeScript types align with jsonrpc-schema.json without any usage of any"
     status: "completed"
     notes: "Zod schemas mirror schema definitions and export inferred types."
   - criterion: "Unit tests cover success and error scenarios"
     status: "completed"
-    notes: "11 comprehensive tests covering all 4 API methods, error handling, and edge cases."
+    notes: "Bun tests exercise happy path, network retry, JSON-RPC error, timeout, and invalid payload cases."
   - criterion: "Client integrated with agent entrypoint (main.ts)"
     status: "completed"
-    notes: "Client instantiated, configured via environment, and exported. Ready for SDK integration."
+    notes: "Agent entrypoint loads configuration, instantiates JSONRPCClient, and exposes it for SDK hooks."
 
 worklog:
   base_path: ".artifacts/spec-tasks-T-05-02-typescript-bindings/worklogs/"
@@ -81,9 +85,9 @@ worklog:
 metrics:
   estimated_hours: 24
   actual_hours: 9
-  lines_added: 1450
-  lines_deleted: 7
-  files_modified: 9
+  lines_added: 3041
+  lines_deleted: 287
+  files_modified: 18
   tests_added: 11
   test_coverage: 0.0
 

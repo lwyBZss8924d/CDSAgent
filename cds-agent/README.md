@@ -20,7 +20,7 @@ bun run typecheck
 ### Basic Client Usage
 
 ```typescript
-import { JSONRPCClient } from './src/client/jsonrpc';
+import { JSONRPCClient } from 'cds-agent';
 
 // Initialize the client
 const client = new JSONRPCClient('http://localhost:9876/rpc');
@@ -98,7 +98,7 @@ import {
   EntityNotFoundError,
   QueryTimeoutError,
   NetworkError
-} from './src/client/jsonrpc';
+} from 'cds-agent';
 
 try {
   const results = await client.searchEntities({ query: 'test' });
@@ -124,7 +124,7 @@ import type {
   Entity,
   EntityType,
   SnippetMode
-} from './src/types/api';
+} from 'cds-agent';
 
 // Type-safe parameter construction
 const params: SearchEntitiesParams = {
@@ -232,7 +232,7 @@ The client is designed to integrate with the Claude Agent SDK for LLM-powered co
 
 ```typescript
 // main.ts shows the integration point
-import { JSONRPCClient } from './client/jsonrpc';
+import { JSONRPCClient } from 'cds-agent';
 
 const jsonRpcClient = new JSONRPCClient(serviceUrl, {
   logger: (event, payload) => {

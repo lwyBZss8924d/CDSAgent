@@ -1,49 +1,43 @@
 import { JSONRPCClient } from "./client/jsonrpc";
+import { loadConfig, type CDSAgentConfig } from "./utils/config";
 
-type LogLevel = "debug" | "info" | "warn" | "error" | "silent";
+const config = loadConfig();
 
-const LOG_LEVELS: Record<Exclude<LogLevel, "silent">, number> = {
+const LOG_LEVELS: Record<Exclude<CDSAgentConfig["logLevel"], "silent">, number> = {
   debug: 10,
   info: 20,
   warn: 30,
   error: 40,
 };
 
-const resolveLogLevel = (value: string | undefined): LogLevel => {
-  if (!value) {
-    return "info";
-  }
-  const normalized = value.toLowerCase();
-  if (["debug", "info", "warn", "error", "silent"].includes(normalized)) {
-    return normalized as LogLevel;
-  }
-  return "info";
-};
-
-const currentLogLevel = resolveLogLevel(process.env.LOG_LEVEL);
-
-const shouldLog = (level: Exclude<LogLevel, "silent">): boolean => {
-  if (currentLogLevel === "silent") {
+const shouldLog = (level: Exclude<CDSAgentConfig["logLevel"], "silent">): boolean => {
+  if (config.logLevel === "silent") {
     return false;
   }
-  const threshold = LOG_LEVELS[currentLogLevel as Exclude<LogLevel, "silent">];
+  const threshold = LOG_LEVELS[config.logLevel as Exclude<CDSAgentConfig["logLevel"], "silent">];
   return threshold !== undefined && LOG_LEVELS[level] >= threshold;
 };
 
-const serviceUrl = process.env.CDS_INDEX_SERVICE_URL ?? "http://localhost:9876/rpc";
-
-const jsonRpcClient = new JSONRPCClient(serviceUrl, {
+const jsonRpcClient = new JSONRPCClient(config.serviceUrl, {
+  timeoutMs: config.timeoutMs,
+  retryDelaysMs: config.retryDelaysMs,
   logger: (event, payload) => {
-    const levelMap: Record<string, Exclude<LogLevel, "silent">> = {
+    const levelMap: Record<string, Exclude<CDSAgentConfig["logLevel"], "silent">> = {
       request: "debug",
       response: "debug",
       networkError: "warn",
       error: "error",
     };
+
+    if ((event === "request" || event === "response") && !config.enableRequestLogging) {
+      return;
+    }
+
     const level = levelMap[event] ?? "debug";
     if (!shouldLog(level)) {
       return;
     }
+
     const prefix = `[jsonrpc:${event}]`;
     if (level === "error") {
       console.error(prefix, payload);
@@ -59,7 +53,7 @@ const jsonRpcClient = new JSONRPCClient(serviceUrl, {
 
 async function bootstrap(): Promise<void> {
   console.log("CDSAgent v0.1.0 - LLM Orchestration Layer");
-  console.log(`JSON-RPC service: ${serviceUrl}`);
+  console.log(`JSON-RPC service: ${config.serviceUrl}`);
 
   // TODO: Initialize Claude Agent SDK and register hooks once available.
   // The JSONRPCClient instance is ready to be injected into agent tool handlers.

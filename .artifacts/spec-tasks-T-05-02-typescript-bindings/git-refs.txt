@@ -6,3 +6,4 @@ Worktree: .worktrees/T-05-02-typescript-bindings
 Symlink: ~/dev-space/CDSAgent-T-05-02-typescript-bindings
 
 # Commits will be listed here as they are made
+2025-10-23 3549909 feat(agent): T-05-02 - complete TypeScript client bindings & SDK integration
