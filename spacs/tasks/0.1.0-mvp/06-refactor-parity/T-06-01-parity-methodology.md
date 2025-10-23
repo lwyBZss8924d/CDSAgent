@@ -6,7 +6,9 @@
 
 **Owner**: Rust Lead (with All Rust Developers)
 
-**Status**: 🔨 In Progress | **Week**: 1 (Target: 2025-10-23, Started: 2025-10-20)
+**Status**: ✅ Completed | **Week**: 1 (Target: 2025-10-23, Started: 2025-10-20)
+
+**PR Link**: [PR #4](https://github.com/lwyBZss8924d/CDSAgent/pull/4)
 
 ---
 

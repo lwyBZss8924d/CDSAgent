@@ -6,7 +6,9 @@
 
 **Owners**: Rust Dev 1 (service) & TS Dev 1 (schema tooling)
 
-**Status**: ✅ Completed | **Week**: 1 (2025-10-19)
+**Status**: ✅ Completed | **Week**: 1 (2025-10-20)
+
+**PR Link**: [PR #3](https://github.com/lwyBZss8924d/CDSAgent/pull/3)
 
 ---
 

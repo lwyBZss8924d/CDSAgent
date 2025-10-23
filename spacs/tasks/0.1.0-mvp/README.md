@@ -28,8 +28,9 @@ spacs/tasks/0.1.0-mvp/
 Each task follows this lifecycle:
 
 - **☐ Not Started**: Task not yet assigned or begun
-- **🔨 In Progress**: Currently being worked on
+- **🚧 In Progress**: Currently being worked on
 - **✓ Completed**: Finished and verified
+- **⏳ Pending**: Waiting for Next Phase backlog tasks Start Development Cooking Spacs Tasks
 - **⏸ Blocked**: Waiting on dependencies or external input
 
 ### 2. Task File Format
@@ -100,14 +101,14 @@ M5: Production RC (Week 8-10)
 ### Milestone M1: API Contracts & Parity (Week 1)
 
 **Target**: 2025-10-26 (1 week from start)
-**Status**: 🏗 Ready to Start
+**Status**: 🚧 In Progress
 
 **Critical Path Tasks**:
 
-- [ ] **T-05-01**: JSON-RPC Schema Definition (3 days, P0) ← START HERE
-- [ ] **T-06-01**: LocAgent Parity Methodology (2 days, P0) [parallel with T-05-01]
-- [ ] **T-05-02**: TypeScript Client Bindings (2 days, P0) [after T-05-01]
-- [ ] **T-05-03**: Error Code Catalogue (1 day, P1) [after T-05-01]
+- [x] **T-05-01**: JSON-RPC Schema Definition (3 days, P0) ← START HERE
+- [x] **T-06-01**: LocAgent Parity Methodology (2 days, P0) [parallel with T-05-01]
+- [x] **T-05-02**: TypeScript Client Bindings (2 days, P0) [after T-05-01]
+- [⏳] **T-05-03**: Error Code Catalogue (1 day, P1) [after T-05-01]
 
 **Success Criteria**:
 
@@ -293,5 +294,5 @@ Each task references its parent issue. When starting a task:
 
 ---
 
-**Last Updated**: 2025-10-19
+**Last Updated**: 2025-10-23
 **Status**: Active Development

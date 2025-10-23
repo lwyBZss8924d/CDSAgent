@@ -8,6 +8,8 @@
 
 **Status**: ✅ Completed (2025-10-23) | **Week**: 1
 
+**PR Link**: [PR #5](https://github.com/lwyBZss8924d/CDSAgent/pull/5)
+
 ---
 
 ## Objective

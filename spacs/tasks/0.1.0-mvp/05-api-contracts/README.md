@@ -8,18 +8,24 @@
 
 | Task ID | Title | Owner | Status | Week |
 |---------|-------|-------|--------|------|
-| T-05-01 | JSON-RPC Schema Definition & Validation | Rust Dev 1 + TS Dev 1 | ☐ Not Started | W3 |
-| T-05-02 | TypeScript Client Types & SDK Bindings | TS Dev 1 | ☐ Not Started | W3 |
+| T-05-01 | JSON-RPC Schema Definition & Validation | Rust Dev 1 + TS Dev 1 | ✅ Completed | W3 |
+| T-05-02 | TypeScript Client Types & SDK Bindings | TS Dev 1 | ✅ Completed | W3 |
 | T-05-03 | Error Code Catalogue & Docs | PM/Writer | ☐ Not Started | W4 |
 
 ## Task Details
 
 ### T-05-01: JSON-RPC Schema Definition
 
+Task Status: ✅ Completed
+PR Link: [PR #3](https://github.com/lwyBZss8924d/CDSAgent/pull/3)
+
 - **Deliverables**: `docs/api/jsonrpc-schema.json`, `crates/cds-index/src/service/jsonrpc.rs` tests, schema validation script.
 - **Acceptance**: All service responses conform to schema; CLI/agent tests use schema validation; documented in PRD-05 alignment.
 
 ### T-05-02: TypeScript Client Bindings
+
+Task Status: ✅ Completed
+PR Link: [PR #5](https://github.com/lwyBZss8924d/CDSAgent/pull/5)
 
 - **Deliverables**: `cds-agent/src/client/jsonrpc.ts`, generated typings, unit tests.
 - **Acceptance**: Agent can call service with typed responses; handles error codes defined in schema.

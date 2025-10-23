@@ -32,7 +32,10 @@ milestones:
     description: "Define all interfaces and validation methodology"
     critical_path:
       - T-05-01-jsonrpc-schema  # ✅ Completed 2025-10-19
-      - T-06-01-parity-methodology
+      - T-06-01-parity-methodology  # ✅ Completed 2025-10-22
+    pr_merged:
+      - T-05-01-jsonrpc-schema: 3
+      - T-06-01-parity-methodology: 4
     deliverables:
       - JSON-RPC API schemas  # ✅ Completed
       - LocAgent parity methodology
@@ -194,6 +197,7 @@ tasks:
     worktree: .worktrees/T-05-02-typescript-bindings
     branch: feat/task/T-05-02-typescript-bindings
     completed_date: "2025-10-23"
+    merged_pr: 5
 
     specs:
       prds:
@@ -214,6 +218,25 @@ tasks:
       - cds-agent/src/types/api.ts
       - cds-agent/src/utils/config.ts
       - cds-agent/tests/jsonrpc-client.test.ts
+
+    acceptance_criteria:
+      - "✅ Client methods compile and work with ID validation"
+      - "✅ TypeScript types align with jsonrpc-schema.json"
+      - "✅ Unit tests cover success, error, and security scenarios (12 tests)"
+      - "✅ Client integrated with agent entrypoint"
+
+    worklog_path: .artifacts/spec-tasks-T-05-02-typescript-bindings/worklogs/
+
+    git_commits:
+      - 3549909: "feat(agent): T-05-02 - complete TypeScript client bindings & SDK integration"
+      - 38c1e75: "fix(client): validate JSON-RPC response IDs and fix TypeScript configuration"
+
+    metrics:
+      hours_spent: 9.5
+      lines_added: 3060
+      lines_deleted: 295
+      tests_added: 12
+      test_pass_rate: 1.0
 
   T-06-01-parity-methodology:
     title: "LocAgent Parity Validation Methodology"

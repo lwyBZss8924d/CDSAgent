@@ -39,7 +39,7 @@ CDSAgent 0.1.0-MVP is a graph-based code retrieval system refactored from LocAge
 
 **In Progress** (2/4):
 
-- 🚧 **T-05-02**: TypeScript Client Bindings (Week 1, Target: 2025-10-24)
+- ✅ **T-05-02**: TypeScript Client Bindings (Week 1, Target: 2025-10-24)
   - Worktree initialized, artifacts created
   - Task-specific CLAUDE.md prepared
   - Status: Environment ready, implementation pending
@@ -127,7 +127,7 @@ All task worktrees have been created and are accessible via symlinks:
 |------|--------|---------|--------|----|
 | **T-05-01** | `feat/task/T-05-01-jsonrpc-schema` | `~/dev-space/CDSAgent-T-05-01-jsonrpc-schema` | ✅ Merged | [#3](https://github.com/lwyBZss8924d/CDSAgent/pull/3) |
 | **T-06-01** | `feat/task/T-06-01-parity-methodology` | `~/dev-space/CDSAgent-T-06-01-parity-methodology` | ✅ Merged | [#4](https://github.com/lwyBZss8924d/CDSAgent/pull/4) |
-| **T-05-02** | `feat/task/T-05-02-typescript-bindings` | `~/dev-space/CDSAgent-T-05-02-typescript-bindings` | 🚧 In Progress | - |
+| **T-05-02** | `feat/task/T-05-02-typescript-bindings` | `~/dev-space/CDSAgent-T-05-02-typescript-bindings` | ✅ Merged | [#5](https://github.com/lwyBZss8924d/CDSAgent/pull/5) |
 | **T-02-01** | `feat/task/T-02-01-graph-builder` | `~/dev-space/CDSAgent-T-02-01-graph-builder` | Ready (M2) | - |
 | **T-02-02** | `feat/task/T-02-02-sparse-index` | `~/dev-space/CDSAgent-T-02-02-sparse-index` | Ready (M2) | - |
 | **T-02-03** | `feat/task/T-02-03-service-layer` | `~/dev-space/CDSAgent-T-02-03-service-layer` | Blocked (M2) | - |
@@ -249,7 +249,7 @@ git branch --show-current  # feat/task/T-05-01-jsonrpc-schema
 
 **Priority 1: Complete M1 Tasks** (Target: 2025-10-26)
 
-**T-05-02: TypeScript Client Bindings** (1-2 days)
+**T-05-02: TypeScript Client Bindings** (1-2 days) ✅ COMPLETED
 
 ```bash
 cd ~/dev-space/CDSAgent-T-05-02-typescript-bindings
