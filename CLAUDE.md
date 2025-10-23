@@ -4,8 +4,8 @@ This file provides guidance to Claude when working with code in this "CDSAgent" 
 
 📌 @docs/WORKTREE_WORKFLOW.md ["CDSAgent" codebase Spec-Tasks DEV-COOKING Workflow SOP](docs/WORKTREE_WORKFLOW.md)
 📌 @docs/NEXT_TASK_CHECKLIST.md ["Next Task Selection & Environment Setup Checklist"](docs/NEXT_TASK_CHECKLIST.md)
-📌 @@spacs/tasks/0.1.0-mvp/README.md ["CDSAgent 0.1.0-MVP Task Tracking"](spacs/tasks/0.1.0-mvp/README.md)
-📌 @@spacs/tasks/0.1.0-mvp/TODO.yaml ["CDSAgent 0.1.0-MVP TODO List"](spacs/tasks/0.1.0-mvp/TODO.yaml)
+📌 @spacs/tasks/0.1.0-mvp/README.md ["CDSAgent 0.1.0-MVP Task Tracking"](spacs/tasks/0.1.0-mvp/README.md)
+📌 @spacs/tasks/0.1.0-mvp/TODO.yaml ["CDSAgent 0.1.0-MVP TODO List"](spacs/tasks/0.1.0-mvp/TODO.yaml)
 
 ---
 
