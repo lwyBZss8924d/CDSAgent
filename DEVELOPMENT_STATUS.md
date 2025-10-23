@@ -1,53 +1,81 @@
 # CDSAgent Development Status
 
-**Last Updated**: 2025-10-19
-**Current Phase**: Foundation Complete, Core Implementation Starting
-**Branch**: `feat/dev-environment-setup`
+**Last Updated**: 2025-10-23
+**Current Phase**: M1 - API Contracts & Parity (In Progress)
+**Current Sprint**: Week 1 - API Contracts (2/4 tasks complete)
+**Branch**: `main` (T-05-01, T-06-01 merged)
 
 ---
 
 ## Executive Summary
 
-CDSAgent 0.1.0-MVP is a graph-based code retrieval system refactored from LocAgent (Python) to Rust + TypeScript. The project has completed all planning, specification, and infrastructure setup phases. We are now ready to begin core implementation.
+CDSAgent 0.1.0-MVP is a graph-based code retrieval system refactored from LocAgent (Python) to Rust + TypeScript. The project has completed infrastructure setup (M0) and is actively implementing M1 (API Contracts & Parity Validation).
 
 ### Key Achievements
 
-✅ **Planning Complete** (Week 0)
+✅ **M0: Foundation Setup** (Week 0-1) - **COMPLETED**
 
 - 10 PRD documents defining system architecture
 - 32 technical issues with detailed specifications
 - 30 implementation tasks with acceptance criteria
-- 4-phase roadmap with milestones
-
-✅ **Infrastructure Ready** (Week 1)
-
-- Rust workspace configured with all dependencies
-- TypeScript agent skeleton with Claude SDK
+- Rust workspace + TypeScript agent infrastructure
 - Git worktree workflow for parallel development
 - 7 task branches ready for development
 
-✅ **Documentation Foundation** (Week 1)
+✅ **M1: API Contracts & Parity** (Week 1) - **50% COMPLETE**
 
-- Architecture diagrams and design principles
-- API specifications and data models
-- Development workflow guides
-- Worktree management automation
+**Completed Tasks** (2/4):
+
+- ✅ **T-05-01**: JSON-RPC Schema Definition & Validation ([PR #3](https://github.com/lwyBZss8924d/CDSAgent/pull/3))
+  - Complete JSON Schema for 4 API endpoints
+  - 25 passing contract validation tests
+  - Error code catalogue and versioning strategy
+
+- ✅ **T-06-01**: LocAgent Parity Validation Methodology ([PR #4](https://github.com/lwyBZss8924d/CDSAgent/pull/4))
+  - Comprehensive parity validation framework
+  - Baseline data extraction from LocAgent
+  - Multi-repo aggregation and comparison scripts
+  - 5 validation scripts with metrics tracking
+
+**In Progress** (2/4):
+
+- 🚧 **T-05-02**: TypeScript Client Bindings (Week 1, Target: 2025-10-24)
+  - Worktree initialized, artifacts created
+  - Task-specific CLAUDE.md prepared
+  - Status: Environment ready, implementation pending
+
+- ⏳ **T-06-02**: Run Baseline Parity Checks (Week 1, Target: 2025-10-24)
+  - Depends on: T-06-01 (✅ merged)
+  - Status: Ready to start
+
+✅ **Documentation Enhancement** (2025-10-23)
+
+- Enhanced WORKTREE_WORKFLOW.md (v1.1 → v1.2)
+  - Quick decision flowchart for task selection
+  - 5-step next task selection procedure
+  - 8-step worktree preparation guide
+  - Worktree file system isolation documentation
+- New NEXT_TASK_CHECKLIST.md (~450 lines)
+  - Quick-reference companion document
+  - Complete checklist format for task prep
 
 ### Current State
 
-**Codebase**: Skeleton structure only (~66 lines in core modules)
+**Codebase**: Early implementation (~3,000+ lines across docs + tests)
 
-- Module structure defined
-- Dependencies configured
-- Placeholder types in place
-- Build system operational
+- ✅ JSON-RPC API schema defined and validated
+- ✅ Parity validation framework operational
+- ✅ Contract tests infrastructure (25 tests passing)
+- ⏳ TypeScript client bindings (next)
+- ⏳ Core graph builder (M2)
 
-**Development Environment**: Fully operational
+**Development Environment**: Fully operational + Enhanced
 
-- Cargo workspace: ✅ Compiles
-- Bun/TypeScript: ✅ Configured
-- LocAgent reference: ✅ Available at `tmp/LocAgent/`
-- Test fixtures: ⏳ To be prepared
+- Cargo workspace: ✅ Compiles, tests pass
+- Bun/TypeScript: ✅ Configured, ready for T-05-02
+- LocAgent reference: ✅ Baseline data extracted
+- Parity framework: ✅ Scripts operational
+- Workflow documentation: ✅ Comprehensive + up-to-date
 
 ---
 
@@ -74,8 +102,12 @@ CDSAgent/
 │   ├── issues/04-0.1.0-mvp/         # 32 technical issues
 │   └── tasks/0.1.0-mvp/             # 30 implementation tasks
 ├── docs/                            # Documentation
-│   ├── WORKTREE_WORKFLOW.md         # Git worktree guide
-│   └── api/                         # API specifications (T-05-01)
+│   ├── WORKTREE_WORKFLOW.md         # Git worktree SOP (v1.2)
+│   ├── NEXT_TASK_CHECKLIST.md       # Task selection checklist
+│   └── api/                         # API specifications
+│       ├── jsonrpc-schema.json      # ✅ T-05-01 (merged)
+│       ├── README.md                # API documentation
+│       └── error-codes.md           # Error catalogue
 ├── scripts/                         # Development scripts
 │   ├── worktree-symlink.sh          # Worktree symlink manager
 │   └── README.md
@@ -91,15 +123,17 @@ CDSAgent/
 
 All task worktrees have been created and are accessible via symlinks:
 
-| Task | Branch | Symlink | Status | Priority |
-|------|--------|---------|--------|----------|
-| **T-05-01** | `feat/task/T-05-01-jsonrpc-schema` | `~/dev-space/CDSAgent-T-05-01-jsonrpc-schema` | Ready | P0 |
-| **T-02-01** | `feat/task/T-02-01-graph-builder` | `~/dev-space/CDSAgent-T-02-01-graph-builder` | Ready | P0 |
-| **T-02-02** | `feat/task/T-02-02-sparse-index` | `~/dev-space/CDSAgent-T-02-02-sparse-index` | Ready | P0 |
-| **T-02-03** | `feat/task/T-02-03-service-layer` | `~/dev-space/CDSAgent-T-02-03-service-layer` | Ready | P0 |
-| **T-03-01** | `feat/task/T-03-01-cli-commands` | `~/dev-space/CDSAgent-T-03-01-cli-commands` | Ready | P1 |
-| **T-04-01** | `feat/task/T-04-01-agent-sdk` | `~/dev-space/CDSAgent-T-04-01-agent-sdk` | Ready | P1 |
-| **T-04-02** | `feat/task/T-04-02-prompt-design` | `~/dev-space/CDSAgent-T-04-02-prompt-design` | Ready | P1 |
+| Task | Branch | Symlink | Status | PR |
+|------|--------|---------|--------|----|
+| **T-05-01** | `feat/task/T-05-01-jsonrpc-schema` | `~/dev-space/CDSAgent-T-05-01-jsonrpc-schema` | ✅ Merged | [#3](https://github.com/lwyBZss8924d/CDSAgent/pull/3) |
+| **T-06-01** | `feat/task/T-06-01-parity-methodology` | `~/dev-space/CDSAgent-T-06-01-parity-methodology` | ✅ Merged | [#4](https://github.com/lwyBZss8924d/CDSAgent/pull/4) |
+| **T-05-02** | `feat/task/T-05-02-typescript-bindings` | `~/dev-space/CDSAgent-T-05-02-typescript-bindings` | 🚧 In Progress | - |
+| **T-02-01** | `feat/task/T-02-01-graph-builder` | `~/dev-space/CDSAgent-T-02-01-graph-builder` | Ready (M2) | - |
+| **T-02-02** | `feat/task/T-02-02-sparse-index` | `~/dev-space/CDSAgent-T-02-02-sparse-index` | Ready (M2) | - |
+| **T-02-03** | `feat/task/T-02-03-service-layer` | `~/dev-space/CDSAgent-T-02-03-service-layer` | Blocked (M2) | - |
+| **T-03-01** | `feat/task/T-03-01-cli-commands` | `~/dev-space/CDSAgent-T-03-01-cli-commands` | Blocked (M3) | - |
+| **T-04-01** | `feat/task/T-04-01-agent-sdk` | `~/dev-space/CDSAgent-T-04-01-agent-sdk` | Blocked (M4) | - |
+| **T-04-02** | `feat/task/T-04-02-prompt-design` | `~/dev-space/CDSAgent-T-04-02-prompt-design` | Blocked (M4) | - |
 
 **Access Example:**
 
@@ -122,20 +156,23 @@ git branch --show-current  # feat/task/T-05-01-jsonrpc-schema
 
 **Critical Path Tasks:**
 
-1. **T-05-01: JSON-RPC API Schema** (Week 1, 3 days)
-   - Define schema for 4 endpoints
-   - Validation layer implementation
-   - **Deliverables**: `docs/api/jsonrpc-schema.json`
+(1) **T-05-01: JSON-RPC API Schema** (Week 1, 3 days)
 
-2. **T-02-01: Graph Builder** (Week 2, 5 days)
-   - Tree-sitter Python AST parsing
-   - Graph construction (4 nodes, 4 edges)
-   - **Deliverables**: Graph with ≤2% variance from LocAgent
+- Define schema for 4 endpoints
+- Validation layer implementation
+- **Deliverables**: `docs/api/jsonrpc-schema.json`
 
-3. **T-02-02: Sparse Index** (Week 2-3, 4 days)
-   - Name/ID HashMap (upper index)
-   - BM25 content search (lower index)
-   - **Deliverables**: <500ms p95 search latency
+(2) **T-02-01: Graph Builder** (Week 2, 5 days)
+
+- Tree-sitter Python AST parsing
+- Graph construction (4 nodes, 4 edges)
+- **Deliverables**: Graph with ≤2% variance from LocAgent
+
+(3) **T-02-02: Sparse Index** (Week 2-3, 4 days)
+
+- Name/ID HashMap (upper index)
+- BM25 content search (lower index)
+- **Deliverables**: <500ms p95 search latency
 
 **Success Criteria:**
 
@@ -147,10 +184,10 @@ git branch --show-current  # feat/task/T-05-01-jsonrpc-schema
 
 **Milestone**: M2 - Alpha
 
-4. **T-02-03: Service Layer** (Week 3-4)
-5. **T-03-01: CLI Commands** (Week 4)
-6. **T-04-01: Agent SDK Bootstrap** (Week 5)
-7. **T-04-02: Prompt Design** (Week 5)
+(4) **T-02-03: Service Layer** (Week 3-4)
+(5) **T-03-01: CLI Commands** (Week 4)
+(6) **T-04-01: Agent SDK Bootstrap** (Week 5)
+(7) **T-04-02: Prompt Design** (Week 5)
 
 **Success Criteria:**
 
@@ -162,78 +199,113 @@ git branch --show-current  # feat/task/T-05-01-jsonrpc-schema
 
 **Milestone**: M3 - Beta
 
-8. **T-04-03: Hooks** (Week 6)
-9. **T-08-01: Unit Tests** (Week 6-8)
-10. **T-04-04: Sample Transcripts** (Week 7)
+(8) **T-04-03: Hooks** (Week 6)
+(9) **T-08-01: Unit Tests** (Week 6-8)
+(10) **T-04-04: Sample Transcripts** (Week 7)
 
 ### Phase 4: Production (Weeks 8-10)
 
 **Milestone**: M4 - v1.0 RC
 
-11. **T-07-01-04: Deployment** (Week 8-9)
-12. **T-08-03-04: Parity & Benchmarks** (Week 9-10)
+(11) **T-07-01-04: Deployment** (Week 8-9)
+(12) **T-08-03-04: Parity & Benchmarks** (Week 9-10)
 
 ---
 
 ## Next Immediate Steps
 
-### Week 1 Actions (This Week)
+### ✅ Completed This Week (2025-10-19 to 2025-10-23)
 
-**Day 1-2: Start T-05-01 - JSON-RPC Schema**
+**Day 1-3: T-05-01 - JSON-RPC Schema** ✅ MERGED
 
 ```bash
-cd ~/dev-space/CDSAgent-T-05-01-jsonrpc-schema
+# ✅ Implemented JSON-RPC 2.0 schema for 4 endpoints
+# ✅ Created 25 contract validation tests (all passing)
+# ✅ Documented error codes and versioning strategy
+# ✅ PR #3 merged to main
+```
+
+**Day 4-5: T-06-01 - Parity Methodology** ✅ MERGED
+
+```bash
+# ✅ Built comprehensive parity validation framework
+# ✅ Extracted baseline data from LocAgent
+# ✅ Created 5 validation scripts (search, traverse, aggregate, compare, check-all)
+# ✅ Fixed multiple bugs in comparison logic
+# ✅ PR #4 merged to main
+```
+
+**Day 6: Workflow Documentation Enhancement** ✅ COMPLETED
+
+```bash
+# ✅ Updated WORKTREE_WORKFLOW.md (v1.1 → v1.2, +469 lines)
+# ✅ Created NEXT_TASK_CHECKLIST.md (~450 lines)
+# ✅ Documented next task selection procedure
+# ✅ Documented worktree file system isolation issue
+# ✅ Prepared T-05-02 worktree and artifacts
+```
+
+### 🚧 Current Week Actions (2025-10-24 onwards)
+
+**Priority 1: Complete M1 Tasks** (Target: 2025-10-26)
+
+**T-05-02: TypeScript Client Bindings** (1-2 days)
+
+```bash
+cd ~/dev-space/CDSAgent-T-05-02-typescript-bindings
 
 # Read task specification
-cat spacs/tasks/0.1.0-mvp/05-api-contracts/T-05-01-jsonrpc-schema.md
+cat spacs/tasks/0.1.0-mvp/05-api-contracts/T-05-02-typescript-bindings.md
 
-# Create API schema directory
-mkdir -p docs/api
+# Implement TypeScript client
+# 1. Generate types from JSON schema (quicktype or Zod)
+# 2. Implement JSON-RPC client with retry logic
+# 3. Create typed wrapper methods
+# 4. Write unit tests with mocks
+# 5. Integration test with cds-index service
 
-# Implement schema validation
-# - Define JSON-RPC 2.0 schema
-# - Add validation tests
-# - Document error codes
+# Target: PR ready by 2025-10-24 EOD
 ```
 
-**Day 3: Complete T-05-01 + Prepare Parity Baseline**
+**T-06-02: Run Baseline Parity Checks** (1 day, can parallelize)
 
 ```bash
-# Commit schema work
-git add docs/api/ crates/cds-index/src/service/jsonrpc.rs
-git commit -m "feat(api): T-05-01 - implement JSON-RPC schema validation"
-git push -u origin feat/task/T-05-01-jsonrpc-schema
+cd ~/dev-space/CDSAgent-T-06-01-parity-methodology
 
-# Create PR
-gh pr create --title "feat(api): T-05-01 - JSON-RPC Schema Definition" \
-  --body "Implements JSON-RPC schema with validation for 4 endpoints" \
-  --base main
+# Run complete parity check suite
+./scripts/parity-check.sh --all
 
-# Start parity methodology documentation (T-06-01)
+# Generate baseline metrics report
+# - Document node/edge counts
+# - Record search result counts
+# - Capture traverse relationship counts
+# - Save for M2 comparison
+
+# Target: Complete by 2025-10-25
 ```
 
-**Day 4-5: Prepare for T-02-01 - Graph Builder**
+### Week 2-3 Actions: Start M2 (Core Indexing)
+
+**T-02-01: Graph Builder** (5 days, depends on T-06-02 baseline)
 
 ```bash
-# Extract LocAgent baseline data
-cd tmp/LocAgent
-python dependency_graph/build_graph.py --help
+cd ~/dev-space/CDSAgent-T-02-01-graph-builder
 
-# Setup test fixtures
-mkdir -p crates/cds-index/tests/fixtures/repos/
-# Clone 3 small Python repos for testing
-
-# Document parity validation approach
-# - Node/edge count comparison
-# - Qualified name format matching
-# - Graph structure validation
+# Implement Python AST parsing with tree-sitter
+# Build graph (4 node types, 4 edge types)
+# Compare with LocAgent baseline (target: ≤2% variance)
+# Performance: <5s for 1K files
 ```
 
-### Week 2 Actions
+**T-02-02: Sparse Index** (4 days, can parallelize with T-02-01)
 
-- Start **T-02-01** (Graph Builder) using parity baseline
-- Parallel: Start **T-02-02** (Sparse Index)
-- Continuous: Run integration tests
+```bash
+cd ~/dev-space/CDSAgent-T-02-02-sparse-index
+
+# Implement upper index (HashMap name/ID)
+# Implement lower index (BM25 content search)
+# Performance: <500ms p95 search latency
+```
 
 ---
 
@@ -290,16 +362,22 @@ cds search "User" --repo ./test-repo --format json
 
 ### Documentation
 
-- **Worktree Workflow**: [docs/WORKTREE_WORKFLOW.md](docs/WORKTREE_WORKFLOW.md)
+- **Worktree Workflow SOP**: [docs/WORKTREE_WORKFLOW.md](docs/WORKTREE_WORKFLOW.md) (v1.2)
+- **Next Task Checklist**: [docs/NEXT_TASK_CHECKLIST.md](docs/NEXT_TASK_CHECKLIST.md) 🆕
 - **Task Specifications**: [spacs/tasks/0.1.0-mvp/](spacs/tasks/0.1.0-mvp/)
+- **Task Registry (TODO.yaml)**: [spacs/tasks/0.1.0-mvp/TODO.yaml](spacs/tasks/0.1.0-mvp/TODO.yaml)
 - **PRD Documentation**: [spacs/prd/0.1.0-MVP-PRDs-v0/](spacs/prd/0.1.0-MVP-PRDs-v0/)
 - **Issue Breakdown**: [spacs/issues/04-0.1.0-mvp/](spacs/issues/04-0.1.0-mvp/)
+- **API Documentation**: [docs/api/](docs/api/) 🆕
+  - [JSON-RPC Schema](docs/api/jsonrpc-schema.json)
+  - [Error Codes](docs/api/error-codes.md)
+  - [Versioning Strategy](docs/api/versioning.md)
 
 ### Reference Implementation
 
 - **LocAgent Source**: `tmp/LocAgent/`
 - **LocAgent Paper**: `tmp/LocAgent/arXiv-2503.09089v2`
-- **LocAgent Repo**: https://github.com/gersteinlab/LocAgent
+- **LocAgent Repo**: <https://github.com/gersteinlab/LocAgent>
 
 ### Development Tools
 
@@ -360,14 +438,30 @@ git worktree remove .worktrees/T-XX-XX-task-name
 
 Track overall progress in:
 
-- **Main Project Board**: GitHub Projects (if configured)
-- **Task README Files**: Status field in each `spacs/tasks/*/README.md`
-- **This Document**: Updated weekly with current phase
+- **TODO.yaml**: Central task registry with real-time status updates
+- **Pull Requests**: GitHub PRs for code review and merge tracking
+- **Task Artifacts**: `.artifacts/spec-tasks-{TASK_ID}/metadata.yaml`
+- **This Document**: Updated after each milestone completion
 
-**Current Status**: ✅ Foundation Complete → 🏗 Core Implementation Starting
+### Milestone Progress
+
+- ✅ **M0**: Foundation Setup (100% complete)
+- 🚧 **M1**: API Contracts & Parity (50% complete - 2/4 tasks)
+  - ✅ T-05-01: JSON-RPC Schema (merged)
+  - ✅ T-06-01: Parity Methodology (merged)
+  - 🚧 T-05-02: TypeScript Bindings (in progress)
+  - ⏳ T-06-02: Baseline Parity Checks (ready)
+- ⏳ **M2**: Core Indexing Prototype (0% - ready to start)
+- ⏳ **M3**: Service & CLI Alpha (0% - blocked by M2)
+- ⏳ **M4**: Agent Integration Beta (0% - blocked by M3)
+- ⏳ **M5**: Production RC (0% - blocked by M4)
+
+**Current Status**: 🚧 M1 In Progress (Target: 2025-10-26)
 
 ---
 
-**Ready for Development**: All 7 task worktrees are created and ready for parallel development!
+**Development Active**: 2 tasks completed, 1 in progress, M2 ready to start!
 
-**Next Action**: Start implementation of **T-05-01: JSON-RPC Schema** in `~/dev-space/CDSAgent-T-05-01-jsonrpc-schema`
+**Next Action**: Complete **T-05-02: TypeScript Client Bindings** in `~/dev-space/CDSAgent-T-05-02-typescript-bindings`
+
+**M1 Deadline**: 2025-10-26 (3 days remaining)
