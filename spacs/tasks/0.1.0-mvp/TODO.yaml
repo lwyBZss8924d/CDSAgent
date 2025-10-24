@@ -245,9 +245,9 @@ tasks:
     priority: P0
     status: completed
     owner: Rust Lead
-    duration_days: 2
-    completed_date: "2025-10-22"
-    merged_pr: 4
+    duration_days: 4  # Phase 1: 2 days, Phase 2: 2 days (2025-10-24)
+    completed_date: "2025-10-24"  # Phase 1: 2025-10-22 (PR #4), Phase 2: 2025-10-24 (baseline extraction)
+    merged_pr: 4  # Phase 1
     worktree: .worktrees/T-06-01-parity-methodology
     branch: feat/task/T-06-01-parity-methodology
 
@@ -257,7 +257,7 @@ tasks:
       issues:
         - spacs/issues/04-0.1.0-mvp/06-refactor-parity.md
       tasks:
-        - spacs/tasks/0.1.0-mvp/06-refactor-parity/ (to be created)
+        - spacs/tasks/0.1.0-mvp/06-refactor-parity/T-06-01-parity-methodology.md
 
     dependencies:
       requires: []
@@ -267,7 +267,12 @@ tasks:
     deliverables:
       - docs/parity-validation-methodology.md
       - scripts/parity-check.sh
-      - Baseline data from LocAgent (3 sample repos)
+      - tests/fixtures/parity/golden_outputs/graph_locagent.json
+      - tests/fixtures/parity/locagent_version.txt
+      - tmp/extract-locagent-baseline.py
+
+    git_commits:
+      - fb1a625: "feat(parity): T-06-01 Phase 2 - extract LocAgent baseline for parity validation"
 
   T-05-03-error-catalogue:
     title: "Error Code Catalogue & Documentation"
@@ -841,20 +846,20 @@ tasks:
 
 # Workflow metadata tracking
 workflows:
-  current_phase: "M1 - API Contracts & Parity"
-  active_tasks:
-    - T-05-01-jsonrpc-schema  # Next to start
+  current_phase: "M1 - API Contracts & Parity (Completing)"
+  active_tasks: []  # All M1 critical path tasks completed
 
   completed_tasks:
     - T-00-01-worktree-setup
+    - T-05-01-jsonrpc-schema  # PR #3 merged 2025-10-19
+    - T-05-02-typescript-bindings  # PR #5 merged 2025-10-23
+    - T-06-01-parity-methodology  # PR #4 merged 2025-10-22, Phase 2 completed 2025-10-24
 
   blocked_tasks: []
 
   next_up:
-    - T-05-01-jsonrpc-schema  # Week 1, Day 1
-    - T-06-01-parity-methodology  # Week 1, Day 1 (parallel)
-    - T-05-02-typescript-bindings  # Week 1, Day 4
-    - T-02-01-graph-builder  # Week 2, Day 1
+    - T-05-03-error-catalogue  # Week 1, Day 5 (M1 final task, P1)
+    - T-02-01-graph-builder  # Week 2, Day 1 (M2 start, requires T-06-01 ✅)
 
 # Artifact tracking
 artifacts:
