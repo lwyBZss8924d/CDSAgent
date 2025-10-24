@@ -1,0 +1,26 @@
+[
+  {
+    "repo": "LocAgent",
+    "graph_build": {
+      "duration_s": 0.59,
+      "memory_mb": 4.33,
+      "nodes": 658,
+      "edges": 1419
+    },
+    "search": {
+      "p50_ms": 0.32,
+      "p95_ms": 0.5,
+      "p99_ms": 1.77,
+      "queries": 50,
+      "mean_ms": 0.37
+    },
+    "traverse": {
+      "p50_ms": 0.12,
+      "p95_ms": 4.45,
+      "p99_ms": 4.45,
+      "scenarios": 10,
+      "mean_ms": 0.58
+    },
+    "timestamp": "2025-10-24T14:30:57.334711Z"
+  }
+]

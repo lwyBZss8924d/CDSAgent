@@ -1,0 +1,458 @@
+#!/usr/bin/env bash
+#
+# swe-lite: Unified CLI for SWE-bench Lite baseline extraction
+#
+# Usage:
+#   swe-lite select              # Select 5 diverse instances
+#   swe-lite fetch               # Fetch selected instances
+#   swe-lite baseline <type>     # Extract baselines (graph|search|traverse|perf|all)
+#   swe-lite check               # Verify environment and dependencies
+#
+# All commands use uv for Python dependency management.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+LOCAGENT_DIR="$REPO_ROOT/tmp/LocAgent"
+FIXTURES_DIR="$REPO_ROOT/tests/fixtures/parity"
+SAMPLES_YAML="$FIXTURES_DIR/swe-bench-lite/samples.yaml"
+ARTIFACTS_DIR="$REPO_ROOT/.artifacts/tmp/swe-bench-lite"
+GOLDEN_DIR="$FIXTURES_DIR/golden_outputs"
+
+# Color output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+info() {
+    echo -e "${BLUE}ℹ${NC} $*"
+}
+
+success() {
+    echo -e "${GREEN}✓${NC} $*"
+}
+
+error() {
+    echo -e "${RED}✗${NC} $*" >&2
+}
+
+warn() {
+    echo -e "${YELLOW}⚠${NC} $*"
+}
+
+# Ensure uv is available
+check_uv() {
+    if ! command -v uv &> /dev/null; then
+        error "uv not found. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh"
+        exit 1
+    fi
+}
+
+# Check if LocAgent is present
+check_locagent() {
+    if [ ! -d "$LOCAGENT_DIR" ]; then
+        error "LocAgent not found at $LOCAGENT_DIR"
+        error "Please ensure tmp/LocAgent directory exists"
+        exit 1
+    fi
+}
+
+# Run Python script with uv
+run_python() {
+    local script="$1"
+    shift
+
+    cd "$LOCAGENT_DIR"
+    # Guard against unset PYTHONPATH with set -u
+    export PYTHONPATH="$LOCAGENT_DIR${PYTHONPATH:+:$PYTHONPATH}"
+
+    uv run --directory "$LOCAGENT_DIR" python "$REPO_ROOT/scripts/$script" "$@"
+}
+
+# Command: select
+cmd_select() {
+    info "Selecting 5 diverse SWE-bench Lite instances..."
+
+    check_uv
+    check_locagent
+
+    # Check for HF_TOKEN if dataset requires authentication
+    if [ -z "${HF_TOKEN:-}" ]; then
+        warn "HF_TOKEN not set. If dataset access fails, set: export HF_TOKEN=your_token"
+        warn "Get token from: https://huggingface.co/settings/tokens"
+    fi
+
+    # Install datasets and pyyaml if needed
+    info "Installing dependencies (datasets, pyyaml)..."
+    cd "$LOCAGENT_DIR"
+    uv pip install --quiet datasets pyyaml 2>/dev/null || true
+
+    info "Loading SWE-bench Lite dataset (this may take 1-2 minutes)..."
+    run_python select-swe-bench-instances.py \
+        --output "$SAMPLES_YAML"
+
+    success "Selection complete: $SAMPLES_YAML"
+}
+
+# Command: fetch
+cmd_fetch() {
+    info "Fetching SWE-bench Lite instances..."
+
+    check_uv
+    check_locagent
+
+    if [ ! -f "$SAMPLES_YAML" ]; then
+        error "samples.yaml not found. Run: swe-lite select"
+        exit 1
+    fi
+
+    # Install gitpython if needed
+    cd "$LOCAGENT_DIR"
+    uv pip install --quiet gitpython 2>/dev/null || true
+
+    run_python fetch-swe-bench-lite.py \
+        --from-yaml "$SAMPLES_YAML" \
+        --output-dir "$ARTIFACTS_DIR"
+
+    success "Fetch complete: $ARTIFACTS_DIR"
+}
+
+# Command: baseline
+cmd_baseline() {
+    local baseline_type="${1:-all}"
+
+    check_uv
+    check_locagent
+
+    case "$baseline_type" in
+        graph)
+            extract_graph_baselines
+            ;;
+        search)
+            extract_search_baselines
+            ;;
+        traverse)
+            extract_traverse_baselines
+            ;;
+        perf|performance)
+            extract_performance_baselines
+            ;;
+        all)
+            extract_graph_baselines
+            extract_search_baselines
+            extract_traverse_baselines
+            extract_performance_baselines
+            ;;
+        *)
+            error "Unknown baseline type: $baseline_type"
+            error "Valid types: graph, search, traverse, perf, all"
+            exit 1
+            ;;
+    esac
+}
+
+extract_graph_baselines() {
+    info "Extracting graph baselines..."
+
+    # Re-extract LocAgent with full nodes/edges
+    info "  [1/6] LocAgent (re-extraction with full data)..."
+    run_python extract-parity-baseline.py \
+        --repo-path "$LOCAGENT_DIR" \
+        --repo-name "LocAgent" \
+        --output "$GOLDEN_DIR/graph_locagent.json"
+
+    # Extract SWE-bench Lite instances
+    if [ ! -f "$SAMPLES_YAML" ]; then
+        warn "samples.yaml not found. Skipping SWE-bench instances."
+        return
+    fi
+
+    local instance_count=0
+    while IFS= read -r line; do
+        if [[ "$line" =~ instance_id:\ (.+) ]]; then
+            instance_count=$((instance_count + 1))
+            local instance_id="${BASH_REMATCH[1]}"
+            local instance_dir="$ARTIFACTS_DIR/$instance_id"
+
+            if [ ! -d "$instance_dir" ]; then
+                warn "  Instance not fetched: $instance_id (run: swe-lite fetch)"
+                continue
+            fi
+
+            info "  [$((instance_count + 1))/6] $instance_id..."
+            run_python extract-parity-baseline.py \
+                --repo-path "$instance_dir" \
+                --repo-name "$instance_id" \
+                --output "$GOLDEN_DIR/graph_${instance_id}.json" \
+                --max-files 500
+        fi
+    done < "$SAMPLES_YAML"
+
+    success "Graph baselines extracted"
+}
+
+extract_search_baselines() {
+    info "Extracting search baselines (50 queries × N repos)..."
+
+    # LocAgent
+    info "  [1/6] LocAgent..."
+    run_python extract-search-baseline.py \
+        --repo-path "$LOCAGENT_DIR" \
+        --repo-name "LocAgent" \
+        --output "$GOLDEN_DIR/search_queries.jsonl"
+
+    # SWE-bench Lite instances
+    if [ ! -f "$SAMPLES_YAML" ]; then
+        warn "samples.yaml not found. Skipping SWE-bench instances."
+        return
+    fi
+
+    local instance_count=0
+    while IFS= read -r line; do
+        if [[ "$line" =~ instance_id:\ (.+) ]]; then
+            instance_count=$((instance_count + 1))
+            local instance_id="${BASH_REMATCH[1]}"
+            local instance_dir="$ARTIFACTS_DIR/$instance_id"
+
+            if [ ! -d "$instance_dir" ]; then
+                warn "  Instance not fetched: $instance_id"
+                continue
+            fi
+
+            info "  [$((instance_count + 1))/6] $instance_id..."
+            run_python extract-search-baseline.py \
+                --repo-path "$instance_dir" \
+                --repo-name "$instance_id" \
+                --output "$GOLDEN_DIR/search_queries.jsonl" \
+                --append
+        fi
+    done < "$SAMPLES_YAML"
+
+    success "Search baselines extracted"
+}
+
+extract_traverse_baselines() {
+    info "Extracting traversal baselines (10 scenarios × N repos)..."
+
+    # LocAgent
+    info "  [1/6] LocAgent..."
+    run_python extract-traverse-baseline.py \
+        --repo-path "$LOCAGENT_DIR" \
+        --repo-name "LocAgent" \
+        --output "$GOLDEN_DIR/traverse_samples.jsonl"
+
+    # SWE-bench Lite instances
+    if [ ! -f "$SAMPLES_YAML" ]; then
+        warn "samples.yaml not found. Skipping SWE-bench instances."
+        return
+    fi
+
+    local instance_count=0
+    while IFS= read -r line; do
+        if [[ "$line" =~ instance_id:\ (.+) ]]; then
+            instance_count=$((instance_count + 1))
+            local instance_id="${BASH_REMATCH[1]}"
+            local instance_dir="$ARTIFACTS_DIR/$instance_id"
+
+            if [ ! -d "$instance_dir" ]; then
+                warn "  Instance not fetched: $instance_id"
+                continue
+            fi
+
+            info "  [$((instance_count + 1))/6] $instance_id..."
+            run_python extract-traverse-baseline.py \
+                --repo-path "$instance_dir" \
+                --repo-name "$instance_id" \
+                --output "$GOLDEN_DIR/traverse_samples.jsonl" \
+                --append
+        fi
+    done < "$SAMPLES_YAML"
+
+    success "Traversal baselines extracted"
+}
+
+extract_performance_baselines() {
+    info "Extracting performance baselines..."
+
+    # Install psutil
+    cd "$LOCAGENT_DIR"
+    uv pip install --quiet psutil 2>/dev/null || true
+
+    # LocAgent
+    info "  [1/6] LocAgent..."
+    run_python benchmark-performance.py \
+        --repo-path "$LOCAGENT_DIR" \
+        --repo-name "LocAgent" \
+        --output "$GOLDEN_DIR/performance_baselines.json"
+
+    # SWE-bench Lite instances
+    if [ ! -f "$SAMPLES_YAML" ]; then
+        warn "samples.yaml not found. Skipping SWE-bench instances."
+        return
+    fi
+
+    local instance_count=0
+    while IFS= read -r line; do
+        if [[ "$line" =~ instance_id:\ (.+) ]]; then
+            instance_count=$((instance_count + 1))
+            local instance_id="${BASH_REMATCH[1]}"
+            local instance_dir="$ARTIFACTS_DIR/$instance_id"
+
+            if [ ! -d "$instance_dir" ]; then
+                warn "  Instance not fetched: $instance_id"
+                continue
+            fi
+
+            info "  [$((instance_count + 1))/6] $instance_id..."
+            run_python benchmark-performance.py \
+                --repo-path "$instance_dir" \
+                --repo-name "$instance_id" \
+                --output "$GOLDEN_DIR/performance_baselines.json" \
+                --append
+        fi
+    done < "$SAMPLES_YAML"
+
+    success "Performance baselines extracted"
+}
+
+# Command: check
+cmd_check() {
+    info "Checking environment..."
+
+    # Check uv
+    if command -v uv &> /dev/null; then
+        success "uv found: $(uv --version)"
+    else
+        error "uv not found"
+        exit 1
+    fi
+
+    # Check Python
+    if command -v python3 &> /dev/null; then
+        success "python3 found: $(python3 --version)"
+    else
+        warn "python3 not found in PATH"
+    fi
+
+    # Check LocAgent
+    if [ -d "$LOCAGENT_DIR" ]; then
+        success "LocAgent found: $LOCAGENT_DIR"
+    else
+        error "LocAgent not found: $LOCAGENT_DIR"
+        exit 1
+    fi
+
+    # Check LocAgent dependencies
+    cd "$LOCAGENT_DIR"
+    if [ -f ".venv/pyvenv.cfg" ]; then
+        success "LocAgent venv exists"
+    else
+        warn "LocAgent venv not found (will be created on first run)"
+    fi
+
+    # Check fixtures directory
+    if [ -d "$FIXTURES_DIR" ]; then
+        success "Fixtures directory: $FIXTURES_DIR"
+    else
+        warn "Fixtures directory not found (will be created)"
+    fi
+
+    info "Environment check complete"
+}
+
+# Command: help
+cmd_help() {
+    cat <<EOF
+swe-lite: Unified CLI for SWE-bench Lite baseline extraction
+
+Usage:
+  swe-lite select              Select 5 diverse SWE-bench Lite instances
+  swe-lite fetch               Fetch selected instances to .artifacts/tmp/
+  swe-lite baseline <type>     Extract baselines (graph|search|traverse|perf|all)
+  swe-lite check               Verify environment and dependencies
+  swe-lite help                Show this help message
+
+Workflow:
+  1. swe-lite select           # Select instances → samples.yaml
+  2. swe-lite fetch            # Clone repos → .artifacts/tmp/
+  3. swe-lite baseline all     # Extract all baselines → golden_outputs/
+
+Baseline Types:
+  graph       Extract graph structure (nodes + edges)
+  search      Extract BM25 search results (50 queries)
+  traverse    Extract graph traversal results (10 scenarios)
+  perf        Extract performance metrics (timing + memory)
+  all         Extract all baseline types (default)
+
+Output Locations:
+  Metadata:     tests/fixtures/parity/swe-bench-lite/samples.yaml
+  Repositories: .artifacts/tmp/swe-bench-lite/<instance_id>/
+  Baselines:    tests/fixtures/parity/golden_outputs/*.{json,jsonl}
+
+Dependencies:
+  - uv (Python package manager)
+  - LocAgent at tmp/LocAgent/
+  - Python 3.12+ with uv-managed dependencies
+  - HF_TOKEN (optional, for SWE-bench Lite dataset access)
+
+Environment Variables:
+  HF_TOKEN    Hugging Face access token (get from https://huggingface.co/settings/tokens)
+              Required if SWE-bench Lite dataset access is restricted
+              export HF_TOKEN=your_hf_token_here
+
+Examples:
+  # Complete workflow
+  swe-lite check
+  swe-lite select
+  swe-lite fetch
+  swe-lite baseline all
+
+  # Re-extract only graph baselines
+  swe-lite baseline graph
+
+  # Check environment
+  swe-lite check
+
+For more information, see docs/parity-validation-methodology.md
+EOF
+}
+
+# Main dispatch
+main() {
+    if [ $# -eq 0 ]; then
+        cmd_help
+        exit 0
+    fi
+
+    local command="$1"
+    shift
+
+    case "$command" in
+        select)
+            cmd_select "$@"
+            ;;
+        fetch)
+            cmd_fetch "$@"
+            ;;
+        baseline)
+            cmd_baseline "$@"
+            ;;
+        check)
+            cmd_check "$@"
+            ;;
+        help|--help|-h)
+            cmd_help
+            ;;
+        *)
+            error "Unknown command: $command"
+            echo ""
+            cmd_help
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

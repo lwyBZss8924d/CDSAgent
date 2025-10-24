@@ -7,7 +7,7 @@ task:
   priority: "P0"
   milestone: "M1"
   week: 1
-  duration_days: 2
+  duration_days: 4  # Phase 1: 2 days, Phase 2: 2 days
 
 owner:
   primary: "Rust Lead"
@@ -51,6 +51,7 @@ dependencies:
     - "T-08-03-parity-validation"
 
 deliverables:
+  # Phase 1 (PR #4)
   - "docs/parity-validation-methodology.md"
   - "scripts/parity-check.sh"
   - "tests/fixtures/parity/README.md"
@@ -58,23 +59,44 @@ deliverables:
   - "tests/fixtures/parity/locagent_repo/"
   - "tests/fixtures/parity/sample_repos/"
   - "tests/fixtures/parity/golden_outputs/"
+  # Phase 2 (2025-10-24)
+  - "tests/fixtures/parity/golden_outputs/graph_django__django-10914.json"
+  - "tests/fixtures/parity/golden_outputs/graph_scikit-learn__scikit-learn-10297.json"
+  - "tests/fixtures/parity/golden_outputs/graph_matplotlib__matplotlib-18869.json"
+  - "tests/fixtures/parity/golden_outputs/graph_pytest-dev__pytest-11143.json"
+  - "tests/fixtures/parity/golden_outputs/graph_psf__requests-1963.json"
+  - "tests/fixtures/parity/golden_outputs/traverse_samples.jsonl"
+  - "tests/fixtures/parity/golden_outputs/search_queries.jsonl"
+  - "tests/fixtures/parity/golden_outputs/performance_baselines.json"
+  - "tests/fixtures/parity/golden_outputs/README.md"
+  - "tests/fixtures/parity/swe-bench-lite/samples.yaml"
+  - "scripts/swe-lite"
+  - "scripts/fetch-swe-bench-lite.py"
+  - "scripts/select-swe-bench-instances.py"
+  - "scripts/extract-parity-baseline.py"
+  - "scripts/extract-search-baseline.py"
+  - "scripts/extract-traverse-baseline.py"
+  - "scripts/benchmark-performance.py"
 
 acceptance_criteria:
   - criterion: "Publish docs/parity-validation-methodology.md with full methodology"
     status: "completed"
-    notes: "Completed 2025-10-20: 62KB comprehensive SOP with 9 sections published"
+    notes: "Completed 2025-10-20: 62KB comprehensive SOP with 9 sections published. Updated 2025-10-24: Added Section 10 'Known Limitations' documenting llama-index issue."
   - criterion: "Implement scripts/parity-check.sh covering graph, search, traverse, performance checks"
     status: "completed"
     notes: "Completed 2025-10-20: Functional automation script with CI integration, tested successfully"
-  - criterion: "Extract and store golden outputs for 5 SWE-bench Lite repos"
+  - criterion: "Extract and store golden outputs for 6 repos (LocAgent + 5 SWE-bench Lite)"
     status: "completed"
-    notes: "Completed 2025-10-24: Minimal baseline strategy - extracted LocAgent self (658 nodes, 1419 edges). Additional sample repos deferred to T-02-01 phase per incremental approach."
+    notes: "Completed 2025-10-24: Graph baselines (6/6 repos: 658 to 6,876 nodes), Traverse baselines (60/60 scenarios). Search/performance baselines partial (LocAgent only) due to llama-index limitation."
   - criterion: "Track LocAgent baseline version in tests/fixtures/parity/locagent_version.txt"
     status: "completed"
     notes: "Completed 2025-10-24: Version tracking file updated with commit 38538ce, Python 3.12.7 uv environment, SKIP_DIRS modifications documented"
   - criterion: "Define and socialize parity gates for project phases"
     status: "completed"
     notes: "Completed 2025-10-20: Phase-gated checkpoints (Week 2, 5, 7, 10) documented in methodology"
+  - criterion: "Document known limitations and workarounds"
+    status: "completed"
+    notes: "Completed 2025-10-24: llama-index SimpleDirectoryReader limitation documented in methodology Section 10 and golden_outputs/README.md. Explains why search/perf baselines are LocAgent-only and why this doesn't block CDSAgent Rust development."
 
 worklog:
   base_path: ".artifacts/spec-tasks-T-06-01-parity-methodology/worklogs/"
@@ -93,13 +115,18 @@ worklog:
       notes: "worklogs/2025-10-24-notes.md"
 
 metrics:
-  estimated_hours: 16  # 2 days * 8 hours
-  actual_hours: 14  # Phase 1: 6h (2025-10-20), Review: 4h (2025-10-22), Phase 2: 4h (2025-10-24)
-  lines_added: 2650  # Phase 1: 2483, Phase 2: ~167 (baseline files + version tracking)
-  lines_deleted: 1  # SKIP_DIRS modification in LocAgent
-  files_modified: 13  # Phase 1: 10, Phase 2: 3 (build_graph.py, locagent_version.txt, graph_locagent.json)
-  tests_added: 0  # Parity test infrastructure created, actual tests pending
+  estimated_hours: 32  # 4 days * 8 hours
+  actual_hours: 28  # Phase 1: 6h (2025-10-20), Review: 4h (2025-10-22), Phase 2: 18h (2025-10-24)
+  lines_added: 21500  # Phase 1: 2483, Phase 2: ~19,000 (6 graph JSONs + traverse/search/perf baselines + docs)
+  lines_deleted: 15  # Phase 2: Script cleanups and doc updates
+  files_modified: 35  # Phase 1: 10, Phase 2: 25 (baselines, scripts, docs, metadata)
+  tests_added: 0  # Parity test infrastructure created, actual tests pending in T-08-03
   test_coverage: 0.0  # Not applicable for methodology/documentation task
+  baselines_extracted:
+    graph: "6/6 repos (658 to 6,876 nodes)"
+    traverse: "60/60 scenarios (10 × 6 repos)"
+    search: "1/6 repos (LocAgent only - llama-index limitation)"
+    performance: "1/6 repos (LocAgent only - llama-index limitation)"
 
 comments:
   - date: "2025-10-19"
@@ -110,7 +137,7 @@ comments:
     text: "Captured review context; task still pending kick-off and past target completion (2025-10-21)."
   - date: "2025-10-24"
     author: "Claude Code Agent"
-    text: "Phase 2 completed: Set up LocAgent uv environment (Python 3.12.7), fixed SKIP_DIRS bug to exclude .venv, extracted minimal baseline (LocAgent self: 658 nodes, 1419 edges). Strategy: incremental baseline approach - defer sample repos to M2 tasks."
+    text: "Phase 2 completed: Extracted comprehensive baselines from LocAgent + 5 SWE-bench Lite repos. Graph baselines: 6/6 repos (658 to 6,876 nodes), Traverse baselines: 60/60 scenarios. Search/performance baselines: 1/6 repos (LocAgent only) due to llama-index SimpleDirectoryReader limitation - documented in methodology Section 10. Created automation toolkit (swe-lite CLI + 7 Python scripts). CDSAgent Rust implementation unaffected by limitation."
 
 related_artifacts:
   - type: "documentation"

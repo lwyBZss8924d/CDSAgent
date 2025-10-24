@@ -1,0 +1,60 @@
+dataset: SWE-bench Lite
+dataset_url: https://github.com/princeton-nlp/SWE-bench
+split: test
+selection_date: '2025-10-24'
+selection_criteria: Diversity in framework type, repo size, popularity
+samples:
+- instance_id: django__django-10914
+  repo: django/django
+  repo_url: https://github.com/django/django
+  base_commit: e7fd69d051eaa67cb17f172a39b57253e9cb831a
+  problem_statement: "Set default FILE_UPLOAD_PERMISSION to 0o644.\nDescription\n\t\
+    \nHello,\nAs far as I can see, the \u200BFile Uploads documentation page does\
+    \ not mention any permission issues.\nWhat I would like to see is a warnin..."
+  created_at: '2019-01-30T13:13:20Z'
+  language: python
+- instance_id: scikit-learn__scikit-learn-10297
+  repo: scikit-learn/scikit-learn
+  repo_url: https://github.com/scikit-learn/scikit-learn
+  base_commit: b90661d6a46aa3619d3eec94d5281f5888add501
+  problem_statement: "linear_model.RidgeClassifierCV's Parameter store_cv_values issue\n\
+    #### Description\r\nParameter store_cv_values error on sklearn.linear_model.RidgeClassifierCV\r\
+    \n\r\n#### Steps/Code to Reproduce\r\nimport num..."
+  created_at: '2017-12-12T22:07:47Z'
+  language: python
+- instance_id: matplotlib__matplotlib-18869
+  repo: matplotlib/matplotlib
+  repo_url: https://github.com/matplotlib/matplotlib
+  base_commit: b7d05919865fc0c37a0164cf467d5d5513bd0ede
+  problem_statement: "Add easily comparable version info to toplevel\n<!--\r\nWelcome!\
+    \ Thanks for thinking of a way to improve Matplotlib.\r\n\r\n\r\nBefore creating\
+    \ a new feature request please search the issues for relevant featu..."
+  created_at: '2020-11-01T23:18:42Z'
+  language: python
+- instance_id: pytest-dev__pytest-11143
+  repo: pytest-dev/pytest
+  repo_url: https://github.com/pytest-dev/pytest
+  base_commit: 6995257cf470d2143ad1683824962de4071c0eb7
+  problem_statement: "Rewrite fails when first expression of file is a number and\
+    \ mistaken as docstring \n<!--\r\nThanks for submitting an issue!\r\n\r\nQuick\
+    \ check-list while reporting bugs:\r\n-->\r\n\r\n- [x] a detailed description\
+    \ ..."
+  created_at: '2023-06-26T06:44:43Z'
+  language: python
+- instance_id: psf__requests-1963
+  repo: psf/requests
+  repo_url: https://github.com/psf/requests
+  base_commit: 110048f9837f8441ea536804115e80b69f400277
+  problem_statement: '`Session.resolve_redirects` copies the original request for
+    all subsequent requests, can cause incorrect method selection
+
+    Consider the following redirection chain:
+
+
+    ```
+
+    POST /do_something HTTP/1.1
+
+    Hos...'
+  created_at: '2014-03-15T17:42:11Z'
+  language: python

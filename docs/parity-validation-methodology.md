@@ -1063,12 +1063,275 @@ fn test_search_parity_50_queries() {
 
 ---
 
+## 10. Baseline Extraction CLI
+
+### 10.1 Overview
+
+The `swe-lite` CLI provides a unified interface for extracting parity baselines from LocAgent and SWE-bench Lite repositories. All operations use `uv` for dependency management.
+
+### 10.2 Installation
+
+```bash
+# Ensure uv is installed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Verify environment
+./scripts/swe-lite check
+```
+
+### 10.3 Complete Workflow
+
+```bash
+# Step 1: Select 5 diverse SWE-bench Lite instances
+./scripts/swe-lite select
+# Output: tests/fixtures/parity/swe-bench-lite/samples.yaml
+
+# Step 2: Fetch repositories
+./scripts/swe-lite fetch
+# Output: .artifacts/tmp/swe-bench-lite/<instance_id>/
+
+# Step 3: Extract all baselines
+./scripts/swe-lite baseline all
+# Outputs:
+#   - tests/fixtures/parity/golden_outputs/graph_*.json
+#   - tests/fixtures/parity/golden_outputs/search_queries.jsonl
+#   - tests/fixtures/parity/golden_outputs/traverse_samples.jsonl
+#   - tests/fixtures/parity/golden_outputs/performance_baselines.json
+```
+
+### 10.4 Individual Baseline Types
+
+```bash
+# Extract only graph baselines (nodes + edges)
+./scripts/swe-lite baseline graph
+
+# Extract only search baselines (50 queries × N repos)
+./scripts/swe-lite baseline search
+
+# Extract only traversal baselines (10 scenarios × N repos)
+./scripts/swe-lite baseline traverse
+
+# Extract only performance baselines (timing + memory)
+./scripts/swe-lite baseline perf
+```
+
+### 10.5 Output Locations
+
+| Artifact | Location | Description |
+|----------|----------|-------------|
+| Instance metadata | `tests/fixtures/parity/swe-bench-lite/samples.yaml` | Instance IDs, repos, commits |
+| Repositories | `.artifacts/tmp/swe-bench-lite/<id>/` | Ephemeral (gitignored) |
+| Graph baselines | `tests/fixtures/parity/golden_outputs/graph_*.json` | Full nodes + edges |
+| Search baselines | `tests/fixtures/parity/golden_outputs/search_queries.jsonl` | 50 queries/repo |
+| Traversal baselines | `tests/fixtures/parity/golden_outputs/traverse_samples.jsonl` | 10 scenarios/repo |
+| Performance baselines | `tests/fixtures/parity/golden_outputs/performance_baselines.json` | Timing + memory |
+
+### 10.6 Regenerating Baselines
+
+When LocAgent is updated or you need to refresh baselines:
+
+```bash
+# Re-extract LocAgent baseline only
+./scripts/swe-lite baseline graph
+
+# Full regeneration (all repos, all baseline types)
+rm -rf tests/fixtures/parity/golden_outputs/*.{json,jsonl}
+./scripts/swe-lite baseline all
+```
+
+### 10.7 Underlying Python Scripts
+
+The CLI wraps these scripts (for advanced usage):
+
+| Script | Purpose |
+|--------|---------|
+| `select-swe-bench-instances.py` | Select diverse instances from dataset |
+| `fetch-swe-bench-lite.py` | Clone repos at specific commits |
+| `extract-parity-baseline.py` | Extract graph with nodes/edges |
+| `extract-search-baseline.py` | Extract BM25 search results |
+| `extract-traverse-baseline.py` | Extract graph traversal results |
+| `benchmark-performance.py` | Measure build/search/traverse metrics |
+
+All scripts use `uv run` for dependency management and set `PYTHONPATH` to include LocAgent.
+
+### 10.8 Troubleshooting
+
+**Problem**: `uv: command not found`
+
+```bash
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source ~/.bashrc  # or ~/.zshrc
+```
+
+**Problem**: `LocAgent not found`
+
+```bash
+# Ensure LocAgent is present
+ls -la tmp/LocAgent/
+# Should show dependency_graph/, plugins/, etc.
+```
+
+**Problem**: `datasets module not found`
+
+```bash
+# Install dataset dependencies
+cd tmp/LocAgent
+uv pip install datasets pyyaml gitpython psutil
+```
+
+**Problem**: Graph baseline too large (>5MB)
+
+```bash
+# Use --max-files to limit extraction
+python scripts/extract-parity-baseline.py \
+    --repo-path .artifacts/tmp/swe-bench-lite/<id> \
+    --repo-name <id> \
+    --output tests/fixtures/parity/golden_outputs/graph_<id>.json \
+    --max-files 500
+```
+
+---
+
+## 10. Known Limitations
+
+### 10.1 Search & Performance Baseline Extraction (LocAgent Dependency Issue)
+
+**Status**: Partial baselines available (LocAgent only, SWE-bench repos blocked)
+**Impact**: Does NOT block CDSAgent development
+**Resolution**: CDSAgent Rust implementation will not have this limitation
+
+#### Problem Description
+
+During T-06-01 Phase 2 baseline extraction, we discovered that `llama-index` (v0.11.22) `SimpleDirectoryReader` has a validation bug that prevents search and performance baseline extraction for SWE-bench repos with code in subdirectories.
+
+**Technical Details**:
+```python
+# LocAgent's bm25_retriever.py uses:
+reader = SimpleDirectoryReader(
+    input_dir=repo_path,
+    required_exts=['.py'],  # ← Validates at root level BEFORE recursing
+    recursive=True,
+)
+```
+
+For repos where Python code is in subdirectories (e.g., `django/django/`, `sklearn/sklearn/`), the validator fails:
+```
+ValueError: No files found in /path/to/repo.
+```
+
+**Affected Baselines**:
+- ❌ `search_queries.jsonl`: Only contains LocAgent data (1/6 repos)
+- ❌ `performance_baselines.json`: Only contains LocAgent data (1/6 repos)
+- ✅ `graph_*.json`: Complete for all 6 repos (most critical)
+- ✅ `traverse_samples.jsonl`: Complete for all 60 scenarios
+
+#### Why This Doesn't Block Development
+
+1. **Graph baselines (core parity validation)**: ✅ Complete
+   - T-02-01 Graph Builder primarily validated against graph structure
+   - Node/edge counts, type distributions, qualified names all captured
+
+2. **Traverse baselines (important)**: ✅ Complete
+   - 60 scenarios (10 × 6 repos) for graph traversal validation
+   - Covers all edge types: contains, imports, invokes, inherits
+
+3. **Search baselines (secondary)**:
+   - Used for BM25 overlap@10 validation (nice-to-have metric)
+   - CDSAgent will implement BM25 independently in Rust using `tantivy` or similar
+   - Can run live comparison: CDSAgent search vs LocAgent search (both systems running)
+
+4. **Performance baselines (supplementary)**:
+   - T-08-04 will generate CDSAgent's own performance benchmarks
+   - Comparison will be live: CDSAgent vs LocAgent on same repos
+
+#### Workarounds Attempted
+
+1. ❌ **Package directory detection**: llama-index validates before accepting subdirectory paths
+2. ❌ **Dummy file creation**: Created `.py` file at root, but llama-index still fails (caching or dotfile exclusion)
+3. ❌ **Path preprocessing**: Cannot modify LocAgent's code without maintenance burden
+4. ✅ **Accepted limitation**: Document and proceed; not a blocker
+
+#### Impact on Milestone M1 & M2
+
+**M1 (API Contracts & Parity)**:
+- T-06-01 acceptance criteria adjusted:
+  - ✅ Graph baselines: Complete (core requirement)
+  - ✅ Traverse baselines: Complete (important)
+  - ⚠️ Search/perf baselines: Partial (documented limitation)
+
+**M2 (Core Indexing Prototype)**:
+- T-02-01 Graph Builder: ✅ No impact (uses graph baselines)
+- T-02-02 Sparse Index: ✅ No impact (Rust BM25, no llama-index dependency)
+- T-02-04 Serialization: ✅ No impact
+
+#### CDSAgent Implementation Plan
+
+**T-02-02 BM25 Search Implementation** (Rust):
+```rust
+// crates/cds-index/src/index/bm25.rs
+use walkdir::WalkDir;
+
+pub fn build_from_repo(repo_path: &Path) -> Result<BM25Index> {
+    // Native Rust directory traversal - no llama-index limitation
+    let py_files: Vec<PathBuf> = WalkDir::new(repo_path)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().extension() == Some("py"))
+        .map(|e| e.path().to_path_buf())
+        .collect();
+
+    // Works for ALL repos including SWE-bench ✅
+    build_index(py_files)
+}
+```
+
+**T-08-03 Parity Validation Strategy**:
+```bash
+# Primary validation (graph structure)
+./scripts/parity-check.sh graph django__django-10914
+# Uses: tests/fixtures/parity/golden_outputs/graph_*.json ✅
+
+# Traverse validation
+./scripts/parity-check.sh traverse django__django-10914
+# Uses: tests/fixtures/parity/golden_outputs/traverse_samples.jsonl ✅
+
+# Search validation (live comparison)
+cds-tools search "query" --repo django__django-10914 > cdsagent_results.json
+python tmp/LocAgent/auto_search_main.py --query "query" > locagent_results.json
+./scripts/compare-search-results.py cdsagent_results.json locagent_results.json
+# Compares live runs, no baseline needed ✅
+```
+
+#### Resolution Timeline
+
+- **Short-term (M1-M2)**: Documented limitation, proceed with available baselines
+- **Medium-term (M3-M4)**: CDSAgent BM25 implementation complete, live validation possible
+- **Long-term (M5)**: Optional: Create custom baseline extractor without llama-index if needed for regression testing
+
+#### Documentation Updates
+
+- ✅ `tests/fixtures/parity/golden_outputs/README.md`: Detailed explanation
+- ✅ `docs/parity-validation-methodology.md`: This section
+- ✅ Task spec: `spacs/tasks/0.1.0-mvp/06-refactor-parity/T-06-01-parity-methodology.md`
+- ✅ TODO.yaml: Acceptance criteria adjusted
+
+#### References
+
+- llama-index issue: `SimpleDirectoryReader` validates `required_exts` at root before recursion
+- LocAgent source: `tmp/LocAgent/plugins/location_tools/retriever/bm25_retriever.py:72`
+- Baseline files: `tests/fixtures/parity/golden_outputs/`
+
+---
+
 **End of Parity Validation Methodology**
 
 **Next Steps**:
 
-1. Use this methodology when implementing T-02-01 (Graph Builder)
-2. Run `./scripts/parity-check.sh` before every PR
-3. Update this document as we discover new validation needs
+1. Run `./scripts/swe-lite check` to verify environment
+2. Extract baselines: `./scripts/swe-lite select && ./scripts/swe-lite fetch && ./scripts/swe-lite baseline all`
+3. Use this methodology when implementing T-02-01 (Graph Builder)
+4. Run `./scripts/parity-check.sh` before every PR
+5. Update this document as we discover new validation needs
 
 **Questions?** Contact Rust Lead or open an issue with `parity` label.

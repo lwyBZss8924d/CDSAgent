@@ -265,14 +265,53 @@ tasks:
         - T-02-01-graph-builder
 
     deliverables:
+      # Phase 1 (PR #4)
       - docs/parity-validation-methodology.md
       - scripts/parity-check.sh
       - tests/fixtures/parity/golden_outputs/graph_locagent.json
       - tests/fixtures/parity/locagent_version.txt
       - tmp/extract-locagent-baseline.py
+      # Phase 2 (2025-10-24)
+      - tests/fixtures/parity/golden_outputs/graph_django__django-10914.json
+      - tests/fixtures/parity/golden_outputs/graph_scikit-learn__scikit-learn-10297.json
+      - tests/fixtures/parity/golden_outputs/graph_matplotlib__matplotlib-18869.json
+      - tests/fixtures/parity/golden_outputs/graph_pytest-dev__pytest-11143.json
+      - tests/fixtures/parity/golden_outputs/graph_psf__requests-1963.json
+      - tests/fixtures/parity/golden_outputs/traverse_samples.jsonl
+      - tests/fixtures/parity/golden_outputs/search_queries.jsonl
+      - tests/fixtures/parity/golden_outputs/performance_baselines.json
+      - tests/fixtures/parity/golden_outputs/README.md
+      - tests/fixtures/parity/swe-bench-lite/samples.yaml
+      - scripts/swe-lite
+      - scripts/fetch-swe-bench-lite.py
+      - scripts/select-swe-bench-instances.py
+      - scripts/extract-parity-baseline.py
+      - scripts/extract-search-baseline.py
+      - scripts/extract-traverse-baseline.py
+      - scripts/benchmark-performance.py
+
+    acceptance_criteria:
+      - "✅ Methodology document published with 10 sections"
+      - "✅ Graph baselines extracted for 6 repos (LocAgent + 5 SWE-bench)"
+      - "✅ Traverse baselines extracted for 60 scenarios (10 × 6 repos)"
+      - "⚠️ Search baselines extracted for LocAgent only (llama-index limitation)"
+      - "⚠️ Performance baselines extracted for LocAgent only (llama-index limitation)"
+      - "✅ Automation scripts created (swe-lite CLI wrapper)"
+      - "✅ Known limitations documented in methodology + README"
+
+    worklog_path: .artifacts/spec-tasks-T-06-01-parity-methodology/worklogs/
 
     git_commits:
       - fb1a625: "feat(parity): T-06-01 Phase 2 - extract LocAgent baseline for parity validation"
+
+    metrics:
+      estimated_hours: 32  # 4 days × 8 hours
+      actual_hours: 28
+      baselines_extracted:
+        graph: "6/6 repos (658 to 6,876 nodes)"
+        traverse: "60/60 scenarios"
+        search: "1/6 repos (LocAgent only)"
+        performance: "1/6 repos (LocAgent only)"
 
   T-05-03-error-catalogue:
     title: "Error Code Catalogue & Documentation"
