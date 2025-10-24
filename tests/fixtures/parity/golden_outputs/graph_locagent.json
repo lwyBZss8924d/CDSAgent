@@ -1,0 +1,18 @@
+{
+  "repository": "LocAgent",
+  "total_nodes": 658,
+  "total_edges": 1419,
+  "node_counts_by_type": {
+    "directory": 20,
+    "file": 74,
+    "function": 478,
+    "class": 86
+  },
+  "edge_counts_by_type": {
+    "contains": 657,
+    "imports": 218,
+    "invokes": 531,
+    "inherits": 13
+  },
+  "graph_version": "v2.3"
+}

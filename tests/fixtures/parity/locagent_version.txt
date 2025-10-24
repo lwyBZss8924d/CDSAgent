@@ -1,41 +1,50 @@
-# LocAgent Baseline Version Information
+# LocAgent Baseline Version Tracking
 
-## Source Repository
-- **Original Repository**: https://github.com/gersteinlab/LocAgent
-- **Paper**: https://arxiv.org/abs/2503.09089 (arXiv-2503.09089v2)
-- **Datasets**:
-  - SWE-bench Lite: czlll/SWE-bench_Lite
-  - Loc-Bench V1: czlll/Loc-Bench_V1
+This file tracks the specific version of LocAgent used to generate golden outputs for parity validation.
 
-## Local Copy Information
-- **Location**: tmp/LocAgent/
-- **Copy Date**: 2025-10-18 (from CDSAgent project setup)
-- **Note**: Copied without .git history for reference purposes
+## Repository Information
+- **Repository**: https://github.com/gersteinlab/LocAgent
+- **Commit**: 38538ce1c35d1b1553645496e175fce3ee481cf5
+- **Branch**: main
+- **Extraction Date**: 2025-10-24
+
+## Graph Version
+- **Version**: v2.3 (from dependency_graph/build_graph.py)
 
 ## Python Environment
-- **Python Version**: 3.12 (recommended by LocAgent README)
-- **System Python**: 3.14.0 (macOS, /opt/homebrew/bin/python3)
-- **Dependencies**: requirements.txt from LocAgent repository
+- **Python Version**: 3.12.7 (uv-managed)
+- **Package Manager**: uv 0.8.17
+- **Key Dependencies**:
+  - tree-sitter==0.21.3
+  - tree-sitter-languages==1.10.2
+  - networkx==3.4.2
+  - datasets==3.1.0
+  - torch==2.9.0 (CPU-only)
 
-## Graph Index Version
-- **Version**: v2.3 (from LocAgent README §2.3)
-- **Configuration**:
-  - Node types: 4 (directory, file, class, function)
-  - Edge types: 4 (contain, import, invoke, inherit)
+## Modifications to LocAgent
+- **File**: dependency_graph/build_graph.py
+- **Line 25**: Modified SKIP_DIRS to exclude virtual environments and build artifacts:
+  ```python
+  SKIP_DIRS = ['.github', '.git', '.venv', 'venv', '__pycache__',
+               '.pytest_cache', 'node_modules', 'site-packages',
+               '.tox', '.eggs', 'build', 'dist', '.mypy_cache', '.hypothesis']
+  ```
+- **Reason**: Prevent indexing of dependency packages in .venv/
 
-## BM25 Configuration
-- **Parameters** (from PRD-06 §2.2):
-  - k1: 1.5
-  - b: 0.75
-- **Tokenization**: camelCase/snake_case splitting with stop words
-
-## Baseline Extraction Date
-- **Date**: 2025-10-20
-- **Extracted By**: Claude Code Agent
-- **Purpose**: Parity validation for CDSAgent 0.1.0-MVP Rust refactoring
+## Baseline Files Generated (Minimal Set)
+- ✅ `graph_locagent.json` - LocAgent's own codebase graph
+  - Nodes: 658 (20 directories, 74 files, 86 classes, 478 functions)
+  - Edges: 1419 (657 contains, 218 imports, 531 invokes, 13 inherits)
+- ⏸ `graph_sample_repos.json` - Deferred to T-02-01 phase
+- ⏸ `search_queries.jsonl` - Deferred to T-02-02 phase
+- ⏸ `traverse_samples.jsonl` - Deferred to T-02-01 phase
+- ⏸ `performance_baselines.json` - Deferred to T-08-04 phase
 
 ## Notes
-- LocAgent paper published: March 2025 (arXiv:2503.09089v2)
-- Graph version 2.3 is the latest stable version used in paper benchmarks
-- All baseline data extracted using LocAgent's own codebase as ground truth
-- Additional sample repos selected from SWE-bench Lite for comprehensive validation
+- Graph version v2.3 uses directed heterogeneous graphs with 4 node types (directory, file, class, function) and 4 edge types (contains, imports, invokes, inherits)
+- Baseline extraction follows methodology in docs/parity-validation-methodology.md
+- Golden outputs serve as ground truth for CDSAgent Rust implementation validation
+- **Strategy**: Minimal baseline (LocAgent self) for T-06-01; full baselines added incrementally in M2/M3
+
+## Regeneration Instructions
+See tests/fixtures/parity/README.md for detailed instructions on regenerating baselines if LocAgent version is updated.
