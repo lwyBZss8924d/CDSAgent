@@ -79,7 +79,32 @@ def benchmark_search(repo_path: Path, num_queries: int = 50) -> Dict[str, Any]:
     """Benchmark search latency."""
     print(f"Benchmarking search ({num_queries} queries)...")
 
-    retriever = build_code_retriever_from_repo(str(repo_path))
+    # Workaround for llama-index SimpleDirectoryReader limitation:
+    # It validates required_exts at the root level before recursing. For repos where
+    # Python code is in subdirectories (django/django/, sklearn/sklearn/), this fails.
+    # Solution: Temporarily create a dummy .py file to satisfy the validator.
+    dummy_file = repo_path / "dummy_llamaindex_workaround.py"
+    created_dummy = False
+
+    try:
+        # Check if we need the workaround (no .py files at root except setup.py/conftest.py)
+        root_py_files = list(repo_path.glob("*.py"))
+        substantial_files = [f for f in root_py_files
+                           if f.name not in ("setup.py", "conftest.py", "__init__.py")]
+
+        if not substantial_files:
+            # Create dummy file to satisfy SimpleDirectoryReader validator
+            dummy_file.write_text("# Temporary file for llama-index SimpleDirectoryReader validation\n")
+            created_dummy = True
+            print(f"  ✓ Created dummy file: {dummy_file.name} (llama-index workaround)")
+
+        retriever = build_code_retriever_from_repo(str(repo_path))
+
+    finally:
+        # Clean up dummy file
+        if created_dummy and dummy_file.exists():
+            dummy_file.unlink()
+            print(f"  ✓ Cleaned up dummy file")
 
     # Use diverse queries
     queries = [
