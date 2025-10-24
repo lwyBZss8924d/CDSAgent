@@ -6,7 +6,7 @@
 
 **Owner**: PM / Technical Writer
 
-**Status**: ☐ Not Started | **Week**: 4
+**Status**: ✅ Completed (2025-10-25) | **Week**: 1
 
 ---
 
@@ -29,9 +29,9 @@ Document all JSON-RPC error codes, their meaning, and recommended remediation st
 
 ## Acceptance Criteria
 
-- [ ] Every error code defined in PRD-05 documented with description and remediation.
-- [ ] CLI and agent reference documentation updated to link to error catalogue.
-- [ ] Process for adding new error codes established (checklist in docs).
+- [x] Every error code defined in PRD-05 documented with description and remediation.
+- [x] CLI and agent reference documentation updated to link to error catalogue.
+- [x] Process for adding new error codes established (checklist in docs).
 
 ## Dependencies
 

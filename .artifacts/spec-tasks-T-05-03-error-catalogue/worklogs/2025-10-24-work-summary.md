@@ -1,4 +1,4 @@
-# Work Summary - 2025-10-25
+# Work Summary - 2025-10-24
 **Task**: T-05-03-error-catalogue - Error Code Catalogue & Documentation
 **Developer**: Claude Code Agent
 **Status**: ✅ Completed
@@ -39,9 +39,9 @@
 ### Files Created
 - .artifacts/spec-tasks-T-05-03-error-catalogue/metadata.yaml
 - .artifacts/spec-tasks-T-05-03-error-catalogue/git-refs.txt
-- .artifacts/spec-tasks-T-05-03-error-catalogue/worklogs/2025-10-25-work-summary.md
-- .artifacts/spec-tasks-T-05-03-error-catalogue/worklogs/2025-10-25-commit-log.md
-- .artifacts/spec-tasks-T-05-03-error-catalogue/worklogs/2025-10-25-notes.md
+- .artifacts/spec-tasks-T-05-03-error-catalogue/worklogs/2025-10-24-work-summary.md
+- .artifacts/spec-tasks-T-05-03-error-catalogue/worklogs/2025-10-24-commit-log.md
+- .artifacts/spec-tasks-T-05-03-error-catalogue/worklogs/2025-10-24-notes.md
 
 ---
 

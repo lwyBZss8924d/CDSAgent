@@ -8,9 +8,9 @@
 
 | Task ID | Title | Owner | Status | Week |
 |---------|-------|-------|--------|------|
-| T-05-01 | JSON-RPC Schema Definition & Validation | Rust Dev 1 + TS Dev 1 | ✅ Completed | W3 |
-| T-05-02 | TypeScript Client Types & SDK Bindings | TS Dev 1 | ✅ Completed | W3 |
-| T-05-03 | Error Code Catalogue & Docs | PM/Writer | ☐ Not Started | W4 |
+| T-05-01 | JSON-RPC Schema Definition & Validation | Rust Dev 1 + TS Dev 1 | ✅ Completed (2025-10-19) | W1 |
+| T-05-02 | TypeScript Client Types & SDK Bindings | TS Dev 1 | ✅ Completed (2025-10-23) | W1 |
+| T-05-03 | Error Code Catalogue & Docs | PM/Writer | ✅ Completed (2025-10-25) | W1 |
 
 ## Task Details
 
@@ -32,8 +32,11 @@ PR Link: [PR #5](https://github.com/lwyBZss8924d/CDSAgent/pull/5)
 
 ### T-05-03: Error Code Catalogue
 
-- **Deliverables**: `docs/api/error-codes.md`, updates to README.
-- **Acceptance**: Every error code mapped to description, remediation, and HTTP mapping (for future REST proxy).
+Task Status: ✅ Completed
+PR Link: [PR #5](https://github.com/lwyBZss8924d/CDSAgent/pull/5)
+
+- **Deliverables**: `docs/api/error-codes.md` (434 lines, 8 sections), updates to README.md (line 205).
+- **Acceptance**: Every error code mapped to description, remediation, and HTTP mapping. Process for adding new error codes established (Section 6.1).
 
 ## Dependencies
 

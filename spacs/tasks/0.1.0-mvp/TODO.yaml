@@ -1,6 +1,6 @@
 # CDSAgent 0.1.0-MVP Task Tracking
 # Version: 1.0
-# Last Updated: 2025-10-23
+# Last Updated: 2025-10-24T18:00:00
 #
 # This file tracks all implementation tasks with metadata, dependencies, and status.
 # Each task links to PRDs, Issues, and detailed task specifications.
@@ -28,18 +28,23 @@ milestones:
   M1:
     name: "API Contracts & Parity"
     target_date: "2025-10-26"  # Week 1
-    status: in_progress
+    status: completed  # ✅ Completed 2025-10-25
+    completed_date: "2025-10-25"
     description: "Define all interfaces and validation methodology"
     critical_path:
       - T-05-01-jsonrpc-schema  # ✅ Completed 2025-10-19
-      - T-06-01-parity-methodology  # ✅ Completed 2025-10-22
+      - T-06-01-parity-methodology  # ✅ Completed 2025-10-24
+      - T-05-02-typescript-bindings  # ✅ Completed 2025-10-23
+      - T-05-03-error-catalogue  # ✅ Completed 2025-10-25
     pr_merged:
       - T-05-01-jsonrpc-schema: 3
+      - T-05-02-typescript-bindings: 5
       - T-06-01-parity-methodology: 4
     deliverables:
       - JSON-RPC API schemas  # ✅ Completed
-      - LocAgent parity methodology
-      - TypeScript type bindings
+      - LocAgent parity methodology  # ✅ Completed with Phase 2 baselines
+      - TypeScript type bindings  # ✅ Completed
+      - Error code catalogue  # ✅ Completed
 
   M2:
     name: "Core Indexing Prototype"
@@ -319,11 +324,12 @@ tasks:
     milestone: M1
     week: 1
     priority: P1
-    status: not_started
+    status: completed
     owner: PM/Tech Writer
     duration_days: 1
     worktree: null
     branch: main
+    completed_date: "2025-10-24"
 
     specs:
       tasks:
@@ -335,8 +341,26 @@ tasks:
       blocks: []
 
     deliverables:
-      - docs/api/error-codes.md
-      - Updated README with error handling
+      - docs/api/error-codes.md  # ✅ Completed (created in T-05-01)
+      - Updated README with error handling  # ✅ Completed (line 205)
+
+    acceptance_criteria:
+      - "✅ Every error code defined in PRD-05 documented with description and remediation"
+      - "✅ CLI and agent reference documentation updated to link to error catalogue"
+      - "✅ Process for adding new error codes established (checklist in docs)"
+
+    worklog_path: .artifacts/spec-tasks-T-05-03-error-catalogue/worklogs/
+
+    git_commits:
+      - 477d022: "docs(api): T-05-03 - finalize error catalogue with task tracking"
+
+    metrics:
+      estimated_hours: 8
+      actual_hours: 1
+      lines_added: 358
+      lines_deleted: 0
+      tests_added: 0
+      test_pass_rate: null
 
   # ==================== Phase 2: Core Indexing (Week 2-3) ====================
 
@@ -886,20 +910,21 @@ tasks:
 
 # Workflow metadata tracking
 workflows:
-  current_phase: "M1 - API Contracts & Parity (Completing)"
-  active_tasks: []  # All M1 critical path tasks completed
+  current_phase: "M2 - Core Indexing Prototype (Starting)"
+  active_tasks: []  # Ready to start T-02-01
 
   completed_tasks:
-    - T-00-01-worktree-setup
-    - T-05-01-jsonrpc-schema  # PR #3 merged 2025-10-19
-    - T-05-02-typescript-bindings  # PR #5 merged 2025-10-23
-    - T-06-01-parity-methodology  # PR #4 merged 2025-10-22, Phase 2 completed 2025-10-24
+    - T-00-01-worktree-setup  # M0
+    - T-05-01-jsonrpc-schema  # M1, PR #3 merged 2025-10-19
+    - T-05-02-typescript-bindings  # M1, PR #5 merged 2025-10-23
+    - T-06-01-parity-methodology  # M1, PR #4 merged 2025-10-22, Phase 2 completed 2025-10-24
+    - T-05-03-error-catalogue  # M1, completed 2025-10-25
 
   blocked_tasks: []
 
   next_up:
-    - T-05-03-error-catalogue  # Week 1, Day 5 (M1 final task, P1)
-    - T-02-01-graph-builder  # Week 2, Day 1 (M2 start, requires T-06-01 ✅)
+    - T-02-01-graph-builder  # Week 2, M2 start (requires T-06-01 ✅ - START HERE)
+    - T-02-02-sparse-index  # Week 2, M2 (requires T-02-01)
 
 # Artifact tracking
 artifacts:
@@ -920,4 +945,8 @@ artifacts:
 comments:
   - "2025-10-19: Initial TODO.yaml created with all task definitions"
   - "2025-10-19: M0 milestone completed - worktree infrastructure ready"
-  - "Next action: Start T-05-01 in ~/dev-space/CDSAgent-T-05-01-jsonrpc-schema"
+  - "2025-10-24: M1 milestone completed - API contracts and parity baseline established"
+  - "2025-10-24: T-06-01 Phase 2 baselines extracted (6 graphs, 60 traversals, 50 search queries)"
+  - "2025-10-24: Known limitation documented - llama-index retriever requires .py at repo root"
+  - "2025-10-24: Fixed benchmark-performance.py with dummy __init__.py workaround (d78c687)"
+  - "Next action: Start T-02-01 in ~/dev-space/CDSAgent-T-02-01-graph-builder (M2 begins)"
