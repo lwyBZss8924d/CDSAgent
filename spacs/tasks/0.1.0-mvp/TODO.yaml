@@ -302,7 +302,8 @@ tasks:
     worklog_path: .artifacts/spec-tasks-T-06-01-parity-methodology/worklogs/
 
     git_commits:
-      - fb1a625: "feat(parity): T-06-01 Phase 2 - extract LocAgent baseline for parity validation"
+      - fb1a625: "feat(parity): T-06-01 Phase 1 - establish parity validation methodology"
+      - d00ce54: "feat(parity): T-06-01 Phase 2 - extract comprehensive baselines with llama-index limitation documented"
 
     metrics:
       estimated_hours: 32  # 4 days × 8 hours
