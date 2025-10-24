@@ -1,0 +1,15 @@
+# Git References for T-05-03-error-catalogue
+# Generated: 2025-10-25
+
+Branch: main
+Worktree: null (main branch task)
+
+Base Commit: d78c687 (fix(parity): add llama-index guard to benchmark-performance.py)
+
+Related Commits:
+- 890b01e: feat(api): T-05-01 - implement JSON-RPC schema validation (created error-codes.md)
+- 5ff7db3: fix(api): address schema validation and documentation issues
+- db543df: fix(tests): use compiled schema validation against full jsonrpc-schema.json
+
+Task Commits (will be added after completion):
+- TBD: docs(api): T-05-03 - finalize error catalogue with task tracking

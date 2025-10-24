@@ -1,0 +1,62 @@
+# Task Metadata for T-05-03-error-catalogue
+# Auto-generated on 2025-10-25
+
+task:
+  id: T-05-03-error-catalogue
+  title: "Error Code Catalogue & Documentation"
+  owner: PM/Tech Writer
+  milestone: M1
+  priority: P1
+  status: completed
+  start_date: "2025-10-25"
+  completed_date: "2025-10-25"
+
+  specs:
+    prds:
+      - spacs/prd/0.1.0-MVP-PRDs-v0/05-api-specifications.md
+    issues:
+      - spacs/issues/04-0.1.0-mvp/05-api-contracts.md
+    tasks:
+      - spacs/tasks/0.1.0-mvp/05-api-contracts/T-05-03-error-catalogue.md
+
+  dependencies:
+    requires:
+      - T-05-01-jsonrpc-schema
+    blocks: []
+
+deliverables:
+  - path: docs/api/error-codes.md
+    status: completed
+    notes: "Comprehensive error catalogue (434 lines, 8 sections)"
+  - path: README.md
+    status: completed
+    notes: "Links to error catalogue at line 205"
+
+acceptance_criteria:
+  - criterion: "Every error code defined in PRD-05 documented with description and remediation"
+    status: completed
+    notes: "All 4 custom error codes (-32001 to -32004) fully documented"
+  - criterion: "CLI and agent reference documentation updated to link to error catalogue"
+    status: completed
+    notes: "README.md links to docs/api/error-codes.md"
+  - criterion: "Process for adding new error codes established (checklist in docs)"
+    status: completed
+    notes: "Section 6.1 in error-codes.md documents the process"
+
+git:
+  branch: main
+  worktree: null
+  commits: []  # Will be populated after commit
+
+metrics:
+  estimated_hours: 8  # 1 day
+  actual_hours: 1  # Minimal work - most deliverables completed in T-05-01
+  lines_added: 50  # Mostly documentation updates
+  lines_deleted: 0
+  tests_added: 0
+  test_pass_rate: null
+
+comments:
+  - date: "2025-10-25"
+    author: "Claude Code Agent"
+    text: "Task deliverables were 90% complete during T-05-01. This task formalized tracking and verified completeness."
