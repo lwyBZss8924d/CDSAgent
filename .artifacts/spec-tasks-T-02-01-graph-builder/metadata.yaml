@@ -1,0 +1,111 @@
+# Task Metadata - T-02-01 Graph Builder
+
+task:
+  id: "T-02-01-graph-builder"
+  title: "Graph Builder - AST Parsing & Construction"
+  status: "not_started"  # not_started | in_progress | blocked | completed
+  priority: "P0"
+  milestone: "M2"
+  week: 2
+  duration_days: 5
+
+owner:
+  primary: "Rust Dev 1"
+  secondary: ["Refactor Parity Lead"]
+
+dates:
+  started: "2025-10-24"
+  target_completion: "2025-10-30"  # 5 business days from start
+  actual_completion: null
+
+specs:
+  prds:
+    - "spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md"
+    - "spacs/prd/0.1.0-MVP-PRDs-v0/06-rust-refactoring-plan.md"
+  issues:
+    - "spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md"
+  tasks:
+    - "spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md"
+
+git:
+  worktree: ".worktrees/T-02-01-graph-builder"
+  branch: "feat/task/T-02-01-graph-builder"
+  symlink: "~/dev-space/CDSAgent-T-02-01-graph-builder"
+  commits:
+    - hash: "f0e4858"
+      message: "docs(task): T-02-01 - initialize task artifacts and Day 1 spec review"
+      date: "2025-10-24"
+      files_changed: 5
+  pr:
+    number: null
+    url: null
+    status: null  # draft | open | merged | closed
+    merged_at: null
+
+dependencies:
+  requires:
+    - "T-06-01-parity-methodology"  # ✅ Completed 2025-10-24
+  blocks:
+    - "T-02-02-sparse-index"
+    - "T-03-01-core-commands"
+
+deliverables:
+  - "crates/cds-index/src/graph/parser.rs"
+  - "crates/cds-index/src/graph/builder.rs"
+  - "crates/cds-index/src/graph/traversal.rs"
+  - "crates/cds-index/tests/graph_builder_tests.rs"
+  - "tests/fixtures/repos/"
+
+acceptance_criteria:
+  - criterion: "Parses Python repositories and produces a graph with all 4 node types and 4 edge types"
+    status: "pending"
+    notes: "Node types: directory, file, class, function. Edge types: contains, imports, invokes, inherits"
+  - criterion: "Fully-qualified names match LocAgent format (e.g., path/to/file.py::Class::method)"
+    status: "pending"
+    notes: "FQN format: filename:Class.method with colon separator for file boundary"
+  - criterion: "Unit tests cover typical and edge cases (decorators, nested classes, async functions)"
+    status: "pending"
+    notes: "Target: >80% test coverage"
+  - criterion: "Graph parity script reports ≤2% variance in node/edge counts vs. LocAgent baseline"
+    status: "pending"
+    notes: "Validate against all 6 baselines: LocAgent, Django, Matplotlib, Requests, Pytest, Scikit-learn"
+
+worklog:
+  base_path: ".artifacts/spec-tasks-T-02-01-graph-builder/worklogs/"
+  entries:
+    - date: "2025-10-24"
+      summary: "worklogs/2025-10-24-work-summary.md"
+      commits: "worklogs/2025-10-24-commit-log.md"
+      notes: "worklogs/2025-10-24-notes.md"
+
+metrics:
+  estimated_hours: 40  # 5 days * 8 hours
+  actual_hours: 0
+  lines_added: 0
+  lines_deleted: 0
+  files_modified: 0
+  tests_added: 0
+  test_coverage: 0.0  # 0.0 to 1.0
+
+comments:
+  - date: "2025-10-24"
+    author: "Rust Dev 1"
+    text: "Task preparation complete. Spec review documented in 2025-10-24-notes.md. 6 baseline fixtures available (658 to 6,876 nodes). Ready to begin implementation."
+
+related_artifacts:
+  - type: "parity_baseline"
+    path: "tests/fixtures/parity/golden_outputs/graph_locagent.json"
+  - type: "parity_baseline"
+    path: "tests/fixtures/parity/golden_outputs/graph_django__django-10914.json"
+  - type: "parity_baseline"
+    path: "tests/fixtures/parity/golden_outputs/graph_matplotlib__matplotlib-18869.json"
+  - type: "parity_baseline"
+    path: "tests/fixtures/parity/golden_outputs/graph_psf__requests-1963.json"
+  - type: "parity_baseline"
+    path: "tests/fixtures/parity/golden_outputs/graph_pytest-dev__pytest-11143.json"
+  - type: "parity_baseline"
+    path: "tests/fixtures/parity/golden_outputs/graph_scikit-learn__scikit-learn-10297.json"
+  - type: "reference_implementation"
+    path: "tmp/LocAgent/dependency_graph/build_graph.py"
+  - type: "methodology"
+    path: "docs/parity-validation-methodology.md"

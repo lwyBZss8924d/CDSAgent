@@ -1,0 +1,8 @@
+f0e4858
+
+Task: T-02-01-graph-builder
+Branch: feat/task/T-02-01-graph-builder
+Base: main (commit 894bb53)
+
+Commit History:
+- f0e4858: docs(task): T-02-01 - initialize task artifacts and Day 1 spec review
