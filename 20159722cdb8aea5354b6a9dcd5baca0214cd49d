@@ -1,0 +1,70 @@
+T-02-01 Graph Builder - Day 2 Implementation Checkpoint
+
+## Task Metadata
+- Task ID: T-02-01-graph-builder
+- Milestone: M2 (Core Indexing Prototype)
+- Priority: P0
+- Status: In Progress (60% complete)
+- Owner: Rust Dev 1
+
+## Time Tracking
+- Day 1 (2025-10-24): 2 hours (planning & spec review)
+- Day 2 (2025-10-25): 8 hours (core implementation)
+- Total: 10 hours / 40 estimated hours
+
+## Implementation Statistics
+- Core code: 1,732 lines (parser 426, builder 1040, traversal 64, mod 202)
+- Tests: 232 lines (2 unit tests)
+- Documentation: 36K worklogs (work-summary, commit-log, notes)
+- Total lines changed: +4,265, -40
+
+## Code Metrics
+- Files modified: 16
+- Test coverage: ~15% (2 tests)
+- Test pass rate: 100% (2/2 passing)
+- Cargo check: ✅ Passing
+- Cargo fmt: ✅ Applied
+
+## Acceptance Criteria Status
+1. [IN_PROGRESS] All 4 node/edge types implemented
+   - ✅ Node types: Directory, File, Class, Function
+   - ✅ Edge types: Contains, Imports, Invokes, Inherits
+   - ⏳ Needs parity validation
+2. [IN_PROGRESS] FQN format matches LocAgent
+   - ✅ Format implemented: filename:Class.method
+   - ⏳ Needs golden baseline validation
+3. [IN_PROGRESS] Unit tests coverage
+   - ✅ Initial tests (invoke edge alias resolution)
+   - ⏳ Needs expansion to >80%
+4. [PENDING] Parity validation ≤2% variance
+   - ⏳ Not yet run
+
+## Parity Baselines Available
+- tests/fixtures/parity/golden_outputs/graph_locagent.json (658 nodes, 1,419 edges)
+- tests/fixtures/parity/golden_outputs/graph_django__django-10914.json (6,876 nodes, 9,982 edges)
+- tests/fixtures/parity/golden_outputs/graph_matplotlib__matplotlib-18869.json (1,304 nodes, 1,674 edges)
+- tests/fixtures/parity/golden_outputs/graph_psf__requests-1963.json (752 nodes, 2,060 edges)
+- tests/fixtures/parity/golden_outputs/graph_pytest-dev__pytest-11143.json (5,991 nodes, 8,634 edges)
+- tests/fixtures/parity/golden_outputs/graph_scikit-learn__scikit-learn-10297.json (6,613 nodes, 55,638 edges)
+
+## Next Actions (Day 3)
+1. Run cargo clippy --all-targets --all-features
+2. Run parity validation: scripts/parity-check.sh
+3. Expand unit test coverage to >80%
+4. Fix any parity validation failures
+5. Update TODO.yaml with progress
+
+## Dependencies
+- Requires: T-06-01 ✅ (completed 2025-10-24)
+- Blocks: T-02-02 (sparse index), T-03-01 (CLI commands)
+
+## Reference Implementation
+- LocAgent: tmp/LocAgent/dependency_graph/build_graph.py (400+ lines)
+- Paper: tmp/LocAgent/arXiv-2503.09089v2/2503.09089v2.pdf
+
+## Worklog Artifacts
+- .artifacts/spec-tasks-T-02-01-graph-builder/metadata.yaml (updated)
+- .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-25-work-summary.md (9.0K)
+- .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-25-commit-log.md (8.9K)
+- .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-25-notes.md (18K)
+- .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/* (action logs)
