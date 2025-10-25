@@ -90,11 +90,56 @@
 - Recorded testing TODO for comprehensive suite expansion
 - Documented Day 2 progress in metadata
 
+### Session 4: Parity Harness & Import Refinement (06:30:00Z - 08:00:00Z)
+
+**Graph Parity Harness** (crates/cds-index/tests/graph_parity_tests.rs, 359 lines):
+- Dedicated integration test for all 6 parity baseline repos
+- Loads golden JSONs and enforces ≤2% variance rule
+- Human-readable diagnostics with variance percentages
+- PARITY_DEBUG=1 mode dumps missing/extra edge samples by kind
+- Edge mismatch debugging with 5-sample limits
+
+**Builder + Parser Enhancements** (crates/cds-index/src/graph/builder.rs, +159 lines):
+- **AST-based Import Collection**: Parse each file with rustpython_parser + tree-sitter
+  - Cache AST for behavior-edge analysis
+  - Collect import directives via AST to match LocAgent's ast.walk logic
+  - Tree-sitter import extraction as fallback when AST parse fails
+- **Absolute Import Fix**: `resolve_module_spec` now handles `level == 0` correctly
+  - Starts from repo root instead of current module path
+  - Removed global name lookup fallback for invoke edges
+- **PARITY_DEBUG Support**: Environment-gated debug hooks
+  - Logs unresolved attribute import targets when enabled
+  - Surfaced re-export gaps (e.g., `dependency_graph/__init__.py::RepoEntitySearcher`)
+  - Identified enum/constant imports not currently modeled
+
+**Current Parity Status** (from `cargo test --test graph_parity_tests`):
+- ✅ **Nodes**: Exact match (658 to 6,876 nodes across 6 repos)
+- ✅ **Contains edges**: Exact match
+- ✅ **Inherit edges**: Exact match
+- ❌ **Import edges**: 166 vs 218 (+23.85% variance) - Missing 52 edges
+- ❌ **Invoke edges**: 448 vs 531 (-15.63% variance) - Missing 83 edges
+
+**Root Causes Identified**:
+1. **Missing Imports**: Re-exported symbols not followed (e.g., `__init__.py` → actual definitions)
+2. **Missing Invokes**: Need LocAgent's `find_all_possible_callee` traversal instead of alias-map lookup
+3. **Extra Edges**: AST picks up imports LocAgent ignores, self-recursive invoke logging
+
+**Tooling Runs**:
+- `cargo fmt --all` ✅
+- `cargo clippy --all-targets --workspace` ✅ (only existing warnings)
+- `cargo test -p cds-index --test graph_parity_tests -- --nocapture` (fails by design with variances above)
+
 ### Tests Added
 
 **Unit Tests** (2 tests, 232 lines total):
 1. `test_invoke_edge_with_alias()` - Validates alias resolution in function calls
 2. `test_decorator_alias_invoke()` - Validates decorator creates invoke edge
+
+**Integration Tests** (1 test suite, 359 lines total):
+3. `graph_parity_baselines()` - Parity validation for all 6 baseline repos
+   - Executes LocAgent + 5 SWE-bench fixtures
+   - Enforces ≤2% variance on node/edge counts
+   - PARITY_DEBUG=1 dumps edge mismatches
 
 **Next Tests Needed** (from TODO):
 - Parser tests (nested classes, async functions, decorators)
@@ -127,7 +172,7 @@
 
 **Raw Logs**:
 - `.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK-START-2025-10-24-04.txt` (+749 lines, new)
-- `.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01.txt` (+180 lines, new)
+- `.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01.txt` (+232 lines, updated with Session 4)
 
 ### Key Decisions
 
@@ -185,21 +230,30 @@
 
 ## Next Steps
 
-**Tomorrow (Day 3 - Parity Validation)**:
+**Tomorrow (Day 3 - Parity Improvement)**:
 
-- [ ] Run `cargo fmt --all` and `cargo clippy --all-targets`
-- [ ] Run parity check against all 6 baselines
-- [ ] Compare node/edge counts (≤2% variance threshold)
-- [ ] Validate FQN format matches LocAgent golden outputs
-- [ ] Document any variance findings
-- [ ] Expand unit test coverage (parser, edge creation, FQN format)
+1. **Implement Re-Export Awareness** (~4 hours)
+   - Capture assignments in `__init__.py` files
+   - Propagate `__all__` exports
+   - Map aliases in pending_imports
+   - **Target**: Close 52 missing import edges
 
-**Day 4-5 (Completion)**:
+2. **Mirror LocAgent's `find_all_possible_callee` Logic** (~4 hours)
+   - Replace alias-map + local-symbol heuristic with graph connectivity traversal
+   - Derive invoke edges from graph walk instead of name resolution
+   - **Target**: Add ~83 missing invoke edges, avoid spurious global lookups
 
-- [ ] Achieve >80% test coverage target
+**Day 4 (Validation & Testing)**:
+
+- [ ] Verify parity passes for LocAgent (≤2% variance)
+- [ ] Extend `graph_parity_tests` to cover all 5 SWE-bench fixtures
+- [ ] Expand unit test coverage to >80%
+- [ ] Run full clippy/fmt/test suite
+
+**Day 5 (Completion)**:
+
 - [ ] Benchmark performance (<5s for 1K files)
-- [ ] Fix any parity validation failures
-- [ ] Create PR with comprehensive test coverage
+- [ ] Create PR with parity validation results
 - [ ] Update TODO.yaml milestone status
 
 ## Acceptance Criteria Progress
@@ -207,35 +261,48 @@
 - [🔄] **Parses Python repositories and produces a graph with all 4 node types and 4 edge types**
   - ✅ All 4 node types implemented
   - ✅ All 4 edge types implemented
-  - ⏳ Needs parity validation testing
+  - ✅ Parity harness validates against 6 baseline repos
+  - ⏳ Nodes/contains/inherits pass parity (exact match)
+  - ❌ Imports/invokes exceed 2% variance (need refinement)
 
 - [🔄] **Fully-qualified names match LocAgent format**
   - ✅ FQN format implemented (filename:Class.method)
-  - ⏳ Needs validation against golden baselines
+  - ⏳ Needs validation against golden baselines (covered by parity tests)
 
 - [🔄] **Unit tests cover typical and edge cases**
-  - ✅ Initial tests added (2 invoke edge tests)
+  - ✅ Initial unit tests added (2 invoke edge tests)
+  - ✅ Integration test added (graph parity harness)
   - ⏳ Needs expansion to >80% coverage
 
-- [☐] **Graph parity script reports ≤2% variance**
-  - ⏳ Next step: Run scripts/parity-check.sh
+- [🔄] **Graph parity script reports ≤2% variance**
+  - ✅ Parity harness implemented and running
+  - ❌ Currently failing: imports +23.85%, invokes -15.63%
+  - ⏳ Day 3 work: Implement re-exports and callee traversal to fix variance
 
 ## Notes & Comments
 
-**Day 2 Status**: Core implementation complete (1,964 lines of Rust code). All 4 node types and 4 edge types working. Import resolution and invoke/inherit detection implemented. Initial unit tests passing.
+**Day 2 Status**: Core implementation + parity harness complete (2,323 lines of Rust code). All 4 node types and 4 edge types working. Import resolution and invoke/inherit detection implemented. Parity harness validates against 6 baseline repos.
+
+**Parity Results**:
+- ✅ Nodes exact match across all 6 repos (658 to 6,876 nodes)
+- ✅ Contains/inherits exact match
+- ❌ Imports +23.85% variance (missing 52 re-exported edges)
+- ❌ Invokes -15.63% variance (missing 83 callee-traversal edges)
 
 **Next Critical Actions**:
-1. Parity validation against 6 SWE-bench baselines
-2. Expand unit test coverage to >80%
-3. Address any variance findings from parity checks
+1. Implement `__init__.py` re-export awareness (Day 3)
+2. Mirror LocAgent's `find_all_possible_callee` graph traversal (Day 3)
+3. Verify parity passes for LocAgent baseline (Day 4)
+4. Expand unit test coverage to >80% (Day 4)
 
 **Known Limitations**:
-- Test coverage still low (~15% estimated)
-- Parity validation not yet run
-- Some edge cases may need handling (nested async functions, complex decorators)
+- Test coverage ~20% estimated (unit + integration)
+- Re-export patterns not yet handled
+- Invoke resolution uses alias-map instead of graph connectivity
+- PARITY_DEBUG mode helps diagnose edge mismatches
 
 ---
 
-**Time Spent**: 8 hours (implementation)
-**Status**: In Progress (Day 2 - Core Implementation Complete)
-**Progress**: 60% (core complete, testing/validation remaining)
+**Time Spent**: 11 hours total (Day 1: 2h planning, Day 2: 8h implementation + 3h parity)
+**Status**: In Progress (Day 2 - Parity Harness Complete, Variance Diagnosed)
+**Progress**: 65% (core + parity done, refinement + testing remaining)

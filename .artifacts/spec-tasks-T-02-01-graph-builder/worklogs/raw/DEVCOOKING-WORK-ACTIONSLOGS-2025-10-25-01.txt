@@ -178,3 +178,53 @@ FROME: DEVCOOKING-WORK-START-2025-10-24-04
      inherit edges stay within the ≤2 % variance budget.
 
 ==============================================================
+
+• Graph Parity Harness
+
+  - Added a dedicated integration test (crates/cds-index/tests/graph_parity_tests.rs) that walks the LocAgent + SWE-bench sample
+    repos, loads the golden JSON, and enforces the ≤2 % node/edge variance rule with human-readable diagnostics. The new test
+    exposes a PARITY_DEBUG=1 mode that dumps missing/extra edge samples by kind so it’s easy to see what still diverges.
+
+  Builder + Parser Changes
+
+  - GraphBuilder now parses each Python file with rustpython_parser as well as tree-sitter. The AST result is cached for later
+    behavior-edge analysis, and (most importantly) we now collect import directives directly from the AST to better match
+    LocAgent’s ast.walk logic. Tree-sitter import extraction remains as a fallback when the AST parse fails.
+  - Absolute-import resolution was corrected (spec.level == 0 now starts from repo root instead of the current module path), and
+    we removed the previous “global name lookup” fallback so invoke edges can only be created when an alias or local definition
+    exists—matching LocAgent’s semantics.
+  - Added an env-gated debug hook in add_attribute_import_edge that logs unresolved targets when PARITY_DEBUG is set; this helped
+    surface re-export gaps (e.g., dependency_graph/__init__.py::RepoEntitySearcher) and enum/constant imports we don’t currently
+    model.
+
+  Current Parity Status
+
+  - cargo test -p cds-index --test graph_parity_tests -- --nocapture now drives the full repo set and reports precise deltas.
+    After today’s changes nodes/contain/inherit counts match exactly, but imports = 166 vs 218 (+23.85 % variance) and invokes =
+    448 vs 531 (‑15.63 % variance). The debug output (see /tmp/graph-parity-debug.log when PARITY_DEBUG=1) shows missing import
+    edges for re-exported symbols (e.g., repo_index/file_context.py -> repo_index/repository.py:FileRepository) and unresolved
+    invoke edges for methods such as CodeIndex.semantic_search. Extra edges tend to come from our AST picking up imports LocAgent
+    ignores (e.g., plugins/__init__.py -> plugins/requirement.py::PluginRequirement) and from self-recursive invoke logging.
+  - Root causes to tackle next: (1) teach the builder to follow __all__/re-export patterns so module-level stubs like
+    dependency_graph/__init__.py map to real definitions, and (2) enhance invoke resolution now that alias maps are accurate
+    (likely by mimicking LocAgent’s find_all_possible_callee traversal rather than the current alias-map + local-symbol combo).
+
+  Tooling Runs
+
+  - cargo fmt --all
+  - cargo clippy --all-targets --workspace (only existing “derive Default” warnings in GraphBuilderConfig and the long-standing
+    service_contract_tests suggestions remain)
+  - cargo test -p cds-index --test graph_parity_tests -- --nocapture (fails by design at the moment with the variances above; use
+    PARITY_DEBUG=1 for detailed diffs)
+
+  Next Steps
+
+  1. Implement re-export awareness for imports (capture assignments in __init__.py, propagate __all__, or map aliases in
+     pending_imports) to close the 52 missing edges.
+  2. Mirror LocAgent’s find_all_possible_callee logic so invoke edges derive from graph connectivity instead of the current name-
+     resolution heuristic; that should add the ~83 missing invoke edges without reintroducing the spurious ones that the old
+     global lookup created.
+  3. Once parity passes for LocAgent, extend graph_parity_tests to also cover the five SWE-bench fixtures under .artifacts/tmp/
+     swe-bench-lite so the full 6-repo baseline becomes enforced automatically.
+
+==============================================================

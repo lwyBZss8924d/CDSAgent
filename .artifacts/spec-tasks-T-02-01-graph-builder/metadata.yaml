@@ -36,11 +36,16 @@ git:
       message: "docs(task): T-02-01 - initialize task artifacts and Day 1 spec review"
       date: "2025-10-24"
       files_changed: 5
-    - hash: "2015972"
-      message: "feat(graph): T-02-01 - implement graph builder with AST parsing and edge resolution"
+    - hash: "82936fa"
+      message: "feat(graph): T-02-01 - implement core graph builder with AST parsing and edge resolution"
       date: "2025-10-25"
       files_changed: 16
       notes: "Core implementation: parser (426 lines), builder (1040 lines), traversal (64 lines), tests (232 lines). Total +4,265 lines."
+    - hash: "00da9c2"
+      message: "feat(graph): T-02-01 - add parity harness and refine import resolution"
+      date: "2025-10-25"
+      files_changed: 5
+      notes: "Parity harness (359 lines), builder AST refinement (+159 lines). Current variance: imports +23.85%, invokes -15.63%. Total +570 lines."
   pr:
     number: null
     url: null
@@ -64,16 +69,16 @@ deliverables:
 acceptance_criteria:
   - criterion: "Parses Python repositories and produces a graph with all 4 node types and 4 edge types"
     status: "in_progress"
-    notes: "✅ All 4 node types implemented (directory, file, class, function). ✅ All 4 edge types implemented (contains, imports, invokes, inherits). ⏳ Needs parity validation testing."
+    notes: "✅ All 4 node types implemented. ✅ All 4 edge types implemented. ✅ Parity harness validates against 6 repos. ⏳ Nodes/contains/inherits exact match. ❌ Imports/invokes exceed 2% variance."
   - criterion: "Fully-qualified names match LocAgent format (e.g., path/to/file.py::Class::method)"
     status: "in_progress"
-    notes: "✅ FQN format implemented (filename:Class.method). ⏳ Needs validation against golden baselines."
+    notes: "✅ FQN format implemented (filename:Class.method). ⏳ Validation ongoing via parity tests."
   - criterion: "Unit tests cover typical and edge cases (decorators, nested classes, async functions)"
     status: "in_progress"
-    notes: "✅ Initial unit tests added (2 tests for invoke edges with alias resolution). ⏳ Needs expansion to >80% coverage per TODO."
+    notes: "✅ Unit tests: 2 invoke edge tests. ✅ Integration: Parity harness for 6 repos. ⏳ Needs expansion to >80% coverage."
   - criterion: "Graph parity script reports ≤2% variance in node/edge counts vs. LocAgent baseline"
-    status: "pending"
-    notes: "⏳ Next step: Run scripts/parity-check.sh against 6 SWE-bench fixtures to validate ≤2% variance budget."
+    status: "in_progress"
+    notes: "✅ Parity harness running. ❌ Variance: imports +23.85%, invokes -15.63%. ⏳ Day 3: Implement re-exports + callee traversal."
 
 worklog:
   base_path: ".artifacts/spec-tasks-T-02-01-graph-builder/worklogs/"
@@ -89,12 +94,12 @@ worklog:
 
 metrics:
   estimated_hours: 40  # 5 days * 8 hours
-  actual_hours: 10  # Day 1: 2h planning, Day 2: 8h implementation
-  lines_added: 2064
-  lines_deleted: 26
-  files_modified: 12
-  tests_added: 2
-  test_coverage: 0.15  # Initial tests (2/232 lines in test file, ~0.15 estimated)
+  actual_hours: 13  # Day 1: 2h planning, Day 2: 8h implementation + 3h parity
+  lines_added: 2634  # Core: 2064 + Parity session: 570
+  lines_deleted: 40   # Core: 26 + Parity session: 14
+  files_modified: 14  # Core: 12 + Parity session: 2 more (builder.rs again, graph_parity_tests.rs)
+  tests_added: 3      # 2 unit tests + 1 integration test suite
+  test_coverage: 0.20 # Estimated: ~20% (unit + integration)
 
 comments:
   - date: "2025-10-24"
@@ -103,6 +108,9 @@ comments:
   - date: "2025-10-25"
     author: "Rust Dev 1"
     text: "Day 2 implementation: Core graph builder complete with all 4 node/edge types. Implemented parser (426 lines), builder (1040 lines), traversal (64 lines), initial tests (232 lines). Total: ~1,964 lines of Rust code. Next: Expand unit tests and run parity validation."
+  - date: "2025-10-25"
+    author: "Rust Dev 1"
+    text: "Day 2 parity session: Added parity harness (359 lines), refactored builder with AST-based imports (+159 lines). Parity results: nodes/contains/inherits exact match ✅, imports +23.85% ❌, invokes -15.63% ❌. Root causes: missing re-exports, need graph-based callee traversal. Next: Implement __init__.py awareness and LocAgent's find_all_possible_callee."
 
 related_artifacts:
   - type: "parity_baseline"

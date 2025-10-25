@@ -88,7 +88,6 @@ impl GraphBuilder {
             let rel_path = relative_path(&self.repo_root, entry.path());
 
             if entry.file_type().is_dir() {
-                state.ensure_directory_node(&rel_path);
                 continue;
             }
 
@@ -191,11 +190,22 @@ impl BuilderState {
         let source = fs::read_to_string(absolute_path)?;
         let tree = parser.parse(&source)?;
         let entities = PythonParser::collect_entities_from_tree(&tree, &source);
-        let imports = PythonParser::collect_imports_from_tree(&tree, &source);
+        let directives = match Suite::parse(&source, rel_path.to_string_lossy().as_ref()) {
+            Ok(ast) => {
+                let rc = Rc::new(ast);
+                let collected = collect_imports_from_ast(rc.as_ref());
+                self.parsed_modules.insert(rel_path.to_path_buf(), rc);
+                collected
+            }
+            Err(err) => {
+                warn!("Failed to parse Python AST for {:?}: {err}", rel_path);
+                PythonParser::collect_imports_from_tree(&tree, &source)
+            }
+        };
         self.pending_imports
             .entry(rel_path.to_path_buf())
             .or_default()
-            .extend(imports);
+            .extend(directives);
         self.file_sources
             .entry(rel_path.to_path_buf())
             .or_insert_with(|| source.clone());
@@ -492,22 +502,36 @@ impl BuilderState {
                 EdgeKind::Import,
                 alias.map(|value| value.to_string()),
             );
+        } else if std::env::var_os("PARITY_DEBUG").is_some() {
+            if let Some(source_node) = self.graph.node(source_idx) {
+                println!(
+                    "[PARITY DEBUG] Unable to resolve attribute import {} -> {}",
+                    source_node.id, candidate_id
+                );
+            }
         }
     }
 
     fn resolve_module_spec(&self, current_file: &Path, spec: &ModuleSpecifier) -> Option<PathBuf> {
-        let mut components = module_components(current_file);
+        let mut components = if spec.level == 0 {
+            Vec::new()
+        } else {
+            module_components(current_file)
+        };
+
         if spec.level > components.len() {
             return None;
         }
         for _ in 0..spec.level {
             components.pop();
         }
+
         for segment in &spec.segments {
             if !segment.is_empty() {
                 components.push(segment.clone());
             }
         }
+
         finalize_module_path(&components, &self.file_nodes)
     }
 
@@ -583,18 +607,127 @@ impl BuilderState {
                 return Some(idx);
             }
         }
-        self.lookup_global(name)
+        None
+    }
+}
+
+fn collect_imports_from_ast(suite: &Suite) -> Vec<ImportDirective> {
+    let mut directives = Vec::new();
+    visit_ast_imports(suite, &mut directives);
+    directives
+}
+
+fn visit_ast_imports(statements: &[Stmt], directives: &mut Vec<ImportDirective>) {
+    for stmt in statements {
+        match stmt {
+            pyast::Stmt::Import(import_stmt) => {
+                for alias in &import_stmt.names {
+                    if let Some(directive) = convert_module_import(alias) {
+                        directives.push(directive);
+                    }
+                }
+            }
+            pyast::Stmt::ImportFrom(import_from) => {
+                if let Some(directive) = convert_from_import(import_from) {
+                    directives.push(directive);
+                }
+            }
+            _ => {}
+        }
+
+        match stmt {
+            pyast::Stmt::FunctionDef(func) => visit_ast_imports(&func.body, directives),
+            pyast::Stmt::AsyncFunctionDef(func) => visit_ast_imports(&func.body, directives),
+            pyast::Stmt::ClassDef(class_def) => visit_ast_imports(&class_def.body, directives),
+            pyast::Stmt::If(stmt_if) => {
+                visit_ast_imports(&stmt_if.body, directives);
+                visit_ast_imports(&stmt_if.orelse, directives);
+            }
+            pyast::Stmt::For(stmt_for) => {
+                visit_ast_imports(&stmt_for.body, directives);
+                visit_ast_imports(&stmt_for.orelse, directives);
+            }
+            pyast::Stmt::AsyncFor(stmt_for) => {
+                visit_ast_imports(&stmt_for.body, directives);
+                visit_ast_imports(&stmt_for.orelse, directives);
+            }
+            pyast::Stmt::While(stmt_while) => {
+                visit_ast_imports(&stmt_while.body, directives);
+                visit_ast_imports(&stmt_while.orelse, directives);
+            }
+            pyast::Stmt::With(stmt_with) => visit_ast_imports(&stmt_with.body, directives),
+            pyast::Stmt::AsyncWith(stmt_with) => visit_ast_imports(&stmt_with.body, directives),
+            pyast::Stmt::Try(stmt_try) => {
+                visit_ast_imports(&stmt_try.body, directives);
+                visit_ast_imports(&stmt_try.orelse, directives);
+                visit_ast_imports(&stmt_try.finalbody, directives);
+                for handler in &stmt_try.handlers {
+                    let pyast::ExceptHandler::ExceptHandler(except) = handler;
+                    visit_ast_imports(&except.body, directives);
+                }
+            }
+            pyast::Stmt::Match(stmt_match) => {
+                for case in &stmt_match.cases {
+                    visit_ast_imports(&case.body, directives);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+fn convert_module_import(alias: &pyast::Alias) -> Option<ImportDirective> {
+    let module_name = alias.name.to_string();
+    if module_name.is_empty() {
+        return None;
+    }
+    Some(ImportDirective::Module {
+        module: ModuleSpecifier::new(0, split_entity_segments(&module_name)),
+        alias: alias.asname.as_ref().map(|value| value.to_string()),
+    })
+}
+
+fn convert_from_import(import_from: &pyast::StmtImportFrom) -> Option<ImportDirective> {
+    let level = import_from
+        .level
+        .as_ref()
+        .map(|value| value.to_usize())
+        .unwrap_or(0);
+    let module_name = import_from
+        .module
+        .as_ref()
+        .map(|identifier| identifier.to_string())
+        .unwrap_or_default();
+    let module = ModuleSpecifier::new(level, split_entity_segments(&module_name));
+
+    let mut entities = Vec::new();
+    for alias in &import_from.names {
+        let name = alias.name.to_string();
+        if name.is_empty() {
+            continue;
+        }
+        if name == "*" {
+            entities.push(ImportEntity {
+                name,
+                alias: None,
+                is_wildcard: true,
+            });
+            continue;
+        }
+
+        let alias_name = alias.asname.as_ref().map(|value| value.to_string());
+        entities.push(ImportEntity {
+            name,
+            alias: alias_name,
+            is_wildcard: false,
+        });
     }
 
-    fn lookup_global(&self, name: &str) -> Option<GraphNodeIndex> {
-        self.graph
-            .graph()
-            .node_indices()
-            .find(|idx| match self.graph.node(*idx) {
-                Some(node) if node.display_name == name => true,
-                _ => false,
-            })
+    if entities.is_empty() {
+        return None;
     }
+
+    Some(ImportDirective::FromModule { module, entities })
 }
 
 fn normalized_path(path: &Path) -> String {
