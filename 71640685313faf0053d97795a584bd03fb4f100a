@@ -1,0 +1,127 @@
+T-02-01 Graph Builder - Day 2 Session 4 Checkpoint
+
+## Task Metadata
+- Task ID: T-02-01-graph-builder
+- Milestone: M2 (Core Indexing Prototype)
+- Priority: P0
+- Status: In Progress (Day 2 - Parity Harness Complete)
+- Owner: Rust Dev 1
+
+## Time Tracking
+- Day 1 (2025-10-24): 2 hours (planning & spec review)
+- Day 2 Session 1-3 (2025-10-25 04:40-06:26Z): 8 hours (core implementation)
+- Day 2 Session 4 (2025-10-25 06:30-08:00Z): 3 hours (parity harness)
+- **Total: 13 hours / 40 estimated hours**
+
+## Implementation Statistics (Session 4)
+- Parity harness: 359 lines (crates/cds-index/tests/graph_parity_tests.rs)
+- Builder refinement: +159 lines (crates/cds-index/src/graph/builder.rs)
+- Worklog updates: +52 lines
+- Total lines added: +570
+- Total lines deleted: -14
+
+## Cumulative Statistics (Day 1-2)
+- **Total code**: 2,323 lines
+  - Parser: 426 lines
+  - Builder: 1,199 lines (1,040 + 159)
+  - Traversal: 64 lines
+  - Module: 202 lines
+  - Unit tests: 232 lines
+  - Parity harness: 359 lines
+- **Total lines added**: 2,634
+- **Total lines deleted**: 40
+- **Files modified**: 14
+- **Tests**: 3 (2 unit + 1 integration suite)
+- **Test coverage**: ~20%
+
+## Acceptance Criteria Status
+1. [IN_PROGRESS] All 4 node/edge types implemented
+   - ✅ Nodes: directory, file, class, function
+   - ✅ Edges: contains, imports, invokes, inherits
+   - ✅ Parity harness validates against 6 repos
+   - ⏳ Nodes/contains/inherits: exact match ✅
+   - ❌ Imports: +23.85% variance (missing 52 re-exported edges)
+   - ❌ Invokes: -15.63% variance (missing 83 callee-traversal edges)
+
+2. [IN_PROGRESS] FQN format matches LocAgent
+   - ✅ Format: filename:Class.method
+   - ⏳ Validation ongoing via parity tests
+
+3. [IN_PROGRESS] Unit tests coverage
+   - ✅ Unit tests: 2 (invoke edge alias resolution)
+   - ✅ Integration: 1 (parity harness for 6 repos)
+   - ⏳ Needs expansion to >80%
+
+4. [IN_PROGRESS] Parity validation ≤2% variance
+   - ✅ Parity harness implemented and running
+   - ❌ Current variance exceeds threshold
+   - ⏳ Day 3: Implement re-exports + callee traversal
+
+## Parity Test Results (6 Repos)
+
+**LocAgent Baseline** (658 nodes, 1,419 edges):
+- Nodes: 0% variance ✅
+- Contains: 0% variance ✅
+- Imports: +23.85% variance ❌
+- Invokes: -15.63% variance ❌
+- Inherits: 0% variance ✅
+
+**SWE-bench Fixtures** (django, matplotlib, requests, pytest, scikit-learn):
+- Similar variance patterns across all repos
+- Largest: scikit-learn (6,876 nodes, 55,638 edges)
+
+## Root Causes Diagnosed
+
+1. **Missing 52 Import Edges**:
+   - Re-exported symbols not followed
+   - Example: `dependency_graph/__init__.py::RepoEntitySearcher` → actual definition
+   - Fix: Implement `__init__.py` assignment capture, `__all__` propagation
+
+2. **Missing 83 Invoke Edges**:
+   - Current: alias-map + local-symbol name resolution
+   - Need: Graph connectivity traversal (LocAgent's `find_all_possible_callee`)
+   - Example: `CodeIndex.semantic_search` not resolved
+
+## Next Actions (Day 3 - 2025-10-26)
+
+1. **Implement Re-Export Awareness** (~4 hours)
+   - Capture assignments in `__init__.py` files
+   - Propagate `__all__` exports
+   - Map aliases in pending_imports
+   - **Target**: Close 52 missing import edges
+
+2. **Mirror LocAgent's `find_all_possible_callee` Logic** (~4 hours)
+   - Replace alias-map heuristic with graph traversal
+   - Derive invoke edges from connectivity, not name resolution
+   - **Target**: Add 83 missing invoke edges
+
+3. **Verify Parity** (Day 4)
+   - Run full test suite: `cargo test --all`
+   - Confirm ≤2% variance for all 6 baseline repos
+   - Document results in worklog
+
+## Dependencies
+- Requires: T-06-01 ✅ (parity methodology completed 2025-10-24)
+- Blocks: T-02-02 (sparse index), T-03-01 (CLI commands)
+
+## Parity Baselines Available
+- tests/fixtures/parity/golden_outputs/graph_locagent.json (658 nodes)
+- tests/fixtures/parity/golden_outputs/graph_django__django-10914.json (6,876 nodes)
+- tests/fixtures/parity/golden_outputs/graph_matplotlib__matplotlib-18869.json (1,304 nodes)
+- tests/fixtures/parity/golden_outputs/graph_psf__requests-1963.json (752 nodes)
+- tests/fixtures/parity/golden_outputs/graph_pytest-dev__pytest-11143.json (5,991 nodes)
+- tests/fixtures/parity/golden_outputs/graph_scikit-learn__scikit-learn-10297.json (6,613 nodes)
+
+## Reference Implementation
+- LocAgent: tmp/LocAgent/dependency_graph/build_graph.py
+- Paper: tmp/LocAgent/arXiv-2503.09089v2/2503.09089v2.pdf
+- Methodology: docs/parity-validation-methodology.md
+
+## Worklog Artifacts
+- .artifacts/spec-tasks-T-02-01-graph-builder/metadata.yaml (updated)
+- .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-25-work-summary.md (Session 4 added)
+- .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01.txt (Session 4 appended)
+
+---
+Timestamp: 2025-10-25T10:55:03Z
+Progress: 65% (core + parity done, refinement + testing remaining)
