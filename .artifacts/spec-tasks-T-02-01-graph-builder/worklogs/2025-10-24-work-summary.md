@@ -128,6 +128,7 @@
 - [ ] Define GraphEdge struct with 4 edge types
 - [ ] Implement SKIP_DIRS constant and is_skip_dir() function
 - [ ] Start implementing directory traversal with os.walk equivalent
+- [ ] After completing all development goals of T-02-01, update and refine all relevant unit tests related to the functionalities under development in `cds-index` (crates/cds-index/tests)
 
 **Day 3-4 (AST Parsing & Edge Creation)**:
 
@@ -162,3 +163,5 @@
 
 **Time Spent**: 2 hours (specification review, baseline analysis, LocAgent algorithm study)
 **Status**: In Progress (Day 1 - Planning Complete)
+
+**Note**: Work continued on Day 2 (2025-10-25). See `2025-10-25-work-summary.md` for core implementation progress.

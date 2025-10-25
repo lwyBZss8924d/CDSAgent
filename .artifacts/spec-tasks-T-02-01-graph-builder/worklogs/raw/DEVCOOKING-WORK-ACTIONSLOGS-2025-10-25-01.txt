@@ -1,0 +1,180 @@
+DEV-COOKING-WORKLOGS-2025-10-25-01
+DEV-COOKING-WORKLOGS: T-02-01-graph-builder
+DATE: 2025-10-25T04:40:00Z --> 2025-10-25T05:13:20Z
+TASKS: @.worktrees/T-02-01-graph-builder/spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md
+FROME: DEVCOOKING-WORK-START-2025-10-24-04
+
+---
+
+==============================================================
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-25T04:40:00Z
+
+• Graph Foundations
+
+  - Replaced the placeholder graph API with concrete types that match the task deliverables (spacs/tasks/0.1.0-mvp/02-index-core/
+  T-02-01-graph-builder.md:19-44), defining reusable node/edge enums, GraphNode, line-based SourceRange, and a DependencyGraph
+  wrapper that keeps ID→index mappings for later parity checks (crates/cds-index/src/graph/mod.rs:1-165).
+
+  Python Parser
+
+  - Implemented the initial tree-sitter pipeline for Python, including a stack-based walker that mirrors LocAgent’s entity
+  extraction (skipping __init__, tracking nested classes/functions, and preserving line ranges) so we can emit the class/function
+  nodes promised in PRD‑02 FR‑CG‑1 (spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md:34-98, tmp/LocAgent/dependency_graph/
+  build_graph.py:12-48; code in crates/cds-index/src/graph/parser.rs:1-215).
+
+  Graph Builder
+
+  - Added a configurable GraphBuilder that honors LocAgent’s skip list (tmp/LocAgent/dependency_graph/build_graph.py:12-33) and
+  walks the repo to create directory/file nodes, wire contain edges, and fold in parsed entities with FQNs (crates/cds-index/
+  src/graph/builder.rs:1-301). The builder now returns GraphBuildStats, paving the way for the edge-parity and performance gates
+  called out in Sub-Issue 02.01 (spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md:229-298).
+
+  Traversal Helpers
+
+  - Stubbed the first BFS helper plus filter struct so downstream traverse/search tooling has something real to call once we
+  expose the JSON-RPC methods (crates/cds-index/src/graph/traversal.rs:1-63, aligning with the traversal deliverable in spacs/
+  tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md:19-22).
+
+• Graph Core Updates
+
+  - Expanded the public graph surface to expose reusable enums/structs plus the new parser helpers so downstream crates can
+  request module specs and import directives directly (crates/cds-index/src/graph/mod.rs:7-65).
+  - The Python parser now produces ModuleSpecifier, ImportDirective, and ImportEntity records alongside the existing entity
+  walker, letting us reuse one tree-sitter parse for both class/function extraction and textual import analysis (crates/cds-index/
+  src/graph/parser.rs:1-215).
+
+  Builder Import Pipeline
+
+  - GraphBuilder processes each Python file once, caches its tree, and records pending import directives before wiring containment
+  edges. After the directory walk finishes we resolve modules/packages relative to the current file and emit import edges to
+  the appropriate file or entity nodes, matching the PRD requirement for the fourth edge type (crates/cds-index/src/graph/
+  builder.rs:72-386, 398-458).
+  - Resolution handles import module, from package import name, wildcard imports, and simple relative levels by translating module
+  specifiers into repo-relative paths (with fallbacks to __init__.py) and, when needed, linking directly to class/function node
+  IDs (e.g., pkg/foo.py::Class).
+  - Added stubs for the upcoming invoke/inherit pass so the pipeline mirrors LocAgent’s multi-phase builder even though behavioral
+  edges are still pending (crates/cds-index/src/graph/builder.rs:281-305).
+
+  Traversal Helper (unchanged from last round)
+
+  - BFS helper remains ready for future traverse tooling (crates/cds-index/src/graph/traversal.rs:1-63).
+
+  Tests
+
+  - cargo fmt
+  - cargo check -p cds-index
+
+  Notes / Next Steps
+
+  1. Flesh out process_behavior_edges with invoke/inherit detection using the captured alias data so we satisfy the remaining Sub-
+  Issue 02.01 acceptance criteria.
+  2. Persist alias metadata on import edges (probably via a richer edge weight) so parity checks involving callee resolution match
+  LocAgent precisely.
+  3. Hook the new import graph into parity fixtures/tests (tests/fixtures/parity/golden_outputs/*) once invoke/inherit edges land.
+
+  crates/cds-index/tests/service_contract_tests.rs was already modified before this session; left untouched per instructions.
+
+  Next Actions:
+
+  - Import Edge Validation: Wire parity checks for the new import edges using golden fixtures (tests/fixtures/parity/
+    golden_outputs), confirming directory/file/class/function counts stay within the ≤2 % tolerance while import edges match PRD-
+    02 FR‑CG‑2 expectations.
+  - Invoke/Inherit Extraction: Implement process_behavior_edges to analyze tree-sitter ASTs (calls, class bases) so invoke/inherit
+    edges mirror LocAgent (spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md:229-298), including alias handling and fuzzy
+    fallback for parity.
+  - Edge Metadata: Extend EdgeKind::Import payloads (or attach attributes) with alias/source info so downstream traversal/search
+    logic can resolve callee names just like LocAgent’s find_all_possible_callee.
+
+  Testing To-Do
+
+  - After completing all development goals of T-02-01, update and refine all relevant unit tests under crates/cds-index/tests to
+    cover the new parser, import resolution, and upcoming invoke/inherit behavior so the crate’s test suite reflects every added
+    capability.
+
+==============================================================
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-25T05:00:00Z
+
+• Graph Data Enhancements
+
+  - Replaced the simple edge enum with a richer GraphEdge (kind + optional alias) and exposed helper APIs (crates/cds-index/src/
+    graph/mod.rs:7-166). This keeps containment edges lightweight while allowing import edges to capture alias metadata the same
+    way LocAgent tracks it.
+  - Updated BFS traversal to read the relation kind from the new edge struct, so downstream tools can continue filtering by
+    relation without change (crates/cds-index/src/graph/traversal.rs:1-63).
+
+  Python Parser Upgrades
+
+  - Extended parser.rs with ModuleSpecifier, ImportDirective, and ImportEntity plus helpers to extract import / from … import …
+    directives from the same tree-sitter parse we already run for entity extraction (crates/cds-index/src/graph/parser.rs:1-215).
+    This keeps parsing single-pass and preserves alias / wildcard details for the builder.
+
+  Graph Builder Import Pipeline
+
+  - GraphBuilder now queues every file’s import directives during the walk, resolves them after all nodes exist, and emits
+    EdgeKind::Import edges (with alias metadata) to files or specific entities (crates/cds-index/src/graph/builder.rs:72-458).
+    Relative (level-based) and absolute modules, wildcard imports, and attribute lookups fall back to pkg/foo.py::Class when
+    available, mirroring LocAgent’s multi-phase builder.
+  - Added a process_behavior_edges placeholder so we can plug in invoke/inherit analysis next without reshaping the pipeline again
+    (crates/cds-index/src/graph/builder.rs:302-305).
+
+  Verification
+
+  - cargo fmt
+  - cargo check -p cds-index
+
+  Next Actions
+
+  1. Implement invoke/inherit analysis inside process_behavior_edges, including decorator/call traversal and callee-alias
+     resolution to satisfy the remaining Sub-Issue 02.01 acceptance criteria.
+  2. Extend import edges/tests to ensure alias metadata drives callee resolution exactly like LocAgent; once T-02-01 deliverables
+     are finished, refresh crates/cds-index/tests/* per the TODO to cover parser + graph builder paths comprehensively.
+  3. Hook the new graph behavior into the parity fixtures (tests/fixtures/parity/golden_outputs) so we start measuring node/edge
+     variance (≤2 %) with the new edge types before moving on to sparse index work.
+
+==============================================================
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-25T05:13:20Z
+
+• Graph Builder Updates
+
+  - Brought EdgeRef into scope and rewired the behavior-edge collectors to the current rustpython_parser API: find_in_block
+    now matches on pyast::Stmt directly, the decorator/async helpers share the visit_block walker instead of the removed
+    collect_calls_in_suite, and try/except destructuring uses pyast::ExceptHandler::ExceptHandler with the new type_ field
+    so invoke/inherit edges compile again. citecrates/cds-index/src/graph/builder.rs:8-12crates/cds-index/src/graph/
+    builder.rs:688-828crates/cds-index/src/graph/builder.rs:790-808crates/cds-index/src/graph/builder.rs:960-1005
+
+  Parser Integration
+
+  - Removed the hand-written extern "C" block and switch to tree_sitter_python::LANGUAGE.into() when initializing the parser so
+    the linker can find _tree_sitter_python and the crate stays in sync with upstream language bindings. citecrates/cds-index/
+    src/graph/parser.rs:6-16crates/cds-index/src/graph/parser.rs:88-95
+
+  Unit Tests
+
+  - Added two regression tests that prove invoke edges survive alias resolution (import Service as Engine inside a caller) and
+    decorator aliases create invoke edges toward the imported function; also pulled in petgraph::visit::EdgeRef so the assertions
+    can inspect edge targets. citecrates/cds-index/tests/graph_builder_tests.rs:1-232
+
+  Worklog / TODO
+
+  - Recorded the user-requested follow-up in the task worklog so that once T-02-01 coding wraps we revisit every relevant suite
+    under crates/cds-index/tests. cite.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-24-work-summary.md:125-131
+
+  Verification
+
+  - cargo check -p cds-index
+  - cargo test -p cds-index graph_builder_tests -- --nocapture (now succeeds after linking the packaged tree-sitter-python
+    grammar)
+
+  Next Steps
+
+  1. Stage the touched graph/parsing/test files plus the updated worklog and craft a task-scoped commit once you’re ready.
+  2. When you begin parity validation, run scripts/parity-check.sh against the SWE-bench fixtures to confirm the new invoke/
+     inherit edges stay within the ≤2 % variance budget.
+
+==============================================================

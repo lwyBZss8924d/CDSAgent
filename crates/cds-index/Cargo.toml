@@ -27,6 +27,7 @@ tree-sitter-python = { workspace = true }
 petgraph = { workspace = true }
 dashmap = { workspace = true }
 bincode = { workspace = true }
+rustpython-parser = { workspace = true }
 
 # Crate-specific dependencies
 config = "0.14"

@@ -3,7 +3,7 @@
 task:
   id: "T-02-01-graph-builder"
   title: "Graph Builder - AST Parsing & Construction"
-  status: "not_started"  # not_started | in_progress | blocked | completed
+  status: "in_progress"  # not_started | in_progress | blocked | completed
   priority: "P0"
   milestone: "M2"
   week: 2
@@ -36,6 +36,11 @@ git:
       message: "docs(task): T-02-01 - initialize task artifacts and Day 1 spec review"
       date: "2025-10-24"
       files_changed: 5
+    - hash: "2015972"
+      message: "feat(graph): T-02-01 - implement graph builder with AST parsing and edge resolution"
+      date: "2025-10-25"
+      files_changed: 16
+      notes: "Core implementation: parser (426 lines), builder (1040 lines), traversal (64 lines), tests (232 lines). Total +4,265 lines."
   pr:
     number: null
     url: null
@@ -58,17 +63,17 @@ deliverables:
 
 acceptance_criteria:
   - criterion: "Parses Python repositories and produces a graph with all 4 node types and 4 edge types"
-    status: "pending"
-    notes: "Node types: directory, file, class, function. Edge types: contains, imports, invokes, inherits"
+    status: "in_progress"
+    notes: "✅ All 4 node types implemented (directory, file, class, function). ✅ All 4 edge types implemented (contains, imports, invokes, inherits). ⏳ Needs parity validation testing."
   - criterion: "Fully-qualified names match LocAgent format (e.g., path/to/file.py::Class::method)"
-    status: "pending"
-    notes: "FQN format: filename:Class.method with colon separator for file boundary"
+    status: "in_progress"
+    notes: "✅ FQN format implemented (filename:Class.method). ⏳ Needs validation against golden baselines."
   - criterion: "Unit tests cover typical and edge cases (decorators, nested classes, async functions)"
-    status: "pending"
-    notes: "Target: >80% test coverage"
+    status: "in_progress"
+    notes: "✅ Initial unit tests added (2 tests for invoke edges with alias resolution). ⏳ Needs expansion to >80% coverage per TODO."
   - criterion: "Graph parity script reports ≤2% variance in node/edge counts vs. LocAgent baseline"
     status: "pending"
-    notes: "Validate against all 6 baselines: LocAgent, Django, Matplotlib, Requests, Pytest, Scikit-learn"
+    notes: "⏳ Next step: Run scripts/parity-check.sh against 6 SWE-bench fixtures to validate ≤2% variance budget."
 
 worklog:
   base_path: ".artifacts/spec-tasks-T-02-01-graph-builder/worklogs/"
@@ -77,20 +82,27 @@ worklog:
       summary: "worklogs/2025-10-24-work-summary.md"
       commits: "worklogs/2025-10-24-commit-log.md"
       notes: "worklogs/2025-10-24-notes.md"
+    - date: "2025-10-25"
+      summary: "worklogs/2025-10-25-work-summary.md"
+      commits: "worklogs/2025-10-25-commit-log.md"
+      notes: "worklogs/2025-10-25-notes.md"
 
 metrics:
   estimated_hours: 40  # 5 days * 8 hours
-  actual_hours: 0
-  lines_added: 0
-  lines_deleted: 0
-  files_modified: 0
-  tests_added: 0
-  test_coverage: 0.0  # 0.0 to 1.0
+  actual_hours: 10  # Day 1: 2h planning, Day 2: 8h implementation
+  lines_added: 2064
+  lines_deleted: 26
+  files_modified: 12
+  tests_added: 2
+  test_coverage: 0.15  # Initial tests (2/232 lines in test file, ~0.15 estimated)
 
 comments:
   - date: "2025-10-24"
     author: "Rust Dev 1"
     text: "Task preparation complete. Spec review documented in 2025-10-24-notes.md. 6 baseline fixtures available (658 to 6,876 nodes). Ready to begin implementation."
+  - date: "2025-10-25"
+    author: "Rust Dev 1"
+    text: "Day 2 implementation: Core graph builder complete with all 4 node/edge types. Implemented parser (426 lines), builder (1040 lines), traversal (64 lines), initial tests (232 lines). Total: ~1,964 lines of Rust code. Next: Expand unit tests and run parity validation."
 
 related_artifacts:
   - type: "parity_baseline"

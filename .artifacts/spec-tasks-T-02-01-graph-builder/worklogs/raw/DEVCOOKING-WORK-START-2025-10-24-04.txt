@@ -1,0 +1,749 @@
+DEVCOOKING-WORK-START: DEVCOOKING-WORK-START-2025-10-24-04
+DEV-COOKING-WORK-ACTIONSLOGS: DEVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01
+TASKS: @.worktrees/T-02-01-graph-builder/spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md
+
+---
+
+==============================================================
+
+```text
+› ULTRATHINK and Deepresearch about Start DEV-COOKING T-02-01 Job! {{NEXTSTEPS_DEVCOOKING_EXECUTION_PLAN}} (2025-10-24 --> 2025-
+  10-25) **T-02-01** Work in (/Users/arthur/dev-space/CDSAgent/.worktrees/T-02-01-graph-builder  894bb53 [feat/task/T-02-01-
+  graph-builder]) spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md
+
+  ❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+  2025-10-24T19:29:05Z
+
+  - docs/NEXT_TASK_CHECKLIST.md
+  - docs/WORKTREE_WORKFLOW.md
+  - spacs/tasks/0.1.0-mvp/TODO.yaml
+  - spacs/tasks/0.1.0-mvp/README.md
+  - spacs/issues/04-0.1.0-mvp/README.md
+  - PRDs: (spacs/prd/0.1.0-MVP-PRDs-v0/)
+
+  spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md
+  spacs/tasks/0.1.0-mvp/02-index-core/README.md
+  spacs/issues/04-0.1.0-mvp/02-index-core/00-overview.md
+  spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md
+
+  PRDs:
+  spacs/prd/0.1.0-MVP-PRDs-v0/01-system-architecture.md
+  spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+  ...
+
+  ```
+  01-system-architecture.md
+  02-cds-index-service.md
+  03-cds-tools-cli.md
+  04-cds-agent-integration.md
+  05-api-specifications.md
+  06-rust-refactoring-plan.md
+  07-deployment-operations.md
+  08-testing-quality.md
+  09-implementation-roadmap.md
+  10-extensibility-future.md
+
+  …-graph-builder feat/task/T-02-01-graph-builder*​ ≡
+  ❯ cd spacs/tasks/0.1.0-mvp/02-index-core/
+
+  …/02-index-core feat/task/T-02-01-graph-builder*​ ≡
+  ❯ ls
+  README.md
+  T-02-01-graph-builder.md
+  T-02-02-sparse-index.md
+  T-02-03-service-layer.md
+  T-02-04-serialization.md
+  ```
+
+  ```shell
+  CDSAgent main*​​ ≡
+  ❯ git worktree list
+  /Users/arthur/dev-space/CDSAgent                                   894bb53 [main]
+  /Users/arthur/dev-space/CDSAgent/.worktrees/T-02-01-graph-builder  894bb53 [feat/task/T-02-01-graph-builder]
+  /Users/arthur/dev-space/CDSAgent/.worktrees/T-02-02-sparse-index   894bb53 [feat/task/T-02-02-sparse-index]
+  /Users/arthur/dev-space/CDSAgent/.worktrees/T-02-03-service-layer  894bb53 [feat/task/T-02-03-service-layer]
+  /Users/arthur/dev-space/CDSAgent/.worktrees/T-03-01-cli-commands   894bb53 [feat/task/T-03-01-cli-commands]
+  /Users/arthur/dev-space/CDSAgent/.worktrees/T-04-01-agent-sdk      894bb53 [feat/task/T-04-01-agent-sdk]
+  /Users/arthur/dev-space/CDSAgent/.worktrees/T-04-02-prompt-design  894bb53 [feat/task/T-04-02-prompt-design]
+  ```
+
+  <NEXTSTEPS_DEVCOOKING_EXECUTION_PLAN>
+
+  ⏺ Execution Plan v1 (2025-10-24 --> 2025-10-25):
+    ⎿  Updated DEV-COOKING Plan: M1 Completion → M2 Kickoff
+
+       Updated: 2025-10-24T17:43:29Z | Context: Post-T-06-01 Phase 2 completion
+
+       ---
+       Current State Analysis ✅
+
+       Completed (Verified):
+       - ✅ T-05-01: JSON-RPC Schema (PR #3, merged 2025-10-19)
+       - ✅ T-05-02: TypeScript Bindings (PR #5, merged 2025-10-23)
+       - ✅ T-06-01 Phase 2: Baselines extracted (commits d00ce54, fb1a625)
+         - 6 graph baselines (LocAgent + 5 SWE-bench repos, 552KB total)
+         - 60 traverse scenarios (41KB)
+         - 50 search queries (174KB)
+         - Performance baselines (minimal, 468 bytes - llama-index limitation documented)
+
+       Outstanding:
+       - ⚠️ Known defect: scripts/benchmark-performance.py:82 needs dummy init.py guard
+       - 📝 T-05-03: Error Catalogue - 90% complete (error-codes.md exists, README links
+       it)
+       - 🧹 Git hygiene: .claude/settings.local.json unstaged
+
+       ---
+       Phase 1: Fix Review Blocker (30 min, Today)
+
+       Issue: scripts/benchmark-performance.py line 82 calls
+       build_code_retriever_from_repo() without the dummy file workaround.
+
+       Solution: Apply same pattern from extract-search-baseline.py (lines 139-169):
+
+       # In benchmark_search() function, wrap line 82:
+       dummy_file = repo_path / "dummy_llamaindex_workaround.py"
+       created_dummy = False
+
+       try:
+           root_py_files = list(repo_path.glob("*.py"))
+           substantial_files = [f for f in root_py_files
+                               if f.name not in ("setup.py", "conftest.py", "__init__.py")]
+
+           if not substantial_files:
+               dummy_file.write_text("# Temporary file for llama-index\n")
+               created_dummy = True
+
+           retriever = build_code_retriever_from_repo(str(repo_path))
+
+       finally:
+           if created_dummy and dummy_file.exists():
+               dummy_file.unlink()
+
+       Verification:
+       # Test on problematic repo
+       ./scripts/swe-lite baseline perf django__django-10914
+
+       Commit:
+       git add scripts/benchmark-performance.py
+       git commit -m "fix(parity): add llama-index guard to benchmark-performance.py
+
+       Apply same dummy __init__.py workaround used in extract-search-baseline.py
+       to handle SWE-bench repos where Python code is in subdirectories.
+
+       Fixes ValueError when building retriever for django/scikit-learn repos."
+
+       ---
+       Phase 2: Finalize T-05-03 (1 hour, Today/Tomorrow)
+
+       Findings: T-05-03 deliverables are 90% complete:
+       - ✅ docs/api/error-codes.md exists (434 lines, comprehensive)
+       - ✅ README.md links to it (line 205)
+       - ❌ Task artifacts/worklogs missing
+       - ❌ TODO.yaml status not updated
+
+       Actions:
+
+       1. Create task artifacts:
+       mkdir -p .artifacts/spec-tasks-T-05-03-error-catalogue/worklogs
+       # Create metadata.yaml, git-refs.txt, daily worklogs
+
+       2. Review error-codes.md for completeness:
+       - Verify all 4 custom error codes (-32001 to -32004) documented
+       - Check examples match jsonrpc-schema.json
+       - Confirm remediation steps are actionable
+
+       3. Update README (if needed):
+       - Ensure "Error Handling" section exists with link
+       - Add quick reference table (optional, nice-to-have)
+
+       4. Commit:
+       git add .artifacts/spec-tasks-T-05-03-error-catalogue/ README.md
+       git commit -m "docs(api): T-05-03 - finalize error catalogue with task tracking
+
+       Complete T-05-03 Error Code Catalogue:
+       - Reviewed error-codes.md for accuracy (4 custom codes documented)
+       - Verified README links to catalogue (line 205)
+       - Added task artifacts and worklogs for tracking
+
+       Deliverables:
+       - docs/api/error-codes.md (completed in T-05-01)
+       - README.md error handling reference
+       - .artifacts/spec-tasks-T-05-03-error-catalogue/
+
+       All acceptance criteria met."
+
+       ---
+       Phase 3: Update M1 Milestone Status (15 min, Tomorrow)
+
+       Update TODO.yaml:
+
+       milestones:
+         M1:
+           status: completed  # Change from in_progress
+           completed_date: "2025-10-25"
+
+       tasks:
+         T-05-03-error-catalogue:
+           status: completed
+           completed_date: "2025-10-25"
+           git_commits:
+             - HASH: "docs(api): T-05-03 - finalize error catalogue"
+
+       workflows:
+         current_phase: "M2 - Core Indexing Prototype"
+         active_tasks: []
+         completed_tasks:
+           - T-00-01-worktree-setup
+           - T-05-01-jsonrpc-schema
+           - T-05-02-typescript-bindings
+           - T-06-01-parity-methodology
+           - T-05-03-error-catalogue  # Add this
+         next_up:
+           - T-02-01-graph-builder  # M2 starts here
+
+       Commit:
+       git add spacs/tasks/0.1.0-mvp/TODO.yaml
+       git commit -m "docs(tasks): mark M1 milestone complete, prepare M2 kickoff
+
+       M1 Completion Summary:
+       - T-05-01: JSON-RPC Schema ✅
+       - T-05-02: TypeScript Bindings ✅
+       - T-06-01: Parity Methodology ✅ (with Phase 2 baselines)
+       - T-05-03: Error Catalogue ✅
+
+       Next: M2 Core Indexing Prototype (T-02-01 starts 2025-10-25)"
+
+       ---
+       Phase 4: Prepare M2 Environment (30 min, Tomorrow)
+
+       4.1 Sync All Worktrees
+
+       # From main repo
+       cd ~/dev-space/CDSAgent
+       git checkout main
+       git pull origin main
+
+       # Sync all worktrees
+       ./scripts/sync-worktrees.sh
+
+       4.2 Prepare T-02-01 Worktree
+
+       # Navigate to T-02-01 worktree
+       cd ~/dev-space/CDSAgent-T-02-01-graph-builder
+
+       # Verify branch
+       git branch --show-current  # Should show: feat/task/T-02-01-graph-builder
+
+       # Check if artifacts exist
+       ls .artifacts/spec-tasks-T-02-01-graph-builder/
+
+       4.3 Create/Verify Task Artifacts
+
+       # If artifacts don't exist, create them
+       cd ~/dev-space/CDSAgent-T-02-01-graph-builder
+       /Users/arthur/dev-space/CDSAgent/scripts/create-task-worklog.sh \
+         T-02-01-graph-builder \
+         "Graph Builder - AST Parsing & Construction" \
+         "Rust Dev 1"
+
+       # Create daily worklog
+       /Users/arthur/dev-space/CDSAgent/scripts/create-daily-worklog.sh
+       T-02-01-graph-builder
+
+       4.4 Review Specifications
+
+       # Read task spec
+       cat spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md
+
+       # Review parity methodology
+       cat docs/parity-validation-methodology.md
+
+       # Check baselines availability
+       ls -lh tests/fixtures/parity/golden_outputs/graph_*.json
+
+       ---
+       Phase 5: Start M2 Development (Kickoff Tomorrow)
+
+       T-02-01 Implementation Outline:
+
+       1. Tree-sitter Python parsing (Day 1-2):
+         - Integrate tree-sitter-python
+         - Extract 4 node types: directory, file, class, function
+         - Generate fully-qualified names (FQN) matching LocAgent format
+       2. Graph construction (Day 2-3):
+         - Build NetworkX graph with 4 edge types
+         - Implement containment, import, invoke, inherit edges
+         - Serialize to JSON format compatible with parity checks
+       3. Parity validation (Day 3-4):
+         - Run scripts/parity-check.sh against LocAgent baselines
+         - Ensure ≤2% variance in node/edge counts
+         - Verify FQN format matches exactly
+       4. Unit tests (Day 4-5):
+         - Parser tests with edge cases
+         - Graph builder tests with test fixtures
+         - Coverage >80%
+
+       Key References:
+       - LocAgent: tmp/LocAgent/dependency_graph/build_graph.py
+       - Baselines: tests/fixtures/parity/golden_outputs/graph_*.json
+       - Parity script: scripts/parity-check.sh
+
+       ---
+       Timeline Summary
+
+       | Date      | Phase                         | Duration | Deliverables
+               |
+       |-----------|-------------------------------|----------|----------------------------
+       --------|
+       | Oct 24 PM | Phase 1: Fix review blocker   | 30 min   | benchmark-performance.py
+       guard fix |
+       | Oct 24 PM | Phase 2: T-05-03 finalization | 1 hour   | Task artifacts, final
+       commit       |
+       | Oct 25 AM | Phase 3: M1 status update     | 15 min   | TODO.yaml M1→completed
+               |
+       | Oct 25 AM | Phase 4: M2 prep              | 30 min   | Worktrees synced, T-02-01
+       ready    |
+       | Oct 25 PM | Phase 5: T-02-01 start        | 5 days   | Graph builder
+       implementation       |
+
+       ---
+       Success Criteria
+
+       M1 Complete:
+       - ✅ All 4 critical-path tasks (T-05-01, T-05-02, T-06-01, T-05-03) marked completed
+       - ✅ All PRs merged (#3, #4, #5)
+       - ✅ Parity baselines extracted and documented
+       - ✅ TODO.yaml reflects accurate status
+       - ✅ Known limitations documented (llama-index issue)
+
+       M2 Ready:
+       - ✅ All worktrees synced with latest main
+       - ✅ T-02-01 environment prepared
+       - ✅ Baseline data available for validation
+       - ✅ Specifications reviewed
+       - ✅ Development can start immediately
+
+       ---
+       Risk Mitigation
+
+       Risk 1: Performance script fix breaks something else
+       - Mitigation: Test on LocAgent first (known working), then SWE-bench repos
+       - Fallback: Revert commit, defer fix to separate PR
+
+       Risk 2: T-05-03 requires more work than expected
+       - Mitigation: Minimal scope - just verify existing docs and add tracking
+       - Fallback: Mark as "substantially complete", defer polish to later
+
+       Risk 3: Worktree sync causes conflicts
+       - Mitigation: All worktrees are clean (based on status), no active work
+       - Fallback: Reset worktrees to main, recreate if needed
+
+       ---
+       Clean-up Actions
+
+       Before committing:
+       - Unstage .claude/settings.local.json: git reset .claude/settings.local.json
+       - Remove any pycache: find scripts/ -name __pycache__ -type d -exec rm -rf {} +
+       - Verify git status is clean except for planned commits
+
+       ---
+       Ready to Execute: This plan completes M1, addresses the review blocker, and prepares
+        M2 for immediate development start tomorrow (Oct 25).
+
+  </NEXTSTEPS_DEVCOOKING_EXECUTION_PLAN>
+
+  • Next DEV‑COOKING Actions TODO (2025-10-24 --> 2025-10-25)
+
+  Environment Verification ✅
+
+    Branch: feat/task/T-02-01-graph-builder
+    Artifacts: 5 files staged (metadata.yaml, git-refs.txt, 3 worklogs)
+    Baseline Data: 6 graph fixtures ready (LocAgent + 5 SWE-bench repos)
+    Reference Code: tmp/LocAgent/dependency_graph/build_graph.py
+    Documentation: 13,670 bytes of implementation notes in 2025-10-24-notes.md
+
+    Files Staged for Commit
+
+    All T-02-01 artifacts are staged in the worktree:
+    - .artifacts/spec-tasks-T-02-01-graph-builder/metadata.yaml (3,844 bytes)
+    - .artifacts/spec-tasks-T-02-01-graph-builder/git-refs.txt
+    - .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-24-work-summary.md (6,544
+     bytes)
+    - .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-24-commit-log.md
+    - .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-24-notes.md (13,670
+    bytes)
+
+    Ready for Day 1 Coding ✅
+
+    Status: Environment prepared, specifications reviewed, baselines analyzed, architecture
+    decisions documented
+
+  ⏺ ✅ T-02-01 Worktree Initialization Complete
+
+    Final Commit: 8995cb5 - Pushed to origin/feat/task/T-02-01-graph-builder
+
+    Summary of Work Completed
+
+    1. Task Artifacts Initialized (5 files, 789 lines)
+    - ✅ metadata.yaml - Complete M2 task metadata with real values
+      - Title: "Graph Builder - AST Parsing & Construction"
+      - Milestone: M2, Duration: 5 days (2025-10-24 to 2025-10-30)
+      - Priority: P0 (critical path)
+      - Dependencies: T-06-01 ✅, Blocks: T-02-02, T-03-01
+      - 4 acceptance criteria with detailed notes
+      - 6 parity baseline references
+    - ✅ git-refs.txt - Git commit tracking
+    - ✅ 2025-10-24-work-summary.md (6,544 bytes) - Day 1 spec review with 8 objectives (5
+    completed)
+    - ✅ 2025-10-24-commit-log.md - Commit history tracking
+    - ✅ 2025-10-24-notes.md (13,670 bytes) - Comprehensive implementation notes
+
+    2. Day 1 Specification Review Documented
+    - Analyzed LocAgent reference (build_graph.py, 400+ lines)
+    - Studied 6 parity baselines (658 to 6,876 nodes)
+    - Documented 3 architecture decisions (petgraph, tree-sitter, FQN format)
+    - Documented graph schema (4 node types, 4 edge types, construction pipeline)
+    - Established baseline statistics and testing strategy
+
+    3. Parity Baselines Ready
+    | Repository   | Nodes | Edges  | Notes                    |
+    |--------------|-------|--------|--------------------------|
+    | LocAgent     | 658   | 1,419  | Reference baseline       |
+    | Django       | 6,876 | 9,982  | Largest node count       |
+    | Scikit-learn | 6,613 | 55,638 | Stress test (8.4x edges) |
+
+    Next Action (when ready to code):
+    Begin Day 2 implementation: Create Rust module skeleton at
+    crates/cds-index/src/graph/
+
+    The T-02-01 worktree is fully prepared for M2 Core Indexing Prototype development! 🚀
+
+  Todos
+  ☐ Phase 1: ...
+  ...
+
+```
+
+==============================================================
+
+```text
+• Deep dive on T-02-01 readiness and launch plan is below.
+
+  Readiness Snapshot
+
+  - T-02-01 is registered as a P0, week-2, not_started task that already lists its deliverables, acceptance criteria, and
+  dependency on completed T-06-01 while blocking T-02-02 and T-03-01. spacs/tasks/0.1.0-mvp/TODO.yaml:367
+  - Workflow metadata shows the program has entered “M2 – Core Indexing Prototype (Starting)” with no active tasks and T-02-01 at
+  the top of next_up, so this branch is the official kickoff for M2, which targets 2025-11-09. spacs/tasks/0.1.0-mvp/TODO.yaml:913
+  spacs/tasks/0.1.0-mvp/README.md:122
+  - Task metadata locks in the owner (Rust Dev 1), start date (2025-10-24), five-day duration, dependency list, and enumerates the
+  expected Rust files plus parity fixtures, confirming the worktree is fully parameterized. .artifacts/spec-tasks-T-02-01-graph-
+  builder/metadata.yaml:5
+  - The 2025-10-24 work summary documents that all specification review, LocAgent analysis, and baseline study objectives are
+  complete, while module scaffolding and tree-sitter setup remain open for Day 2. .artifacts/spec-tasks-T-02-01-graph-builder/
+  worklogs/2025-10-24-work-summary.md:11 .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-24-work-summary.md:123
+  - Golden outputs for six repos (LocAgent + five SWE-bench samples) plus traverse/search/perf context are already extracted,
+  giving immediate fixtures for parity checks. tests/fixtures/parity/golden_outputs/README.md:5
+
+  Spec & Requirement Highlights
+
+  - Objective: replicate LocAgent’s build_graph.py, producing heterogeneous graphs with directory/file/class/function nodes and
+  contain/import/invoke/inherit edges. spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md:15
+  - Deliverables span the parser, builder, traversal helpers, unit tests, and repository fixtures inside crates/cds-index. spacs/
+  tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md:19
+  - Implementation steps mandate tree-sitter setup, entity extraction, edge derivation, graph assembly with stable IDs, and parity
+  validation. spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md:27
+  - Acceptance criteria require all four node/edge types, LocAgent-format FQNs, thorough tests (decorators, nested + async), and
+  ≤2 % variance via parity script. spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md:40
+  - Dependencies: relies on T-06-01 baselines and gates later sparse-index and CLI tasks, so any delay cascades directly into the
+  rest of M2/M3. spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md:47
+
+  Reference Inputs & Assets
+
+  - The Next Task Checklist lays out the mandatory sequence (milestone check → dependency verification → worktree prep) we just
+  completed, and it should keep guiding daily hygiene. docs/NEXT_TASK_CHECKLIST.md:10
+  - Worktree SOP clarifies expectations for Spec-Tasks (isolated branch, artifacts, daily worklogs), so continuing to update
+  the .artifacts folder each day remains a compliance requirement. docs/WORKTREE_WORKFLOW.md:22
+  - Issue-02 overview frames the CDS-Index Core mandate (graph + hierarchical search + service) and the 2–5× performance goal that
+  this task anchors. spacs/issues/04-0.1.0-mvp/02-index-core/00-overview.md:12
+  - Sub-Issue 02.01 details in-scope work, explicit tree-sitter tasks, validation flow, and the >95 % coverage target, serving as
+  the engineering to-do list. spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md:16
+  - PRD-02 FR-CG requirements plus PRD-06’s refactoring map describe the canonical AST/graph behavior we must mirror and the exact
+  LocAgent algorithms to preserve. spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md:34 spacs/prd/0.1.0-MVP-PRDs-v0/06-rust-
+  refactoring-plan.md:33
+  - Parity methodology plus the golden-output README give quantitative success metrics (≤2 % node/edge variance, ≥90 %
+  search overlap) and the datasets/scripts that enforce them. docs/parity-validation-methodology.md:30 tests/fixtures/parity/
+  golden_outputs/README.md:9
+
+  Risks & Watchpoints
+
+  - Entity IDs use qualified names for v0.1; collision chances are low but still require regression tests on dynamic module
+  structures. spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md:357
+  - Import edges only consider explicit import statements; to stay in parity, ensure our extractor matches LocAgent’s heuristics
+  exactly and document any unresolved dynamic import patterns. spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md:363
+  - Tree-sitter may miss deeply nested classes/functions, so we need targeted fixtures to guard against the “nested entity
+  handling” risk called out in the spec. spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md:369
+  - Performance acceptance is <10 s build time and <500 MB memory on LocAgent repo, and the scikit-learn baseline (6,613 nodes /
+  55,638 edges) will stress that path. spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md:294 tests/fixtures/parity/
+  golden_outputs/README.md:10
+  - Parity gate is strict (≤2 % structure variance, etc.), so parity automation must be wired early to avoid end-of-week
+  surprises. docs/parity-validation-methodology.md:48
+
+  Immediate Next Actions (Oct 24‑25)
+
+  1. Stand up the crates/cds-index/src/graph/{parser,builder,traversal}.rs skeleton and add tree-sitter (+ tree-sitter-
+  python) dependencies to match the deliverable list and Day‑2 plan. spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-
+  builder.md:19 .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-24-work-summary.md:123
+  2. Copy LocAgent’s python.scm, implement ASTParser plus entity extraction helpers so we satisfy FR-CG-1 and Sub-Issue Task 1‑2
+  before moving on to edges. spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md:44 spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-
+  index-service.md:36
+  3. Build the repo traversal + contain/import/invoke/inherit edge logic, mirroring LocAgent’s pipeline described in Sub-Issue
+  Task 3‑4 and PRD FR-CG-2. spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md:129 spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-
+  index-service.md:65
+  4. Add unit tests and parity harnesses that compare CDS graph output with the golden JSON fixtures, enforcing the ≤2 % variance
+  rule on every baseline repo. spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md:242 tests/fixtures/parity/golden_outputs/
+  README.md:9
+  5. Keep updating worklogs/metadata daily (per SOP) once code work begins, capturing metrics and decisions so the audit trail
+  stays intact. .artifacts/spec-tasks-T-02-01-graph-builder/metadata.yaml:73 docs/WORKTREE_WORKFLOW.md:24
+
+  Natural next checks after these steps: run cargo test once parser/builder units exist, then hook up scripts/parity-check.sh
+  against LocAgent baseline before expanding to the SWE-bench fixtures.
+```
+
+==============================================================
+
+```text
+
+› Please review the ULTRATHINK and T-02-01-Graph-Builder PRDs, along with the task plan. Conduct thorough research on "CDSAgent,"
+  based on the "LocAgent" paper and its code repository. LET'S BEGIN CODING!
+
+  - spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md
+  - spacs/tasks/0.1.0-mvp/02-index-core/README.md
+  - spacs/issues/04-0.1.0-mvp/02-index-core/00-overview.md
+  - spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md
+
+  PRDs:
+  spacs/prd/0.1.0-MVP-PRDs-v0/01-system-architecture.md
+  spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+  ...
+
+  ```
+  01-system-architecture.md
+  02-cds-index-service.md
+  03-cds-tools-cli.md
+  04-cds-agent-integration.md
+  05-api-specifications.md
+  06-rust-refactoring-plan.md
+  07-deployment-operations.md
+  08-testing-quality.md
+  09-implementation-roadmap.md
+  10-extensibility-future.md
+
+  …-graph-builder feat/task/T-02-01-graph-builder*​ ≡
+  ❯ cd spacs/tasks/0.1.0-mvp/02-index-core/
+
+  …/02-index-core feat/task/T-02-01-graph-builder*​ ≡
+  ❯ ls
+  README.md
+  T-02-01-graph-builder.md
+  T-02-02-sparse-index.md
+  T-02-03-service-layer.md
+  T-02-04-serialization.md
+  ```
+  CDSAgent base frome "LocAgent"-Paper & Paper's repo code local path! :
+  - (/Users/arthur/dev-space/CDSAgent/tmp/LocAgent/arXiv-2503.09089v2)
+  - @/Users/arthur/dev-space/CDSAgent/tmp/LocAgent/arXiv-2503.09089v2/2503.09089v2.pdf
+  - (/Users/arthur/dev-space/CDSAgent/tmp/LocAgent/)
+  - @/Users/arthur/dev-space/CDSAgent/tmp/LocAgent/dependency_graph/build_graph.py
+  ...
+
+  ```shell
+  CDSAgent/tmp/LocAgent main*​​ ≡
+   ❯ tree
+  .
+  ├── AGENTS.md
+  ├── CLAUDE.md
+  ├── CONTRIBUTING.md
+  ├── LICENSE
+  ├── README.md
+  ├── arXiv-2503.09089v2
+  │   ├── 0_main.bbl
+  │   ├── 0_main.tex
+  │   ├── 1_intro.tex
+  │   ├── 2503.09089v2.pdf
+  │   ├── 2_related.tex
+  │   ├── 3_method.tex
+  │   ├── 4_dataset.tex
+  │   ├── 5_experiment.tex
+  │   ├── 6_1_appendix_details.tex
+  │   ├── 6_2_appendix_graph.tex
+  │   ├── 6_3_appendix_dataset_exp.tex
+  │   ├── 6_4_appendix_prompt.tex
+  │   ├── acl.sty
+  │   ├── acl_natbib.bst
+  │   ├── custom.bib
+  │   ├── data
+  │   │   ├── ablation.tex
+  │   │   ├── api_detail.tex
+  │   │   ├── collect_dataset.tex
+  │   │   ├── cost_efficiency.tex
+  │   │   ├── dataset_dist.tex
+  │   │   ├── downstream_edit.tex
+  │   │   ├── eval_loc_bench.tex
+  │   │   ├── graph_comparison.tex
+  │   │   ├── main_acc.tex
+  │   │   ├── main_ndcg.tex
+  │   │   ├── main_precision.tex
+  │   │   ├── main_results.tex
+  │   │   ├── tab_api_lists.tex
+  │   │   ├── time_efficiency.tex
+  │   │   └── tree-structure.tex
+  │   └── fig
+  │       ├── acc_5_among_hops.pdf
+  │       ├── acc_5_among_hops_w_dist.pdf
+  │       ├── acc_on_categories.pdf
+  │       ├── acc_on_categories_loc_bench560.pdf
+  │       ├── expanded_tree_format.pdf
+  │       ├── fig_2_overview.pdf
+  │       ├── figure1.pdf
+  │       ├── file_acc_5_among_hops.png
+  │       ├── fine-tune-qwen.png
+  │       ├── fine_tune.pdf
+  │       ├── func_acc_10_among_hops.png
+  │       ├── intro1.png
+  │       ├── keyword_entity.pdf
+  │       ├── keywords_example.pdf
+  │       ├── loc_agent_figure1.pdf
+  │       ├── loc_agent_prompt.pdf
+  │       ├── main_fig_v0.1.pdf
+  │       ├── output_format.pdf
+  │       ├── output_locbench.png
+  │       ├── overview.pdf
+  │       ├── preliminary_swe_lite.png
+  │       ├── result_lite_file-.png
+  │       ├── result_lite_file.png
+  │       ├── result_lite_func-1.png
+  │       └── result_lite_func.png
+  ├── assets
+  │   └── overview.png
+  ├── auto_search_main.py
+  ├── build-graph-init-log.txt
+  ├── build_bm25_index.py
+  ├── dependency_graph
+  │   ├── __init__.py
+  │   ├── batch_build_graph.py
+  │   ├── build_graph.py
+  │   └── traverse_graph.py
+  ├── evaluation
+  │   ├── eval_metric.py
+  │   ├── loc_output
+  │   │   └── locagent
+  │   │       └── claude_3-5
+  │   │           └── loc_outputs.jsonl
+  │   └── run_evaluation.ipynb
+  ├── plugins
+  │   ├── __init__.py
+  │   ├── location_tools
+  │   │   ├── __init__.py
+  │   │   ├── locationtools.py
+  │   │   ├── repo_ops
+  │   │   │   ├── __init__.py
+  │   │   │   └── repo_ops.py
+  │   │   ├── retriever
+  │   │   │   ├── __init__.py
+  │   │   │   ├── bm25_retriever.py
+  │   │   │   └── fuzzy_retriever.py
+  │   │   └── utils
+  │   │       ├── compress_file.py
+  │   │       ├── dependency.py
+  │   │       ├── result_format.py
+  │   │       └── util.py
+  │   └── requirement.py
+  ├── pytorch-analysis.md
+  ├── repo_index
+  │   ├── __init__.py
+  │   ├── codeblocks
+  │   │   ├── __init__.py
+  │   │   ├── codeblocks.py
+  │   │   ├── module.py
+  │   │   └── parser
+  │   │       ├── __init__.py
+  │   │       ├── comment.py
+  │   │       ├── create.py
+  │   │       ├── java.py
+  │   │       ├── parser.py
+  │   │       ├── python.py
+  │   │       └── queries
+  │   │           ├── __init__.py
+  │   │           ├── java.scm
+  │   │           └── python.scm
+  │   ├── file_context.py
+  │   ├── index
+  │   │   ├── __init__.py
+  │   │   ├── code_index.py
+  │   │   ├── code_node.py
+  │   │   ├── embed_model.py
+  │   │   ├── epic_split.py
+  │   │   ├── settings.py
+  │   │   ├── simple_faiss.py
+  │   │   └── types.py
+  │   ├── repository.py
+  │   ├── types.py
+  │   ├── utils
+  │   │   ├── __init__.py
+  │   │   ├── colors.py
+  │   │   ├── repo.py
+  │   │   ├── tokenizer.py
+  │   │   └── xml.py
+  │   └── workspace.py
+  ├── requirements-macos-fixed.txt
+  ├── requirements-macos.txt
+  ├── requirements.txt
+  ├── scripts
+  │   ├── gen_bm25_index.sh
+  │   ├── gen_graph_index.sh
+  │   └── run.sh
+  ├── sft_train.py
+  ├── triton-analysis.md
+  └── util
+      ├── __init__.py
+      ├── actions
+      │   ├── action.py
+      │   └── action_parser.py
+      ├── benchmark
+      │   ├── gen_oracle_locations.py
+      │   ├── git_repo_manager.py
+      │   ├── parse_patch.py
+      │   ├── parse_python_file.py
+      │   └── setup_repo.py
+      ├── classify_issue.py
+      ├── cost_analysis.py
+      ├── extract_entity_from_issue.py
+      ├── process_output.py
+      ├── prompts
+      │   ├── __init__.py
+      │   ├── general_prompt.py
+      │   ├── pipelines
+      │   │   ├── auto_search_prompt.py
+      │   │   └── simple_localize_pipeline.py
+      │   ├── prompt.py
+      │   ├── system_prompt.j2
+      │   ├── user_prompt-.j2
+      │   └── user_prompt.j2
+      ├── runtime
+      │   ├── content_tools.py
+      │   ├── exceptions.py
+      │   ├── execute_ipython.py
+      │   ├── finish.py
+      │   ├── fn_call_converter.py
+      │   ├── function_calling.py
+      │   └── structure_tools.py
+      └── utils.py
+
+  42 directories, 203 files
+
+  ```
+
+```
+
+==============================================================
