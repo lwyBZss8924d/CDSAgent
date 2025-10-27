@@ -46,11 +46,11 @@ git:
       date: "2025-10-25"
       files_changed: 5
       notes: "Parity harness (359 lines), builder AST refinement (+159 lines). Current variance: imports +23.85%, invokes -15.63%. Total +570 lines."
-    - hash: "PENDING"
+    - hash: "3083e00"
       message: "feat(graph): T-02-01 - implement export tracking system and resolve import parity"
       date: "2025-10-27"
-      files_changed: 3
-      notes: "ModuleExports model (+548 lines), 3 new unit tests (+182 lines). Import parity RESOLVED: 0% variance. Invoke variance: +1.9%. Total +817 lines, -52 deleted."
+      files_changed: 8
+      notes: "ModuleExports model (+548 lines), 3 new unit tests (+182 lines). Import parity RESOLVED: 0% variance. Invoke variance: +1.9%. Total +1,361 lines, -64 deleted. 8 files: builder.rs, tests, metadata, worklogs, action logs."
   pr:
     number: null
     url: null

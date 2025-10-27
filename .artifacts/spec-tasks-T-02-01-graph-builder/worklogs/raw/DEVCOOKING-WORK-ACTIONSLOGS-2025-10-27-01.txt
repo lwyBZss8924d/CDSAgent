@@ -31,12 +31,19 @@ FROME: @.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK
   - Reworked alias resolution: import alias caching understands package __init__ re-exports, wildcard imports are recorded
     (without inflating edge counts), and build_alias_map now folds in wildcard exposure lazily so invoke resolution can see those
     names.
-  - Added two focused unit tests (wildcard_imports_expand_all_exports, exports_follow_module_all_aliases) to pin the new behavior.
-    All graph_builder_tests green.
+  - Added three focused unit tests (import_edges_follow_package_reexports, wildcard_imports_expand_all_exports,
+    exports_follow_module_all_aliases) to pin the new behavior. All graph_builder_tests green (6/6 passing).
   - Parity harness: for the LocAgent fixture, imports now match the golden totals exactly (218 / 218). Remaining variance sits in
     invoke edges (+10, ~1.9%), which is the next big item.
 
-  What’s Next
+  Statistics
+
+  - Files changed: 8 (builder.rs, graph_builder_tests.rs, metadata.yaml, 3 worklogs, 2 action logs)
+  - Lines added: +1,361 (code: +730, worklogs: +554, action logs: +135, metadata: +36, deletions: -64)
+  - Tests: 3 new unit tests (total 6/6 passing)
+  - Test coverage: ~25% (6 unit tests + parity harness)
+
+  What's Next
 
   1. Mirror LocAgent’s callee search (“find_all_possible_callee”) so invoke edges discover nested methods, recursive imports, and
      package __init__ exports; add unit coverage for decorators and class base traversal.
