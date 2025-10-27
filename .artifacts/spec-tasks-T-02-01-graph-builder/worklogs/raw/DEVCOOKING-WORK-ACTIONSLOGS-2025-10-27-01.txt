@@ -1,0 +1,48 @@
+DEVCOOKING-WORK-ACTIONSLOGS-2025-10-27-01.txt
+
+FROM: EVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01.txt
+
+==============================================================
+
+FROME: @.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01.txt
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-25T12:44:00Z
+
+[TODO]: continue DeepResearch, fix, and test these current all issues:
+  1. Parse __all__ assignments (including repo_ops/util packages) and explode wildcard imports into per-symbol edges.
+  2. When a module re-exports a class/function via from … import *, walk the target module’s symbol table and add attribute
+     edges (possibly storing an “exports” cache keyed by module path).
+  3. Decide how to treat constant-only imports (e.g., NODE_TYPE_*). Either drop them from golden comparisons or model them as
+     file-level edges so the test no longer reports them as missing.
+
+==============================================================
+
+--CONTINUE
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-27T08:20:32Z
+
+• Progress Update
+
+  - Extended graph::builder with full AST-driven export tracking: new ModuleExports model parses __all__, wildcard re-exports, and
+    chained exports; deferred attribute imports now resolve after all files load, with a targeted fallback that preserves alias
+    names when we truly only know the module.
+  - Reworked alias resolution: import alias caching understands package __init__ re-exports, wildcard imports are recorded
+    (without inflating edge counts), and build_alias_map now folds in wildcard exposure lazily so invoke resolution can see those
+    names.
+  - Added two focused unit tests (wildcard_imports_expand_all_exports, exports_follow_module_all_aliases) to pin the new behavior.
+    All graph_builder_tests green.
+  - Parity harness: for the LocAgent fixture, imports now match the golden totals exactly (218 / 218). Remaining variance sits in
+    invoke edges (+10, ~1.9%), which is the next big item.
+
+  What’s Next
+
+  1. Mirror LocAgent’s callee search (“find_all_possible_callee”) so invoke edges discover nested methods, recursive imports, and
+     package __init__ exports; add unit coverage for decorators and class base traversal.
+  2. Re-run graph_parity_tests—first on LocAgent, then across the SWE-bench fixtures—to understand residual gaps (node blow-up on
+     Django indicates more filtering work).
+  3. Once invoke variance is within ≤2 %, update parity assertions, refresh the task artifacts/worklogs, and plan the broader
+     sweep of crates/cds-index/tests per the TODO.
+
+==============================================================

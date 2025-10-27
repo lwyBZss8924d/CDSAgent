@@ -7,12 +7,13 @@
 
 use crate::graph::{
     DependencyGraph, EdgeKind, GraphNode, GraphNodeIndex, ImportDirective, ImportEntity,
-    ModuleSpecifier, ParsedEntity, ParserError, PythonParser,
+    ModuleSpecifier, NodeKind, ParsedEntity, ParserError, PythonParser,
 };
 use petgraph::visit::EdgeRef;
-use rustpython_parser::ast::{self as pyast, Expr, Stmt, Suite};
+use rustpython_parser::ast::{self as pyast, Constant, Expr, Operator, Stmt, Suite};
 use rustpython_parser::Parse;
 use std::{
+    borrow::Cow,
     collections::{HashMap, HashSet},
     ffi::OsStr,
     fs,
@@ -40,9 +41,62 @@ const SKIP_DIRS: &[&str] = &[
     ".hypothesis",
 ];
 
+#[derive(Debug, Default, Clone)]
+struct ModuleExports {
+    names: HashSet<String>,
+    sources: Vec<ExportSource>,
+}
+
+impl ModuleExports {
+    fn is_empty(&self) -> bool {
+        self.names.is_empty() && self.sources.is_empty()
+    }
+
+    fn merge(&mut self, other: &ModuleExports) {
+        self.names.extend(other.names.iter().cloned());
+        self.sources.extend(other.sources.iter().cloned());
+    }
+
+    fn add_name(&mut self, name: String) {
+        if !name.is_empty() {
+            self.names.insert(name);
+        }
+    }
+
+    fn add_source(&mut self, source: ExportSource) {
+        self.sources.push(source);
+    }
+}
+
+#[derive(Debug, Clone)]
+enum ExportSource {
+    Module(ModuleSpecifier),
+    Alias(String),
+}
+
+#[derive(Debug, Default)]
+struct AstModuleData {
+    imports: Vec<ImportDirective>,
+    exports: ModuleExports,
+}
+
+impl AstModuleData {
+    fn into_parts(self) -> (Vec<ImportDirective>, ModuleExports) {
+        (self.imports, self.exports)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct GraphBuilderConfig {
     pub follow_symlinks: bool,
+}
+
+#[derive(Debug, Clone)]
+struct DeferredAttributeImport {
+    source_idx: GraphNodeIndex,
+    module_path: PathBuf,
+    name: String,
+    alias: Option<String>,
 }
 
 impl Default for GraphBuilderConfig {
@@ -130,6 +184,7 @@ struct BuilderState {
     graph: DependencyGraph,
     directory_nodes: HashMap<PathBuf, GraphNodeIndex>,
     file_nodes: HashMap<PathBuf, GraphNodeIndex>,
+    file_index_lookup: HashMap<GraphNodeIndex, PathBuf>,
     pending_imports: HashMap<PathBuf, Vec<ImportDirective>>,
     file_sources: HashMap<PathBuf, String>,
     file_symbols: HashMap<PathBuf, HashMap<String, GraphNodeIndex>>,
@@ -137,6 +192,11 @@ struct BuilderState {
     entity_segments: HashMap<GraphNodeIndex, Vec<String>>,
     parsed_modules: HashMap<PathBuf, Rc<Suite>>,
     behavior_edge_cache: HashSet<(GraphNodeIndex, GraphNodeIndex, EdgeKind)>,
+    deferred_attribute_imports: Vec<DeferredAttributeImport>,
+    module_exports: HashMap<PathBuf, ModuleExports>,
+    module_aliases: HashMap<PathBuf, HashMap<String, PathBuf>>,
+    resolved_exports: HashMap<PathBuf, HashSet<String>>,
+    wildcard_imports: HashMap<PathBuf, Vec<PathBuf>>,
     stats: GraphBuildStats,
 }
 
@@ -159,6 +219,7 @@ impl BuilderState {
             graph,
             directory_nodes,
             file_nodes: HashMap::new(),
+            file_index_lookup: HashMap::new(),
             pending_imports: HashMap::new(),
             file_sources: HashMap::new(),
             file_symbols: HashMap::new(),
@@ -166,6 +227,11 @@ impl BuilderState {
             entity_segments: HashMap::new(),
             parsed_modules: HashMap::new(),
             behavior_edge_cache: HashSet::new(),
+            deferred_attribute_imports: Vec::new(),
+            module_exports: HashMap::new(),
+            module_aliases: HashMap::new(),
+            resolved_exports: HashMap::new(),
+            wildcard_imports: HashMap::new(),
             stats: GraphBuildStats {
                 directories: 1,
                 ..GraphBuildStats::default()
@@ -190,22 +256,33 @@ impl BuilderState {
         let source = fs::read_to_string(absolute_path)?;
         let tree = parser.parse(&source)?;
         let entities = PythonParser::collect_entities_from_tree(&tree, &source);
-        let directives = match Suite::parse(&source, rel_path.to_string_lossy().as_ref()) {
+        let module_data = match Suite::parse(&source, rel_path.to_string_lossy().as_ref()) {
             Ok(ast) => {
                 let rc = Rc::new(ast);
-                let collected = collect_imports_from_ast(rc.as_ref());
+                let data = collect_module_data_from_ast(rc.as_ref());
                 self.parsed_modules.insert(rel_path.to_path_buf(), rc);
-                collected
+                data
             }
             Err(err) => {
                 warn!("Failed to parse Python AST for {:?}: {err}", rel_path);
-                PythonParser::collect_imports_from_tree(&tree, &source)
+                AstModuleData {
+                    imports: PythonParser::collect_imports_from_tree(&tree, &source),
+                    exports: ModuleExports::default(),
+                }
             }
         };
+        let (directives, exports) = module_data.into_parts();
         self.pending_imports
             .entry(rel_path.to_path_buf())
             .or_default()
             .extend(directives);
+        if !exports.is_empty() {
+            self.module_exports
+                .entry(rel_path.to_path_buf())
+                .and_modify(|existing| existing.merge(&exports))
+                .or_insert(exports);
+            self.resolved_exports.clear();
+        }
         self.file_sources
             .entry(rel_path.to_path_buf())
             .or_insert_with(|| source.clone());
@@ -254,6 +331,7 @@ impl BuilderState {
         let node = GraphNode::file(id.clone(), display_name, absolute);
         let idx = self.graph.add_node(node);
         self.file_nodes.insert(rel_path.to_path_buf(), idx);
+        self.file_index_lookup.insert(idx, rel_path.to_path_buf());
         self.stats.files += 1;
 
         let parent_idx = rel_path
@@ -338,6 +416,11 @@ impl BuilderState {
                     ImportDirective::Module { module, alias } => {
                         if let Some(path) = self.resolve_module_spec(&rel_path, &module) {
                             self.add_file_import_edge(file_idx, &path, alias.as_deref());
+                            let alias_name =
+                                alias.clone().or_else(|| module.segments.last().cloned());
+                            if let Some(alias_value) = alias_name {
+                                self.record_module_alias(&rel_path, alias_value, path);
+                            }
                         }
                     }
                     ImportDirective::FromModule { module, entities } => {
@@ -346,6 +429,8 @@ impl BuilderState {
                 }
             }
         }
+
+        self.resolve_deferred_attribute_imports();
     }
 
     fn process_behavior_edges(&mut self) {
@@ -430,11 +515,11 @@ impl BuilderState {
         entities: &[ImportEntity],
     ) {
         let base_module_path = self.resolve_module_spec(source_path, module);
-
         for entity in entities {
             if entity.is_wildcard {
                 if let Some(ref module_path) = base_module_path {
                     self.add_file_import_edge(file_idx, module_path, None);
+                    self.expand_wildcard_import(file_idx, module_path);
                 }
                 continue;
             }
@@ -451,6 +536,8 @@ impl BuilderState {
 
             if let Some(path) = self.resolve_module_spec(source_path, &extended_spec) {
                 self.add_file_import_edge(file_idx, &path, entity.alias.as_deref());
+                let alias_name = entity.alias.clone().unwrap_or_else(|| entity.name.clone());
+                self.record_module_alias(source_path, alias_name, path);
                 continue;
             }
 
@@ -472,12 +559,7 @@ impl BuilderState {
         alias: Option<&str>,
     ) {
         if let Some(&target_idx) = self.file_nodes.get(target_path) {
-            self.graph.add_edge_with_alias(
-                source_idx,
-                target_idx,
-                EdgeKind::Import,
-                alias.map(|value| value.to_string()),
-            );
+            self.add_import_edge_if_absent(source_idx, target_idx, alias);
         }
     }
 
@@ -488,27 +570,271 @@ impl BuilderState {
         name: &str,
         alias: Option<&str>,
     ) {
-        let module_id = normalized_path(module_path);
-        let suffix = split_entity_segments(name).join("::");
-        if suffix.is_empty() {
+        if self.try_add_attribute_import_edge(source_idx, module_path, name, alias) {
             return;
         }
 
-        let candidate_id = format!("{}::{}", module_id, suffix);
-        if let Some(target_idx) = self.graph.get_index(&candidate_id) {
+        self.deferred_attribute_imports
+            .push(DeferredAttributeImport {
+                source_idx,
+                module_path: module_path.to_path_buf(),
+                name: name.to_string(),
+                alias: alias.map(|value| value.to_string()),
+            });
+    }
+
+    fn try_add_attribute_import_edge(
+        &mut self,
+        source_idx: GraphNodeIndex,
+        module_path: &Path,
+        name: &str,
+        alias: Option<&str>,
+    ) -> bool {
+        if let Some(target_idx) = self.resolve_attribute_target(module_path, name) {
+            self.add_import_edge_if_absent(source_idx, target_idx, alias);
+            return true;
+        }
+        false
+    }
+
+    fn resolve_attribute_target(
+        &mut self,
+        module_path: &Path,
+        name: &str,
+    ) -> Option<GraphNodeIndex> {
+        let module_id = normalized_path(module_path);
+        let suffix = split_entity_segments(name).join("::");
+        let debug = std::env::var_os("PARITY_DEBUG").is_some();
+        if !suffix.is_empty() {
+            let candidate_id = format!("{}::{}", module_id, suffix);
+            if let Some(idx) = self.graph.get_index(&candidate_id) {
+                return Some(idx);
+            }
+            if debug && module_id == "util/process_output.py" && name == "merge_sample_locations" {
+                println!(
+                    "[PARITY DEBUG] candidate {} missing for {}",
+                    candidate_id, module_id
+                );
+            }
+        }
+
+        let Some(&module_idx) = self.file_nodes.get(module_path) else {
+            return None;
+        };
+
+        if let Some(symbols) = self.file_symbols.get(module_path) {
+            if let Some(&idx) = symbols.get(name) {
+                return Some(idx);
+            }
+            if debug && module_id == "util/process_output.py" && name == "merge_sample_locations" {
+                println!(
+                    "[PARITY DEBUG] symbols for {} did not contain {} (keys: {:?})",
+                    module_id,
+                    name,
+                    symbols.keys().take(5).collect::<Vec<_>>()
+                );
+            }
+        }
+
+        let alias_map = self.build_alias_map(module_idx);
+        alias_map.get(name).copied()
+    }
+
+    fn resolve_deferred_attribute_imports(&mut self) {
+        if self.deferred_attribute_imports.is_empty() {
+            return;
+        }
+
+        let mut remaining = Vec::new();
+        let mut progress = true;
+        let mut attempts = 0;
+
+        while progress && attempts < 4 {
+            progress = false;
+            attempts += 1;
+            let pending = std::mem::take(&mut self.deferred_attribute_imports);
+            for entry in pending {
+                if self.try_add_attribute_import_edge(
+                    entry.source_idx,
+                    &entry.module_path,
+                    &entry.name,
+                    entry.alias.as_deref(),
+                ) {
+                    progress = true;
+                } else {
+                    remaining.push(entry);
+                }
+            }
+
+            self.deferred_attribute_imports = remaining;
+            remaining = Vec::new();
+        }
+
+        let pending = std::mem::take(&mut self.deferred_attribute_imports);
+        let mut still_unresolved = Vec::new();
+        let debug = std::env::var_os("PARITY_DEBUG").is_some();
+        for entry in pending {
+            if let Some(&module_idx) = self.file_nodes.get(&entry.module_path) {
+                let alias_cow = entry
+                    .alias
+                    .as_deref()
+                    .map(Cow::Borrowed)
+                    .unwrap_or_else(|| Cow::Owned(entry.name.clone()));
+                self.add_import_edge_if_absent(
+                    entry.source_idx,
+                    module_idx,
+                    Some(alias_cow.as_ref()),
+                );
+                if debug {
+                    if let Some(source_node) = self.graph.node(entry.source_idx) {
+                        println!(
+                            "[PARITY DEBUG] Fallback import {} -> {} (module file)",
+                            source_node.id,
+                            normalized_path(&entry.module_path)
+                        );
+                    }
+                }
+            } else {
+                still_unresolved.push(entry);
+            }
+        }
+
+        if debug {
+            for entry in &still_unresolved {
+                if let Some(source_node) = self.graph.node(entry.source_idx) {
+                    println!(
+                        "[PARITY DEBUG] Deferred import unresolved {} -> {}::{}",
+                        source_node.id,
+                        normalized_path(&entry.module_path),
+                        entry.name
+                    );
+                }
+            }
+        }
+
+        self.deferred_attribute_imports = still_unresolved;
+    }
+
+    fn record_module_alias(&mut self, source_path: &Path, alias: String, target_path: PathBuf) {
+        if alias.is_empty() {
+            return;
+        }
+        let entry = self
+            .module_aliases
+            .entry(source_path.to_path_buf())
+            .or_default();
+        entry.insert(alias, target_path.clone());
+        if let Some(stem) = target_path.file_stem().and_then(|stem| stem.to_str()) {
+            entry
+                .entry(stem.to_string())
+                .or_insert_with(|| target_path.clone());
+        }
+        self.resolved_exports.clear();
+    }
+
+    fn expand_wildcard_import(&mut self, source_idx: GraphNodeIndex, module_path: &Path) {
+        if let Some(source_path) = self.file_index_lookup.get(&source_idx) {
+            let entry = self
+                .wildcard_imports
+                .entry(source_path.clone())
+                .or_default();
+            if !entry.iter().any(|path| path == module_path) {
+                entry.push(module_path.to_path_buf());
+            }
+        }
+    }
+
+    fn resolve_exports(&mut self, module_path: &Path) -> HashSet<String> {
+        if let Some(cached) = self.resolved_exports.get(module_path) {
+            return cached.clone();
+        }
+
+        let mut visited = HashSet::new();
+        let mut result = HashSet::new();
+        self.resolve_exports_recursive(module_path, &mut visited, &mut result);
+        self.resolved_exports
+            .insert(module_path.to_path_buf(), result.clone());
+        result
+    }
+
+    fn resolve_exports_recursive(
+        &mut self,
+        module_path: &Path,
+        visited: &mut HashSet<PathBuf>,
+        result: &mut HashSet<String>,
+    ) {
+        if !visited.insert(module_path.to_path_buf()) {
+            return;
+        }
+
+        let mut added = false;
+        if let Some(info) = self.module_exports.get(module_path).cloned() {
+            for name in &info.names {
+                if result.insert(name.clone()) {
+                    added = true;
+                }
+            }
+            for source in info.sources {
+                for target in self.resolve_export_source(module_path, &source) {
+                    self.resolve_exports_recursive(&target, visited, result);
+                    added = true;
+                }
+            }
+        }
+
+        if !added {
+            if let Some(symbols) = self.file_symbols.get(module_path) {
+                for name in symbols.keys() {
+                    if !name.contains("::") {
+                        result.insert(name.clone());
+                    }
+                }
+            }
+        }
+    }
+
+    fn resolve_export_source(&mut self, module_path: &Path, source: &ExportSource) -> Vec<PathBuf> {
+        match source {
+            ExportSource::Module(spec) => self
+                .resolve_module_spec(module_path, spec)
+                .into_iter()
+                .collect(),
+            ExportSource::Alias(name) => {
+                let mut paths = Vec::new();
+                if let Some(map) = self.module_aliases.get(module_path) {
+                    if let Some(target) = map.get(name) {
+                        paths.push(target.clone());
+                    }
+                }
+                if paths.is_empty() {
+                    let spec = ModuleSpecifier::new(0, vec![name.clone()]);
+                    if let Some(path) = self.resolve_module_spec(module_path, &spec) {
+                        paths.push(path);
+                    }
+                }
+                paths
+            }
+        }
+    }
+
+    fn add_import_edge_if_absent(
+        &mut self,
+        source_idx: GraphNodeIndex,
+        target_idx: GraphNodeIndex,
+        alias: Option<&str>,
+    ) {
+        let exists = self.graph.graph().edges(source_idx).any(|edge| {
+            edge.weight().kind == EdgeKind::Import
+                && edge.target() == target_idx
+                && edge.weight().alias.as_deref() == alias
+        });
+        if !exists {
             self.graph.add_edge_with_alias(
                 source_idx,
                 target_idx,
                 EdgeKind::Import,
                 alias.map(|value| value.to_string()),
             );
-        } else if std::env::var_os("PARITY_DEBUG").is_some() {
-            if let Some(source_node) = self.graph.node(source_idx) {
-                println!(
-                    "[PARITY DEBUG] Unable to resolve attribute import {} -> {}",
-                    source_node.id, candidate_id
-                );
-            }
         }
     }
 
@@ -555,8 +881,45 @@ impl BuilderState {
         }
     }
 
-    fn build_alias_map(&self, file_idx: GraphNodeIndex) -> HashMap<String, GraphNodeIndex> {
+    fn build_alias_map(&mut self, file_idx: GraphNodeIndex) -> HashMap<String, GraphNodeIndex> {
         let mut aliases = HashMap::new();
+        let mut visited = HashSet::new();
+        self.collect_callee_candidates(file_idx, &mut visited, &mut aliases);
+
+        if let Some(rel_path) = self.file_index_lookup.get(&file_idx) {
+            if let Some(modules) = self.wildcard_imports.get(rel_path).cloned() {
+                for module_path in modules {
+                    let exports = self.resolve_exports(&module_path);
+                    for name in exports {
+                        if let Some(target_idx) = self.resolve_attribute_target(&module_path, &name)
+                        {
+                            aliases.entry(name).or_insert(target_idx);
+                        }
+                    }
+                }
+            }
+        }
+        aliases
+    }
+
+    fn collect_callee_candidates(
+        &self,
+        file_idx: GraphNodeIndex,
+        visited: &mut HashSet<GraphNodeIndex>,
+        aliases: &mut HashMap<String, GraphNodeIndex>,
+    ) {
+        if !visited.insert(file_idx) {
+            return;
+        }
+
+        if let Some(rel_path) = self.file_index_lookup.get(&file_idx) {
+            if let Some(symbols) = self.file_symbols.get(rel_path) {
+                for (name, &idx) in symbols {
+                    aliases.entry(name.clone()).or_insert(idx);
+                }
+            }
+        }
+
         for edge in self.graph.graph().edges(file_idx) {
             if edge.weight().kind != EdgeKind::Import {
                 continue;
@@ -564,11 +927,56 @@ impl BuilderState {
             let target = edge.target();
             if let Some(alias) = &edge.weight().alias {
                 aliases.entry(alias.clone()).or_insert(target);
-            } else if let Some(node) = self.graph.node(target) {
-                aliases.entry(node.display_name.clone()).or_insert(target);
+            }
+            let Some(node) = self.graph.node(target) else {
+                continue;
+            };
+
+            match node.kind {
+                NodeKind::File => {
+                    if let Some(path) = node.file_path.as_ref() {
+                        if let Some(stem) = path.file_stem().and_then(|stem| stem.to_str()) {
+                            aliases.entry(stem.to_string()).or_insert(target);
+                        }
+                    }
+                    self.collect_callee_candidates(target, visited, aliases);
+                }
+                NodeKind::Class => {
+                    aliases.entry(node.display_name.clone()).or_insert(target);
+                    self.collect_enclosed_entities(target, aliases);
+                }
+                NodeKind::Function => {
+                    aliases.entry(node.display_name.clone()).or_insert(target);
+                }
+                NodeKind::Directory => {}
             }
         }
-        aliases
+    }
+
+    fn collect_enclosed_entities(
+        &self,
+        parent_idx: GraphNodeIndex,
+        aliases: &mut HashMap<String, GraphNodeIndex>,
+    ) {
+        for edge in self.graph.graph().edges(parent_idx) {
+            if edge.weight().kind != EdgeKind::Contain {
+                continue;
+            }
+            let child = edge.target();
+            let Some(node) = self.graph.node(child) else {
+                continue;
+            };
+            match node.kind {
+                NodeKind::Function => {
+                    aliases.entry(node.display_name.clone()).or_insert(child);
+                }
+                NodeKind::Class => {
+                    aliases.entry(node.display_name.clone()).or_insert(child);
+                    self.collect_enclosed_entities(child, aliases);
+                }
+                _ => {}
+            }
+        }
     }
 
     fn connect_behavior_edges(
@@ -611,68 +1019,156 @@ impl BuilderState {
     }
 }
 
-fn collect_imports_from_ast(suite: &Suite) -> Vec<ImportDirective> {
-    let mut directives = Vec::new();
-    visit_ast_imports(suite, &mut directives);
-    directives
+fn collect_module_data_from_ast(suite: &Suite) -> AstModuleData {
+    let mut data = AstModuleData::default();
+    visit_ast_statements(suite, &mut data, true);
+    data
 }
 
-fn visit_ast_imports(statements: &[Stmt], directives: &mut Vec<ImportDirective>) {
+fn visit_ast_statements(statements: &[Stmt], data: &mut AstModuleData, module_level: bool) {
     for stmt in statements {
         match stmt {
             pyast::Stmt::Import(import_stmt) => {
                 for alias in &import_stmt.names {
                     if let Some(directive) = convert_module_import(alias) {
-                        directives.push(directive);
+                        data.imports.push(directive);
                     }
                 }
             }
             pyast::Stmt::ImportFrom(import_from) => {
                 if let Some(directive) = convert_from_import(import_from) {
-                    directives.push(directive);
+                    if module_level {
+                        if let ImportDirective::FromModule { module, entities } = &directive {
+                            if entities.iter().any(|entity| entity.is_wildcard) {
+                                data.exports
+                                    .add_source(ExportSource::Module(module.clone()));
+                            }
+                        }
+                    }
+                    data.imports.push(directive);
                 }
+            }
+            pyast::Stmt::Assign(assign) if module_level => {
+                process_all_assignment(assign, &mut data.exports);
+            }
+            pyast::Stmt::AugAssign(assign) if module_level => {
+                process_all_augassign(assign, &mut data.exports);
             }
             _ => {}
         }
 
         match stmt {
-            pyast::Stmt::FunctionDef(func) => visit_ast_imports(&func.body, directives),
-            pyast::Stmt::AsyncFunctionDef(func) => visit_ast_imports(&func.body, directives),
-            pyast::Stmt::ClassDef(class_def) => visit_ast_imports(&class_def.body, directives),
+            pyast::Stmt::FunctionDef(func) => visit_ast_statements(&func.body, data, false),
+            pyast::Stmt::AsyncFunctionDef(func) => visit_ast_statements(&func.body, data, false),
+            pyast::Stmt::ClassDef(class_def) => visit_ast_statements(&class_def.body, data, false),
             pyast::Stmt::If(stmt_if) => {
-                visit_ast_imports(&stmt_if.body, directives);
-                visit_ast_imports(&stmt_if.orelse, directives);
+                visit_ast_statements(&stmt_if.body, data, false);
+                visit_ast_statements(&stmt_if.orelse, data, false);
             }
             pyast::Stmt::For(stmt_for) => {
-                visit_ast_imports(&stmt_for.body, directives);
-                visit_ast_imports(&stmt_for.orelse, directives);
+                visit_ast_statements(&stmt_for.body, data, false);
+                visit_ast_statements(&stmt_for.orelse, data, false);
             }
             pyast::Stmt::AsyncFor(stmt_for) => {
-                visit_ast_imports(&stmt_for.body, directives);
-                visit_ast_imports(&stmt_for.orelse, directives);
+                visit_ast_statements(&stmt_for.body, data, false);
+                visit_ast_statements(&stmt_for.orelse, data, false);
             }
             pyast::Stmt::While(stmt_while) => {
-                visit_ast_imports(&stmt_while.body, directives);
-                visit_ast_imports(&stmt_while.orelse, directives);
+                visit_ast_statements(&stmt_while.body, data, false);
+                visit_ast_statements(&stmt_while.orelse, data, false);
             }
-            pyast::Stmt::With(stmt_with) => visit_ast_imports(&stmt_with.body, directives),
-            pyast::Stmt::AsyncWith(stmt_with) => visit_ast_imports(&stmt_with.body, directives),
+            pyast::Stmt::With(stmt_with) => visit_ast_statements(&stmt_with.body, data, false),
+            pyast::Stmt::AsyncWith(stmt_with) => visit_ast_statements(&stmt_with.body, data, false),
             pyast::Stmt::Try(stmt_try) => {
-                visit_ast_imports(&stmt_try.body, directives);
-                visit_ast_imports(&stmt_try.orelse, directives);
-                visit_ast_imports(&stmt_try.finalbody, directives);
+                visit_ast_statements(&stmt_try.body, data, false);
+                visit_ast_statements(&stmt_try.orelse, data, false);
+                visit_ast_statements(&stmt_try.finalbody, data, false);
                 for handler in &stmt_try.handlers {
                     let pyast::ExceptHandler::ExceptHandler(except) = handler;
-                    visit_ast_imports(&except.body, directives);
+                    visit_ast_statements(&except.body, data, false);
                 }
             }
             pyast::Stmt::Match(stmt_match) => {
                 for case in &stmt_match.cases {
-                    visit_ast_imports(&case.body, directives);
+                    visit_ast_statements(&case.body, data, false);
                 }
             }
             _ => {}
         }
+    }
+}
+
+fn process_all_assignment(assign: &pyast::StmtAssign, exports: &mut ModuleExports) {
+    for target in &assign.targets {
+        if matches!(target, Expr::Name(name) if name.id.as_str() == "__all__") {
+            collect_exports_from_expr(&assign.value, exports);
+        }
+    }
+}
+
+fn process_all_augassign(assign: &pyast::StmtAugAssign, exports: &mut ModuleExports) {
+    if matches!(assign.op, Operator::Add)
+        && matches!(&*assign.target, Expr::Name(name) if name.id.as_str() == "__all__")
+    {
+        collect_exports_from_expr(&assign.value, exports);
+    }
+}
+
+fn collect_exports_from_expr(expr: &Expr, exports: &mut ModuleExports) {
+    match expr {
+        Expr::List(list) => {
+            for element in &list.elts {
+                collect_exports_from_expr(element, exports);
+            }
+        }
+        Expr::Tuple(tuple) => {
+            for element in &tuple.elts {
+                collect_exports_from_expr(element, exports);
+            }
+        }
+        Expr::Set(set_expr) => {
+            for element in &set_expr.elts {
+                collect_exports_from_expr(element, exports);
+            }
+        }
+        Expr::Constant(constant) => {
+            if let Constant::Str(value) = &constant.value {
+                exports.add_name(value.to_string());
+            }
+        }
+        Expr::BinOp(binop) => {
+            if matches!(binop.op, Operator::Add) {
+                collect_exports_from_expr(&binop.left, exports);
+                collect_exports_from_expr(&binop.right, exports);
+            }
+        }
+        Expr::Attribute(attr) => {
+            if attr.attr.as_str() == "__all__" {
+                if let Some(segments) = attribute_segments(&attr.value) {
+                    if segments.len() == 1 {
+                        exports.add_source(ExportSource::Alias(segments[0].clone()));
+                    } else {
+                        exports.add_source(ExportSource::Module(ModuleSpecifier::new(0, segments)));
+                    }
+                }
+            }
+        }
+        Expr::Name(name) => {
+            exports.add_source(ExportSource::Alias(name.id.to_string()));
+        }
+        _ => {}
+    }
+}
+
+fn attribute_segments(expr: &Expr) -> Option<Vec<String>> {
+    match expr {
+        Expr::Name(name) => Some(vec![name.id.to_string()]),
+        Expr::Attribute(attr) => {
+            let mut segments = attribute_segments(&attr.value)?;
+            segments.push(attr.attr.to_string());
+            Some(segments)
+        }
+        _ => None,
     }
 }
 

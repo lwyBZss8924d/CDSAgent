@@ -83,6 +83,188 @@ def runner():
 }
 
 #[test]
+fn import_edges_follow_package_reexports() {
+    let files = [
+        (
+            "pkg/__init__.py",
+            r#"
+from pkg.core import Service
+
+__all__ = ["Service"]
+"#,
+        ),
+        (
+            "pkg/core.py",
+            r#"
+class Service:
+    def perform(self):
+        pass
+"#,
+        ),
+        (
+            "main.py",
+            r#"
+from pkg import Service
+
+def handler():
+    svc = Service()
+    svc.perform()
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let main_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::File && node.display_name == "main.py"
+    })
+    .expect("main.py file node");
+    let service_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::Class && node.id.ends_with("pkg/core.py::Service")
+    })
+    .expect("Service class");
+
+    let mut found_edge = false;
+    for edge in graph.graph().edges(main_idx) {
+        if edge.weight().kind == EdgeKind::Import && edge.target() == service_idx {
+            found_edge = true;
+            break;
+        }
+    }
+
+    assert!(
+        found_edge,
+        "re-exported import should resolve to Service class in pkg/core.py"
+    );
+}
+
+#[test]
+fn wildcard_imports_expand_all_exports() {
+    let files = [
+        (
+            "pkg/__init__.py",
+            r#"
+from pkg.core import Service, Hidden
+__all__ = ["Service"]
+"#,
+        ),
+        (
+            "pkg/core.py",
+            r#"
+class Service:
+    def action(self):
+        pass
+
+class Hidden:
+    def secret(self):
+        pass
+"#,
+        ),
+        (
+            "main.py",
+            r#"
+from pkg import *
+
+def build():
+    return Service()
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let main_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::File && node.display_name == "main.py"
+    })
+    .expect("main file node");
+    let service_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::Class && node.id.ends_with("pkg/core.py::Service")
+    })
+    .expect("Service class");
+    let hidden_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::Class && node.id.ends_with("pkg/core.py::Hidden")
+    })
+    .expect("Hidden class");
+
+    let mut imports_service = false;
+    let mut imports_hidden = false;
+    for edge in graph.graph().edges(main_idx) {
+        if edge.weight().kind != EdgeKind::Import {
+            continue;
+        }
+        if edge.target() == service_idx {
+            imports_service = true;
+        }
+        if edge.target() == hidden_idx {
+            imports_hidden = true;
+        }
+    }
+
+    assert!(
+        imports_service,
+        "wildcard import should include Service from __all__"
+    );
+    assert!(
+        !imports_hidden,
+        "__all__ constraints should prevent Hidden from being imported"
+    );
+}
+
+#[test]
+fn exports_follow_module_all_aliases() {
+    let files = [
+        (
+            "pkg/repo_ops.py",
+            r#"
+__all__ = ["run"]
+
+def run():
+    return True
+"#,
+        ),
+        (
+            "pkg/locationtools.py",
+            r#"
+from pkg import repo_ops
+
+__all__ = repo_ops.__all__
+"#,
+        ),
+        ("pkg/__init__.py", ""),
+        (
+            "main.py",
+            r#"
+from pkg.locationtools import *
+
+def use():
+    return run()
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let main_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::File && node.display_name == "main.py"
+    })
+    .expect("main file node");
+    let run_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::Function && node.id.ends_with("pkg/repo_ops.py::run")
+    })
+    .expect("run function");
+
+    let mut found = false;
+    for edge in graph.graph().edges(main_idx) {
+        if edge.weight().kind == EdgeKind::Import && edge.target() == run_idx {
+            found = true;
+            break;
+        }
+    }
+
+    assert!(
+        found,
+        "re-exported __all__ via module alias should surface run()"
+    );
+}
+
+#[test]
 fn behavior_edges_detect_invokes_and_inherits() {
     let files = [
         ("pkg/__init__.py", ""),

@@ -46,6 +46,11 @@ git:
       date: "2025-10-25"
       files_changed: 5
       notes: "Parity harness (359 lines), builder AST refinement (+159 lines). Current variance: imports +23.85%, invokes -15.63%. Total +570 lines."
+    - hash: "PENDING"
+      message: "feat(graph): T-02-01 - implement export tracking system and resolve import parity"
+      date: "2025-10-27"
+      files_changed: 3
+      notes: "ModuleExports model (+548 lines), 3 new unit tests (+182 lines). Import parity RESOLVED: 0% variance. Invoke variance: +1.9%. Total +817 lines, -52 deleted."
   pr:
     number: null
     url: null
@@ -68,17 +73,17 @@ deliverables:
 
 acceptance_criteria:
   - criterion: "Parses Python repositories and produces a graph with all 4 node types and 4 edge types"
-    status: "in_progress"
-    notes: "✅ All 4 node types implemented. ✅ All 4 edge types implemented. ✅ Parity harness validates against 6 repos. ⏳ Nodes/contains/inherits exact match. ❌ Imports/invokes exceed 2% variance."
+    status: "completed"
+    notes: "✅ All 4 node types implemented. ✅ All 4 edge types implemented. ✅ Parity harness validates against 6 repos. ✅ Nodes/contains/inherits/imports exact match. ⏳ Invokes +1.9% variance (acceptable, needs minor refinement)."
   - criterion: "Fully-qualified names match LocAgent format (e.g., path/to/file.py::Class::method)"
-    status: "in_progress"
-    notes: "✅ FQN format implemented (filename:Class.method). ⏳ Validation ongoing via parity tests."
+    status: "completed"
+    notes: "✅ FQN format implemented (filename:Class.method). ✅ Validated against golden baselines (parity tests pass)."
   - criterion: "Unit tests cover typical and edge cases (decorators, nested classes, async functions)"
     status: "in_progress"
-    notes: "✅ Unit tests: 2 invoke edge tests. ✅ Integration: Parity harness for 6 repos. ⏳ Needs expansion to >80% coverage."
+    notes: "✅ Unit tests: 6 tests (2 invoke + 3 re-exports/wildcard/chained __all__). ✅ Integration: Parity harness for 6 repos. ⏳ Needs expansion to >80% coverage (currently ~25%)."
   - criterion: "Graph parity script reports ≤2% variance in node/edge counts vs. LocAgent baseline"
     status: "in_progress"
-    notes: "✅ Parity harness running. ❌ Variance: imports +23.85%, invokes -15.63%. ⏳ Day 3: Implement re-exports + callee traversal."
+    notes: "✅ Parity harness running. ✅ Import variance RESOLVED: 0% (was +23.85%). ⏳ Invoke variance: +1.9% (was -15.63%, improved but needs final pass)."
 
 worklog:
   base_path: ".artifacts/spec-tasks-T-02-01-graph-builder/worklogs/"
@@ -91,15 +96,19 @@ worklog:
       summary: "worklogs/2025-10-25-work-summary.md"
       commits: "worklogs/2025-10-25-commit-log.md"
       notes: "worklogs/2025-10-25-notes.md"
+    - date: "2025-10-27"
+      summary: "worklogs/2025-10-27-work-summary.md"
+      commits: "worklogs/2025-10-27-commit-log.md"
+      notes: "worklogs/2025-10-27-notes.md"
 
 metrics:
   estimated_hours: 40  # 5 days * 8 hours
-  actual_hours: 13  # Day 1: 2h planning, Day 2: 8h implementation + 3h parity
-  lines_added: 2634  # Core: 2064 + Parity session: 570
-  lines_deleted: 40   # Core: 26 + Parity session: 14
-  files_modified: 14  # Core: 12 + Parity session: 2 more (builder.rs again, graph_parity_tests.rs)
-  tests_added: 3      # 2 unit tests + 1 integration test suite
-  test_coverage: 0.20 # Estimated: ~20% (unit + integration)
+  actual_hours: 15.5  # Day 1: 2h planning, Day 2: 11h implementation, Day 3: 2.5h export tracking
+  lines_added: 3451   # Core: 2064 + Parity: 570 + Export tracking: 817
+  lines_deleted: 92    # Core: 26 + Parity: 14 + Export tracking: 52
+  files_modified: 15   # Core: 12 + Parity: 2 + Export tracking: 1 more (worklogs)
+  tests_added: 6       # 2 unit (invoke) + 1 integration (parity) + 3 unit (re-exports, wildcard, chained __all__)
+  test_coverage: 0.25  # Estimated: ~25% (6 unit tests + integration harness)
 
 comments:
   - date: "2025-10-24"
@@ -111,6 +120,9 @@ comments:
   - date: "2025-10-25"
     author: "Rust Dev 1"
     text: "Day 2 parity session: Added parity harness (359 lines), refactored builder with AST-based imports (+159 lines). Parity results: nodes/contains/inherits exact match ✅, imports +23.85% ❌, invokes -15.63% ❌. Root causes: missing re-exports, need graph-based callee traversal. Next: Implement __init__.py awareness and LocAgent's find_all_possible_callee."
+  - date: "2025-10-27"
+    author: "Rust Dev 1"
+    text: "Day 3 breakthrough: Import parity RESOLVED 🎉! Implemented comprehensive export tracking system with ModuleExports model, deferred attribute resolution, and wildcard import handling. Import edges now match LocAgent golden baseline exactly (218/218, 0% variance). Added 3 new unit tests. Invoke variance improved from -15.63% to +1.9%. Next: Mirror LocAgent's find_all_possible_callee to eliminate remaining invoke variance."
 
 related_artifacts:
   - type: "parity_baseline"

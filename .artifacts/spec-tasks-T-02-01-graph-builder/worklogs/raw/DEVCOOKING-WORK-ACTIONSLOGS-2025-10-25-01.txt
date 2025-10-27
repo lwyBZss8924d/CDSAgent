@@ -228,3 +228,90 @@ FROME: DEVCOOKING-WORK-START-2025-10-24-04
      swe-bench-lite so the full 6-repo baseline becomes enforced automatically.
 
 ==============================================================
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-25T10:50:00Z
+
+• Current State
+
+  - Parity harness (crates/cds-index/tests/graph_parity_tests.rs:1-210) now drives all six LocAgent + SWE-bench fixtures and
+    enforces the ≤2 % node/edge variance rule with optional PARITY_DEBUG diagnostics, but the run still fails because import edges
+    are 166 vs 218 (+23.9 %) and invoke edges are 448 vs 531 (‑15.6 %). Nodes/contain/inherit edges already line up exactly.
+  - Graph builder/import pipeline (crates/cds-index/src/graph/builder.rs:196-715) parses AST + tree-sitter data and resolves
+    direct imports/aliases, yet it does not follow module re-export patterns (e.g., __init__.py stubs or __all__ lists), nor does
+    it traverse imported modules to expose inner symbols the way LocAgent’s find_all_possible_callee routine does (../../tmp/
+    LocAgent/dependency_graph/build_graph.py:394-520).
+
+  High-Priority TODOs
+
+  1. Model re-exports + __all__ propagation
+     Expand the AST import collector and import-edge construction pipeline (crates/cds-index/src/graph/builder.rs:614-715) to
+     detect top-level assignments/from … import * statements in package __init__.py files and connect those exported names to
+     the concrete class/function nodes they wrap. Cache __all__ contents and multi-hop alias chains so files like repo_index/
+     file_context.py can resolve FileRepository through repo_index/__init__.py the same way LocAgent does.
+  2. Implement callee graph traversal for invoke edges
+     Replace the current alias-only resolver (resolve_name + connect_behavior_edges in crates/cds-index/src/graph/builder.rs:560-
+     610) with a LocAgent-style search: walk up the containment hierarchy, enumerate inner nodes, recursively follow imported
+     files (especially package __init__.py), and build a map of reachable symbols before matching AST call targets to graph nodes.
+     Mimic find_all_possible_callee (../../tmp/LocAgent/dependency_graph/build_graph.py:463-520) so method decorators, chained
+     imports, and recursive package exports produce the missing ~80 invoke edges without reintroducing the removed “global lookup”
+     noise.
+  3. Tighten parity enforcement once counts match
+     After re-export/import fixes, rerun cargo test -p cds-index --test graph_parity_tests to verify all fixtures pass within 2 %.
+     When they do, keep PARITY_DEBUG as an opt-in but make the assertions fail-fast (no silent variance) and document the fixture
+     prep requirements in tests/fixtures/parity/README.md.
+  4. Depth tests for parser + builder
+     Add focused unit tests under crates/cds-index/tests/graph_builder_tests.rs (e.g., new cases covering wildcard imports,
+     __all__, decorator invokes, relative-module inheritance) so regressions are caught before hitting the heavy parity harness.
+     Each new behavior from steps 1–2 should gain at least one deterministic test.
+
+  Extended Obligation (per latest instructions)
+
+  - Once all T-02-01 development goals are completed, do a sweep of crates/cds-index/tests (parity + unit suites) to update/refine
+    every test that exercises the new graph-builder functionality, ensuring coverage reflects the final feature set.
+
+  Immediate Workflow
+
+  - Implement items 1–2, rerun cargo fmt && cargo clippy and the parity harness (with PARITY_DEBUG=1 for diagnostics) until
+    imports/invokes fall within bounds.
+  - When parity stabilizes, update artifacts/worklogs with the new measurements, then proceed to the “refine all tests” sweep
+    before closing out T-02-01.
+
+==============================================================
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-25T12:44:00Z
+
+• What Changed
+
+  - Added a deferred attribute-import queue plus a reverse file-index lookup so module re-exports can resolve after all imports
+    are processed; resolve_attribute_target now reuses alias maps, and resolve_deferred_attribute_imports retries unresolved edges
+    with debug logging (crates/cds-index/src/graph/builder.rs:140-217, 510-613).
+  - Rebuilt the alias-map pipeline to traverse transitive imports, caching every reachable symbol (including nested methods)
+    by walking import edges and new collect_callee_candidates/collect_enclosed_entities helpers; this mirrors LocAgent’s
+    find_all_possible_callee behavior and makes invoke edges alias-aware (crates/cds-index/src/graph/builder.rs:654-723).
+  - Introduced a regression test that proves from pkg import Symbol resolves through an __init__.py re-export, preventing
+    regressions in the package bootstrap path (crates/cds-index/tests/graph_builder_tests.rs:86-122).
+
+  Testing
+
+  - cargo test -p cds-index graph_builder_tests ✅
+  - PARITY_DEBUG=1 cargo test -p cds-index --test graph_parity_tests -- --nocapture ❌ — imports still 173 vs 218 (+20.64 %), but
+    invokes are now 540 vs 531 (+1.69 %), so call-edge parity is inside the ≤2 % budget.
+
+  Current Risks / TODO
+
+  - Import edges remain ~52 short. The remaining gaps are concentrated in files that either (a) import constants/TypedDicts our
+    graph doesn’t model or (b) rely on wildcard exports (__all__, module-level helper functions like set_current_issue). Next
+    steps:
+      1. Parse __all__ assignments (including repo_ops/util packages) and explode wildcard imports into per-symbol edges.
+      2. When a module re-exports a class/function via from … import *, walk the target module’s symbol table and add attribute
+         edges (possibly storing an “exports” cache keyed by module path).
+      3. Decide how to treat constant-only imports (e.g., NODE_TYPE_*). Either drop them from golden comparisons or model them as
+         file-level edges so the test no longer reports them as missing.
+  - Once the import variance is within ≤2 %, rerun the parity harness across all six fixtures and, per the original instruction,
+    cascade any necessary updates through crates/cds-index/tests/ before touching the task artifacts/worklogs.
+
+==============================================================
+
+END
