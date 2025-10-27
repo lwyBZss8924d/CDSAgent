@@ -18,6 +18,7 @@
 **Changes Summary**:
 
 **Core Implementation** (+1,732 lines):
+
 - `crates/cds-index/src/graph/mod.rs` (+195 lines) - Public graph API surface
 - `crates/cds-index/src/graph/parser.rs` (+428 lines) - Tree-sitter Python AST parser
 - `crates/cds-index/src/graph/builder.rs` (+1,042 lines) - 4-phase graph construction pipeline
@@ -25,18 +26,22 @@
 - `Cargo.toml` (+1 line) - Add rustpython-parser workspace dependency
 
 **Tests** (+232 lines):
+
 - `crates/cds-index/tests/graph_builder_tests.rs` (+232 lines, new file)
   - Test: Invoke edges with alias resolution
   - Test: Decorator aliases create invoke edges
 
 **Dependencies** (+318 lines):
+
 - `crates/cds-index/Cargo.toml` (+1 line) - Add rustpython-parser crate dependency
 - `Cargo.lock` (+317 lines) - Dependency resolution
 
 **Documentation** (+1 line):
+
 - `.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-24-work-summary.md` (+1 line)
 
 **Deletions** (-26 lines):
+
 - Removed placeholder/stub code in graph modules
 
 **Implementation Details**:
@@ -108,6 +113,7 @@
 Day 2 of T-02-01 focused on core implementation. Implemented complete graph builder with all 4 node types and 4 edge types. Parser uses tree-sitter for Python AST analysis. Builder follows LocAgent's 4-phase construction pipeline. Import resolution handles relative/absolute/wildcard imports with alias tracking. Invoke/inherit detection uses AST-based analysis with decorator/async support. Initial unit tests validate invoke edge alias resolution.
 
 **Verification**:
+
 - ✅ `cargo check -p cds-index` - Compiles successfully
 - ✅ `cargo test -p cds-index graph_builder_tests -- --nocapture` - Tests pass
 - ⏳ `cargo fmt --all` - Not yet run
@@ -115,6 +121,7 @@ Day 2 of T-02-01 focused on core implementation. Implemented complete graph buil
 - ⏳ Parity validation - Not yet run
 
 **Next Actions**:
+
 1. Run `cargo fmt --all` and `cargo clippy --all-targets`
 2. Stage all modified files
 3. Commit with message above
@@ -122,6 +129,7 @@ Day 2 of T-02-01 focused on core implementation. Implemented complete graph buil
 5. Expand unit test coverage to >80%
 
 **Related Commits**:
+
 - Previous: f0e4858 (2025-10-24) - Task artifacts initialization and Day 1 spec review
 - Blocks: T-02-02 sparse index implementation
 
@@ -134,6 +142,7 @@ Day 2 of T-02-01 focused on core implementation. Implemented complete graph buil
 **Purpose**: Public graph module API surface
 
 **Key Additions**:
+
 - `NodeType` enum with 4 variants
 - `EdgeKind` enum with 4 variants
 - `GraphNode` struct with 7 fields
@@ -149,6 +158,7 @@ Day 2 of T-02-01 focused on core implementation. Implemented complete graph buil
 **Purpose**: Python AST parsing with tree-sitter
 
 **Key Additions**:
+
 - `PythonEntityExtractor` struct with tree-sitter parser
 - `extract_entities()` method with stack-based walker
 - `ModuleSpecifier`, `ImportDirective`, `ImportEntity` types
@@ -162,6 +172,7 @@ Day 2 of T-02-01 focused on core implementation. Implemented complete graph buil
 **Purpose**: Graph construction pipeline
 
 **Key Additions**:
+
 - `GraphBuilder` struct with configuration options
 - `build_graph()` main entry point
 - `walk_repository()` for directory/file traversal
@@ -179,6 +190,7 @@ Day 2 of T-02-01 focused on core implementation. Implemented complete graph buil
 **Purpose**: Graph traversal helpers
 
 **Key Additions**:
+
 - `TraversalFilter` struct for node/edge type filtering
 - `bfs_traverse()` function with filtering support
 
@@ -189,6 +201,7 @@ Day 2 of T-02-01 focused on core implementation. Implemented complete graph buil
 **Purpose**: Unit tests for graph builder
 
 **Tests Added**:
+
 1. `test_invoke_edge_with_alias()` - Validates that aliased imports (import Service as Engine) correctly resolve in invoke edges
 2. `test_decorator_alias_invoke()` - Validates that decorator references create invoke edges to aliased imports
 
@@ -204,11 +217,13 @@ Day 2 of T-02-01 focused on core implementation. Implemented complete graph buil
 **Files Modified**: 12
 
 **Commit Activity**:
+
 - Implementation: 1 commit (pending)
 - Documentation: 0 commits
 - Tests: Included in main commit
 
 **Next Commit** (Day 3):
+
 - Parity validation results
 - Expanded unit test coverage
 - Any bug fixes from parity validation
@@ -220,6 +235,7 @@ Day 2 of T-02-01 focused on core implementation. Implemented complete graph buil
 **Day 2 Status**: Core implementation complete. All modules compiled and initial tests passing. Ready for parity validation and test expansion.
 
 **Code Statistics**:
+
 - Parser: 426 lines
 - Builder: 1,040 lines
 - Traversal: 64 lines
@@ -228,6 +244,7 @@ Day 2 of T-02-01 focused on core implementation. Implemented complete graph buil
 - **Total**: ~1,964 lines of Rust code
 
 **Parity Baselines Available** (for validation):
+
 - LocAgent: 658 nodes, 1,419 edges
 - Django: 6,876 nodes, 9,982 edges
 - Matplotlib: 1,304 nodes, 1,674 edges

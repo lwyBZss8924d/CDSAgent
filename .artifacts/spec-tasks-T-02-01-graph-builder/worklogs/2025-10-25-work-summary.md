@@ -23,6 +23,7 @@
 ### Session 1: Graph Foundations (04:40:00Z)
 
 **Core Infrastructure**:
+
 - Defined `NodeType` enum (Directory, File, Class, Function)
 - Defined `EdgeKind` enum (Contains, Imports, Invokes, Inherits)
 - Implemented `GraphNode` struct with FQN, type, name, file, line range
@@ -30,6 +31,7 @@
 - Added ID→index mappings for parity checks
 
 **Python Parser** (crates/cds-index/src/graph/parser.rs, 426 lines):
+
 - Tree-sitter integration for Python AST parsing
 - Stack-based walker matching LocAgent's entity extraction
 - Entity extraction for classes/functions (skipping `__init__`)
@@ -37,6 +39,7 @@
 - Nested class/function support
 
 **Graph Builder** (crates/cds-index/src/graph/builder.rs, 1040 lines):
+
 - Configurable GraphBuilder with LocAgent skip list
 - Repository traversal with directory/file node creation
 - Contains edge wiring (dir→file, file→entity, class→method)
@@ -44,22 +47,26 @@
 - GraphBuildStats for parity validation metrics
 
 **Traversal Helpers** (crates/cds-index/src/graph/traversal.rs, 64 lines):
+
 - BFS helper with node type filtering
 - Graph traversal foundation for JSON-RPC methods
 
 ### Session 2: Import Pipeline (05:00:00Z)
 
 **Enhanced Edge Types**:
+
 - Extended `GraphEdge` struct with optional alias field
 - Maintains lightweight contains edges while supporting import metadata
 - Updated BFS traversal to use richer edge struct
 
 **Import Analysis**:
+
 - Added `ModuleSpecifier`, `ImportDirective`, `ImportEntity` types
 - Single-pass parsing for both entity extraction and import directives
 - Preserved alias and wildcard import details
 
 **Import Resolution Pipeline**:
+
 - Queued import directives during repository walk
 - Resolved imports after all nodes exist
 - Emitted `EdgeKind::Import` edges with alias metadata
@@ -67,32 +74,38 @@
 - Attribute lookup fallback to `pkg/foo.py::Class`
 
 **Behavior Edge Placeholder**:
+
 - Added `process_behavior_edges()` placeholder for invoke/inherit
 
 ### Session 3: Behavior Edges & Tests (05:13:20Z)
 
 **API Compatibility Fixes**:
+
 - Fixed rustpython_parser API compatibility
 - Updated `find_in_block` to match on `pyast::Stmt` directly
 - Shared `visit_block` walker for decorator/async helpers
 - Fixed try/except destructuring with `pyast::ExceptHandler::ExceptHandler`
 
 **Tree-sitter Integration**:
+
 - Replaced extern "C" block with `tree_sitter_python::LANGUAGE.into()`
 - Fixed linker errors with packaged tree-sitter-python grammar
 
 **Unit Tests** (crates/cds-index/tests/graph_builder_tests.rs, 232 lines):
+
 - Test: Invoke edges with alias resolution (import Service as Engine)
 - Test: Decorator aliases create invoke edges
 - Added petgraph::visit::EdgeRef for edge target inspection
 
 **Worklog Updates**:
+
 - Recorded testing TODO for comprehensive suite expansion
 - Documented Day 2 progress in metadata
 
 ### Session 4: Parity Harness & Import Refinement (06:30:00Z - 08:00:00Z)
 
 **Graph Parity Harness** (crates/cds-index/tests/graph_parity_tests.rs, 359 lines):
+
 - Dedicated integration test for all 6 parity baseline repos
 - Loads golden JSONs and enforces ≤2% variance rule
 - Human-readable diagnostics with variance percentages
@@ -100,6 +113,7 @@
 - Edge mismatch debugging with 5-sample limits
 
 **Builder + Parser Enhancements** (crates/cds-index/src/graph/builder.rs, +159 lines):
+
 - **AST-based Import Collection**: Parse each file with rustpython_parser + tree-sitter
   - Cache AST for behavior-edge analysis
   - Collect import directives via AST to match LocAgent's ast.walk logic
@@ -113,6 +127,7 @@
   - Identified enum/constant imports not currently modeled
 
 **Current Parity Status** (from `cargo test --test graph_parity_tests`):
+
 - ✅ **Nodes**: Exact match (658 to 6,876 nodes across 6 repos)
 - ✅ **Contains edges**: Exact match
 - ✅ **Inherit edges**: Exact match
@@ -120,11 +135,13 @@
 - ❌ **Invoke edges**: 448 vs 531 (-15.63% variance) - Missing 83 edges
 
 **Root Causes Identified**:
+
 1. **Missing Imports**: Re-exported symbols not followed (e.g., `__init__.py` → actual definitions)
 2. **Missing Invokes**: Need LocAgent's `find_all_possible_callee` traversal instead of alias-map lookup
 3. **Extra Edges**: AST picks up imports LocAgent ignores, self-recursive invoke logging
 
 **Tooling Runs**:
+
 - `cargo fmt --all` ✅
 - `cargo clippy --all-targets --workspace` ✅ (only existing warnings)
 - `cargo test -p cds-index --test graph_parity_tests -- --nocapture` (fails by design with variances above)
@@ -132,16 +149,20 @@
 ### Tests Added
 
 **Unit Tests** (2 tests, 232 lines total):
-1. `test_invoke_edge_with_alias()` - Validates alias resolution in function calls
-2. `test_decorator_alias_invoke()` - Validates decorator creates invoke edge
+
+(1) `test_invoke_edge_with_alias()` - Validates alias resolution in function calls
+(2) `test_decorator_alias_invoke()` - Validates decorator creates invoke edge
 
 **Integration Tests** (1 test suite, 359 lines total):
-3. `graph_parity_baselines()` - Parity validation for all 6 baseline repos
-   - Executes LocAgent + 5 SWE-bench fixtures
-   - Enforces ≤2% variance on node/edge counts
-   - PARITY_DEBUG=1 dumps edge mismatches
+
+(3) `graph_parity_baselines()` - Parity validation for all 6 baseline repos
+
+- Executes LocAgent + 5 SWE-bench fixtures
+- Enforces ≤2% variance on node/edge counts
+- PARITY_DEBUG=1 dumps edge mismatches
 
 **Next Tests Needed** (from TODO):
+
 - Parser tests (nested classes, async functions, decorators)
 - Edge creation tests (all 4 edge types)
 - FQN format validation
@@ -153,24 +174,29 @@
 ### Files Modified (12 files, +2,064 lines, -26 lines)
 
 **Core Implementation**:
+
 - `crates/cds-index/src/graph/mod.rs` (+195 lines) - Public graph surface with enums/structs
 - `crates/cds-index/src/graph/parser.rs` (+428 lines) - Tree-sitter Python parsing, entity extraction
 - `crates/cds-index/src/graph/builder.rs` (+1,042 lines) - Graph construction pipeline
 - `crates/cds-index/src/graph/traversal.rs` (+66 lines) - BFS traversal helper
 
 **Tests**:
+
 - `crates/cds-index/tests/graph_builder_tests.rs` (+232 lines, new) - Invoke edge tests
 
 **Dependencies**:
+
 - `Cargo.toml` (+1 line) - Added rustpython-parser workspace dependency
 - `crates/cds-index/Cargo.toml` (+1 line) - Added rustpython-parser
 - `Cargo.lock` (+317 lines) - Dependency resolution
 
 **Worklogs**:
+
 - `.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-24-work-summary.md` (+1 line)
 - `crates/cds-index/tests/service_contract_tests.rs` (+39 lines) - Modified before session
 
 **Raw Logs**:
+
 - `.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK-START-2025-10-24-04.txt` (+749 lines, new)
 - `.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01.txt` (+232 lines, updated with Session 4)
 
@@ -201,6 +227,7 @@
 **Problem**: `_tree_sitter_python` symbol not found when using extern "C" block
 
 **Solution**:
+
 - Replaced hand-written extern block with `tree_sitter_python::LANGUAGE.into()`
 - Used packaged language bindings instead of manual FFI
 
@@ -211,6 +238,7 @@
 **Problem**: Original LocAgent code used Python 3.8 AST API, rustpython_parser differs
 
 **Solution**:
+
 - Updated `find_in_block` to match on `pyast::Stmt` directly
 - Changed try/except handling to use `pyast::ExceptHandler::ExceptHandler.type_`
 - Unified walker helpers to use `visit_block`
@@ -222,6 +250,7 @@
 **Problem**: Invoke edges need to resolve aliased imports (e.g., `import Service as Engine`)
 
 **Solution**:
+
 - Extended `GraphEdge` with optional `alias` field
 - Stored alias metadata during import edge creation
 - Used alias metadata during invoke edge resolution
@@ -284,18 +313,21 @@
 **Day 2 Status**: Core implementation + parity harness complete (2,323 lines of Rust code). All 4 node types and 4 edge types working. Import resolution and invoke/inherit detection implemented. Parity harness validates against 6 baseline repos.
 
 **Parity Results**:
+
 - ✅ Nodes exact match across all 6 repos (658 to 6,876 nodes)
 - ✅ Contains/inherits exact match
 - ❌ Imports +23.85% variance (missing 52 re-exported edges)
 - ❌ Invokes -15.63% variance (missing 83 callee-traversal edges)
 
 **Next Critical Actions**:
+
 1. Implement `__init__.py` re-export awareness (Day 3)
 2. Mirror LocAgent's `find_all_possible_callee` graph traversal (Day 3)
 3. Verify parity passes for LocAgent baseline (Day 4)
 4. Expand unit test coverage to >80% (Day 4)
 
 **Known Limitations**:
+
 - Test coverage ~20% estimated (unit + integration)
 - Re-export patterns not yet handled
 - Invoke resolution uses alias-map instead of graph connectivity

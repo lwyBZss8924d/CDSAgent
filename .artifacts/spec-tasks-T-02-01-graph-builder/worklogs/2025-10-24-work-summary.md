@@ -35,7 +35,7 @@
 - **LocAgent Reference**: Analyzed tmp/LocAgent/dependency_graph/build_graph.py (400+ lines)
   - Graph version: v2.3
   - 4-phase construction pipeline
-  - SKIP_DIRS logic for .git, __pycache__, venv, etc.
+  - SKIP_DIRS logic for `.git`, `__pycache__`, `venv`, etc.
   - Edge case handling for Unicode BOM, Python 2/3 syntax differences
 
 ### Research & Learning
@@ -115,6 +115,7 @@
 **Solution**: Identified this as the stress test case for performance validation (<5s index build target)
 
 **References**:
+
 - tests/fixtures/parity/golden_outputs/graph_scikit-learn__scikit-learn-10297.json
 - Acceptance criteria: "Graph parity script reports ≤2% variance"
 
