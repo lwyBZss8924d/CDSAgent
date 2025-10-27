@@ -1,0 +1,45 @@
+T-02-01 Graph Builder - Day 3 Checkpoint
+
+## Task Metadata
+- Task ID: T-02-01-graph-builder
+- Status: In Progress (Day 3 - Import Parity RESOLVED)
+- Total: 15.5 hours / 40 estimated hours
+- Progress: 80% (import parity complete, invoke refinement remaining)
+
+## Day 3 Achievement
+Import parity RESOLVED: 218/218 edges (0% variance)
+- Was: 166/218 (+23.85% variance)
+- Now: 218/218 (0% exact match) ✅
+
+## Implementation Details
+ModuleExports system: +548 lines builder.rs, -52 deleted
+- AST __all__ parsing with recursive traversal
+- Deferred attribute import resolution queue
+- Wildcard import tracking HashMap
+- Module alias tracking for re-exports
+- Export resolution cache (lazy computation)
+
+Unit tests: +182 lines graph_builder_tests.rs
+- 3 new tests: re-exports, wildcard, chained __all__
+- All 6 tests passing ✅
+
+## Current Parity Status (6 Repos)
+LocAgent fixture (658 nodes, 1,419 edges):
+- Nodes: 0% variance ✅
+- Contains: 0% variance ✅
+- Imports: 0% variance ✅ (RESOLVED)
+- Inherits: 0% variance ✅
+- Invokes: +1.9% variance (10 extra edges)
+
+## Next Actions
+Day 4: Mirror find_all_possible_callee traversal
+Day 5: Expand test coverage >80%, create PR
+
+## Dependencies
+Requires: T-06-01 ✅ (completed)
+Blocks: T-02-02, T-03-01
+
+## Worklog
+- 2025-10-27-work-summary.md: Comprehensive session documentation
+- metadata.yaml: Updated metrics and acceptance criteria
+- 2 acceptance criteria marked 'completed'
