@@ -70,7 +70,7 @@
 ### Files Modified
 
 1. **crates/cds-index/src/graph/builder.rs** (+150 lines, -25 lines)
-   - Refactored alias map to Vec<GraphNodeIndex>
+   - Refactored alias map to Vec `<GraphNodeIndex>`
    - Added resolve_targets() method (lines 1099-1119)
    - Added PendingWildcardExport struct and processing (lines 102-106, 755-779)
    - Updated connect_behavior_edges() to iterate over all targets (lines 1076-1097)
@@ -130,6 +130,7 @@
 **Problem**: Original `HashMap<String, GraphNodeIndex>` only stored single target per alias, causing missing edges when multiple modules export same name.
 
 **Solution**:
+
 - Changed to `HashMap<String, Vec<GraphNodeIndex>>`
 - Added `insert_alias()` helper with deduplication
 - Updated all alias map consumers to iterate over Vec
@@ -141,6 +142,7 @@
 **Problem**: Multi-target resolution discovers 34 more invoke edges than LocAgent, increasing variance from +1.9% to +6.4%.
 
 **Solution** (next steps):
+
 - Audit extra edges via PARITY_DEBUG output
 - Compare with LocAgent's `find_all_possible_callee` implementation
 - Add filtering heuristics (e.g., self-recursion, cross-package constraints)
@@ -163,8 +165,6 @@
    - Iterate filters until variance ≤2%
    - Update unit tests if behavior changes
    - Document filtering rationale in notes
-
-### Future (Week 3+)
 
 4. **Expand Unit Test Coverage** (ongoing)
    - Target >80% coverage (currently ~30%)
