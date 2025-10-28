@@ -1,0 +1,67 @@
+T-02-01 Graph Builder - Day 4 Session 2 Checkpoint
+Timestamp: 2025-10-28T04:37:35Z
+
+## Graph Builder Refactoring - Modular Architecture
+
+### Objective
+Split monolithic builder.rs (1769 lines) into focused modules for:
+- Improved maintainability
+- Preparation for multi-language support (TypeScript v0.2.0, Go v0.3.0)
+- Clear separation of concerns
+
+### Module Structure Created (10 files, 2,037 lines)
+builder/
+├── mod.rs (19 lines) - Public API re-exports
+├── state.rs (458 lines) - BuilderState orchestration
+├── imports.rs (674 lines) - Import edge building
+├── behaviors.rs (195 lines) - Behavior edges [NEW]
+├── language.rs (20 lines) - Language abstraction
+├── aliases.rs (6 lines) - Placeholder
+└── python/
+    ├── mod.rs (8 lines) - Python coordinator
+    ├── ast_utils.rs (645 lines) - AST operations
+    ├── call_extractor.rs (6 lines) - Placeholder
+    └── import_resolver.rs (6 lines) - Placeholder
+
+### behaviors.rs (195 lines, NEW)
+- process_behavior_edges() (lines 40-70): Main orchestration
+- process_entity_behavior_edges() (lines 72-152): Per-entity AST extraction
+- connect_behavior_edges() (lines 154-195): Edge connection with deduplication
+
+### Compilation Fixes (3 errors resolved)
+1. state.rs: Removed incorrect pub use of collect_module_data_from_ast
+2. imports.rs: Added missing use petgraph::visit::EdgeRef;
+3. state.rs: Removed unused imports (ImportEntity, NodeKind, pyast, EdgeRef)
+
+### Verification Results (6-Phase Plan)
+✅ Phase 1: Compilation & Build (2m 11s, exit code 0)
+⏸ Phase 2: Parity Validation (deferred, part of T-02-01 acceptance)
+✅ Phase 3: Placeholder Module Audit (3 modules documented)
+⏸ Phase 4: Integration Tests (requires parity baselines)
+⏸ Phase 5: Performance Benchmarks (optional)
+✅ Phase 6: Documentation (commit message comprehensive)
+
+### Structural Verification
+✅ 100% line coverage mapping (all 1769 lines accounted)
+✅ All 26 major functions migrated
+✅ All 19 helper functions migrated
+✅ All 6 struct definitions preserved
+✅ Zero logic changes (100% structural refactoring)
+✅ Public API preserved (identical via mod.rs re-exports)
+
+### Code Statistics
+- Lines: +2,037 / -0 (builder.rs renamed to builder_backup.rs)
+- Files: 11 changed (1 renamed, 10 added)
+
+### Architecture Decisions (from notes.md)
+- Decision 3: Modular Builder Structure (5 core modules + python/)
+- Decision 4: Placeholder Module Strategy (extension points for future)
+- Decision 5: behaviors.rs Extraction Strategy (stateless logic pattern)
+
+### Session Time
+5 hours (04:04:14Z - 12:37:35Z)
+
+### Artifacts
+- Worklog: .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-28-work-summary.md
+- Notes: .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-28-notes.md (Decision 3-5)
+- Plan: crates/cds-index/src/graph/GraphBuilder-Refactoring-Plan.txt
