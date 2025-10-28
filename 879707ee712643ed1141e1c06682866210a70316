@@ -1,0 +1,171 @@
+T-02-01 Graph Builder - Day 4 Session 3 Checkpoint
+
+## Session Overview
+- **Date**: 2025-10-28
+- **Session**: Day 4 Session 3 (06:58:08Z - 07:27:07Z)
+- **Duration**: 0.5 hours
+- **Task**: Parity debugging with self-recursion filtering
+
+## Checkpoint Artifacts Updated
+1. **metadata.yaml**: Added Session-3 comment (line 146-148)
+   - Root cause analysis with mathematical breakdown
+   - Missing symbols identified (load_jsonl, append_to_jsonl, etc.)
+   - Next steps for alias map fixes
+
+2. **2025-10-28-work-summary.md**: Session 3 section added
+   - Parity results table (variance reversal: +6.4% → -5.84%)
+   - Statistics: +30 lines, 3 files modified (uncommitted)
+   - Time tracking: 0.5h session, 9.5h Day 4 total
+
+3. **2025-10-28-notes.md**: 3 new decisions documented
+   - Decision 6: Self-recursive invoke edge filtering
+   - Decision 7: Parity diagnostics normalization (:: → :)
+   - Decision 8: PARITY_DEBUG environment variable hooks
+
+4. **2025-10-28-commit-log.md**: UTC timestamp standardization
+   - All 6 commits timestamps converted to ISO 8601 Z format
+   - Checkpoint commits 3-6 detailed entries added
+
+5. **action log**: DEVCOOKING-WORK-ACTIONSLOGS-2025-10-28-01.txt
+   - Session 3 timestamped entries preserved
+
+## Parity Analysis
+
+### Invoke Variance Reversal
+- **Session 1 result**: +6.4% (565 vs 531 expected)
+  - Over-counting by 34 edges
+- **Session 3 result**: -5.84% (500 vs 531 expected)
+  - Under-counting by 31 edges
+
+### Root Cause Identified
+**Mathematical breakdown**:
+```
+Expected: 531 invoke edges (LocAgent baseline)
+
+Session 1: 531 (correct) + 34 (self-recursive + noise) = 565 edges
+  └─ Multi-target alias resolution working correctly
+  └─ BUT including self-recursive edges (e.g., func calls itself)
+
+Session 3: 531 (correct) - 31 (missing from alias map) = 500 edges
+  └─ Self-recursion filter removed ~65 edges total
+  └─ Exposed that alias map missing ~31 legitimate symbols
+```
+
+**Missing symbols** (from utility modules):
+- `load_jsonl` (util/benchmark/gen_oracle_locations.py)
+- `append_to_jsonl` (util/benchmark/gen_oracle_locations.py)
+- `load_gt_dict` (evaluation/eval_metric.py)
+- `convert_solutions_dict` (evaluation/eval_metric.py)
+
+**Hypothesis**: Wildcard export handling (`__init__.py`) not correctly populating alias map for symbols from utility submodules.
+
+## Implementation Details
+
+### Self-Recursive Edge Filter
+```rust
+// In behaviors.rs
+for target_idx in targets {
+    if caller_idx == target_idx {
+        continue; // Skip self-recursive calls
+    }
+    // ... add invoke edge
+}
+```
+
+**Problem**: Filter too broad - needs refinement to distinguish:
+- Legitimate recursion (intentional self-calls)
+- Spurious edges (resolution artifacts)
+
+### PARITY_DEBUG Hooks
+Environment-gated logging for:
+- Unresolved callee names per file
+- Alias map contents for problematic modules
+- Module entry tracing
+
+**Findings**:
+- Utility module symbols missing from alias map
+- Need to audit wildcard export resolution
+
+### Normalized Diagnostics
+```rust
+// Normalize FQNs: "file::Class::method" → "file:Class.method"
+let normalized_fqn = fqn.replace("::", ":");
+```
+
+**Benefits**:
+- Clearer parity debugging output
+- Easier identification of missing/extra edges
+- Matches LocAgent golden baseline format
+
+## Uncommitted Code Changes (Debugging)
+- `crates/cds-index/src/graph/builder/behaviors.rs` (+15 lines)
+  - Self-recursion filter
+  - PARITY_DEBUG hooks
+
+- `crates/cds-index/src/graph/builder/imports.rs` (+10 lines)
+  - Alias map debug logging
+
+- `crates/cds-index/tests/graph_parity_tests.rs` (+5 lines)
+  - Normalized parity diagnostics
+
+**Status**: Kept uncommitted for further debugging
+
+## Metrics
+- **Session time**: 0.5 hours
+- **Day 4 total**: 9.5 hours (Session 1: 4h, Session 2: 5h, Session 3: 0.5h)
+- **Cumulative**: 25 hours / 40 hours estimated (62.5% time spent)
+- **Lines added**: +30 (debugging hooks, uncommitted)
+- **Lines deleted**: 0
+- **Files modified**: 3 (behaviors.rs, imports.rs, graph_parity_tests.rs)
+
+## Acceptance Criteria Progress
+- ✅ Criterion 1: All 4 node/edge types implemented
+- ✅ Criterion 2: FQN format matches LocAgent
+- ⏳ Criterion 3: Unit test coverage (~30%, target >80%)
+- ⏳ Criterion 4: Graph parity ≤2% variance
+  - Contains: 0% ✅
+  - Imports: 0% ✅
+  - Inherits: 0% ✅
+  - Invokes: -5.84% ⚠️ (needs fixing)
+
+## Next Steps (Session 4)
+1. **Fix alias map population**
+   - Audit wildcard export handling
+   - Ensure utility module symbols included
+   - Target: 31 missing symbols → 0 missing
+
+2. **Refine self-recursion filter**
+   - Distinguish legitimate recursion from artifacts
+   - May need AST-based intent detection
+
+3. **Achieve parity target**
+   - Target: 531 ±2% invoke edges (520-541 acceptable)
+   - Current: 500 edges (-5.84%)
+   - Need: +31 edges from fixed alias map
+
+4. **Expand unit test coverage**
+   - Current: 8 tests (~30%)
+   - Target: >80% coverage
+   - Focus: Edge case scenarios
+
+## Build Status
+- ✅ cargo build --release: Successful (2m 11s)
+- ✅ cargo fmt: Clean
+- ⏳ cargo clippy: Not yet run
+- ⏳ cargo test: Not yet run (debugging code uncommitted)
+
+## Checkpoint Verification
+- ✅ All artifact files updated
+- ✅ 100% consistency between git log and worklogs
+- ✅ Timestamps standardized to UTC format
+- ✅ Session 3 metrics recorded
+- ✅ Root cause analysis documented
+- ✅ Next steps clearly defined
+- ✅ Uncommitted debugging code preserved for Session 4
+
+---
+
+**Checkpoint completed**: 2025-10-28T07:36:00Z
+**Commit**: 879707e
+**Branch**: feat/task/T-02-01-graph-builder
+**Status**: Artifacts synced, debugging continues in Session 4
