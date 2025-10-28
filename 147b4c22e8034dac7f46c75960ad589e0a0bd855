@@ -1,0 +1,43 @@
+T-02-01 Graph Builder - Day 4 Session 1 Checkpoint
+Timestamp: 2025-10-28T03:48:30Z
+
+## Multi-Target Alias Resolution Implementation
+
+### Key Changes
+- Refactored alias map: HashMap<String, GraphNodeIndex> → HashMap<String, Vec<GraphNodeIndex>>
+- Added resolve_targets() method for unified target resolution
+- Implemented PendingWildcardExport with retry logic (max 4 attempts)
+- Enhanced connect_behavior_edges() with HashSet deduplication
+
+### Code Statistics
+- Lines: +186 / -25 (builder: +150, tests: +61)
+- Files: 19 changed
+- Total changes: +3,349 / -2,385
+
+### Testing
+- Added unit test: invoke_edges_include_all_alias_candidates (61 lines)
+- All 8 tests passing ✅
+- Test scenario: multi-module merge() imports with invoke edges to both targets
+
+### Parity Results (LocAgent fixture, 658 nodes, 1,419 edges)
+- Contains: 657/657 (0% variance) ✅
+- Imports: 218/218 (0% variance) ✅
+- Inherits: 13/13 (0% variance) ✅
+- Invokes: 565/531 (+6.4% variance) ⚠️ - increased from +1.9%
+
+### Root Cause Analysis
+Multi-target resolution now discovers all reachable targets per alias, while LocAgent may have more conservative heuristics. Examples of extra edges:
+- auto_search_main.py::main → auto_search_main.py::merge (self-module)
+- dependency_graph/batch_build_graph.py::run → util/benchmark/setup_repo.py::setup_repo
+
+### Next Steps
+- Audit extra 34 invoke edges (565 vs 531)
+- Align call resolution with LocAgent's find_all_possible_callee heuristics
+- Add filtering: self-recursion, package boundaries, import distance
+
+### Session Time
+4 hours (03:24:29Z - 04:04:14Z)
+
+### Artifacts
+- Worklog: .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-28-work-summary.md
+- Notes: .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-28-notes.md (Decision 1-2)
