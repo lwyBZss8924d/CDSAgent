@@ -289,4 +289,200 @@ fn invoke_edges_include_all_alias_candidates() {
 
 ---
 
-End of Commit Log - Day 4 Commit 1
+## Commit 2: refactor(graph): modularize builder.rs into focused submodules
+
+**Hash**: `956c108`
+**Date**: 2025-10-28T12:37:35+0800
+**Branch**: feat/task/T-02-01-graph-builder
+
+### Session-02 Summary
+
+Split monolithic 1769-line builder.rs into focused modules for better maintainability and multi-language support preparation (v0.2.0+). Completed behavior edge logic migration to behaviors.rs and fixed all compilation errors.
+
+### Files Changed (11 files)
+
+**Deleted**:
+
+- `crates/cds-index/src/graph/builder.rs` → renamed to `builder_backup.rs`
+
+**Added (10 new module files)**:
+
+- `crates/cds-index/src/graph/builder/mod.rs` (19 lines)
+- `crates/cds-index/src/graph/builder/state.rs` (458 lines)
+- `crates/cds-index/src/graph/builder/imports.rs` (674 lines)
+- `crates/cds-index/src/graph/builder/behaviors.rs` (195 lines) ← NEW in this commit
+- `crates/cds-index/src/graph/builder/language.rs` (20 lines)
+- `crates/cds-index/src/graph/builder/aliases.rs` (6 lines)
+- `crates/cds-index/src/graph/builder/python/mod.rs` (8 lines)
+- `crates/cds-index/src/graph/builder/python/ast_utils.rs` (645 lines)
+- `crates/cds-index/src/graph/builder/python/call_extractor.rs` (6 lines)
+- `crates/cds-index/src/graph/builder/python/import_resolver.rs` (6 lines)
+
+### Commit 2 Statistics
+
+- **Total Changes**: +2,037 insertions
+- **Module Count**: 10 files (vs 1 monolith)
+- **Total Lines**: 2,037 lines (vs 1,769 original) - 15% increase due to module docs
+- **Placeholder Modules**: 3 (aliases, call_extractor, import_resolver)
+
+### Module Structure
+
+```text
+builder/
+├── mod.rs (19 lines)              - Public API re-exports
+├── state.rs (458 lines)           - BuilderState orchestration
+├── imports.rs (674 lines)         - Import edge building
+├── behaviors.rs (195 lines)       - Behavior edges [NEW]
+├── language.rs (20 lines)         - Language abstraction
+├── aliases.rs (6 lines)           - Placeholder
+└── python/
+    ├── mod.rs (8 lines)           - Python coordinator
+    ├── ast_utils.rs (645 lines)   - AST operations
+    ├── call_extractor.rs (6)      - Placeholder
+    └── import_resolver.rs (6)     - Placeholder
+```
+
+### Key Improvements
+
+1. **Separation of Concerns**:
+   - Language-agnostic orchestration in top-level modules
+   - Python-specific operations isolated in python/ submodule
+   - Clear module boundaries with restricted visibility (`pub(super)`, `pub(in crate::graph::builder)`)
+
+2. **Maintainability**:
+   - Focused modules (~200-650 lines each vs 1769 lines monolith)
+   - Self-documenting module organization
+   - Easier to locate and modify specific functionality
+
+3. **Extensibility**:
+   - Python code isolated for future multi-language support
+   - Prepared for TypeScript (v0.2.0) and Go (v0.3.0) language modules
+   - Language trait abstraction planned for v0.2.0
+
+### Module Dependencies
+
+```text
+state.rs (BuilderState)
+  ├─> imports.rs (process_pending_imports)
+  │     └─> python/ast_utils.rs (AST parsing)
+  └─> behaviors.rs (process_behavior_edges)
+        └─> python/ast_utils.rs (call extraction)
+```
+
+### Public API Preservation
+
+Preserved identical public API via `builder/mod.rs` re-exports:
+
+```rust
+pub use language::LanguageConfig;
+pub use state::{
+    GraphBuildStats, GraphBuilder, GraphBuilderConfig,
+    GraphBuilderResult, GraphError
+};
+```
+
+No breaking changes - all existing code compiles without modification.
+
+### Compilation Fixes
+
+1. **state.rs** - Removed incorrect re-export
+   - Before: `pub use super::python::ast_utils::collect_module_data_from_ast;` (ERROR)
+   - After: `use super::python::ast_utils::collect_module_data_from_ast;` (internal import)
+   - Reason: Function is `pub(in crate::graph::builder)` (crate-private), cannot be re-exported
+
+2. **imports.rs** - Added missing EdgeRef trait import
+   - Added: `use petgraph::visit::EdgeRef;`
+   - Required for `.target()` method on `EdgeReference` type
+   - Affects lines: 447, 563, 601
+
+3. **state.rs** - Removed unused imports
+   - Removed: `ImportEntity`, `NodeKind`, `self as pyast`, `EdgeRef`
+   - Cleanup after refactoring
+
+### Validation Results
+
+✅ **Compilation & Build**:
+
+- Clean release build: 2m 11s compile time
+- Exit code: 0 (success)
+- No warnings or errors
+
+✅ **Public API**:
+
+- All re-exports verified
+- No breaking changes
+- Existing tests compile without modification
+
+✅ **Structural Verification** (from Agent Analysis):
+
+- 100% line coverage mapping (all 1769 original lines accounted for)
+- All 26 major functions migrated
+- All 19 helper functions migrated
+- All 6 struct definitions preserved
+- Zero logic changes detected (only structural refactoring)
+
+⏸ **Parity Validation**: DEFERRED (part of T-02-01 acceptance criteria)
+⏸ **Integration Tests**: DEFERRED (requires parity baselines)
+
+### Commit 2 Context Notes
+
+#### Why Refactor Now?
+
+**Timing**: After implementing multi-target alias resolution (commit 147b4c2), builder.rs reached 1769 lines, making it difficult to navigate and maintain.
+
+**Goal**: Prepare codebase for v0.2.0 multi-language support (TypeScript, Go) by isolating Python-specific code.
+
+#### Module Design Rationale
+
+**Top-level modules** (state, imports, behaviors, language, aliases):
+
+- Language-agnostic orchestration
+- Can be reused for TypeScript/Go implementations
+- Clear responsibilities (state management, import processing, behavior edges)
+
+**python/ submodule**:
+
+- All Python AST operations
+- Tree-sitter parsing logic
+- Call/decorator/base class extraction
+- Can be paralleled by future typescript/ and go/ modules
+
+**Placeholder modules** (aliases, call_extractor, import_resolver):
+
+- Extension points for future modularization
+- Functionality currently exists in imports.rs and ast_utils.rs
+- Kept as intentional extension points
+
+#### Migration Strategy
+
+**Step 1**: Create module skeleton (mod.rs, state.rs)
+**Step 2**: Extract imports logic → imports.rs
+**Step 3**: Extract Python AST operations → python/ast_utils.rs
+**Step 4**: Extract behaviors logic → behaviors.rs (completed in this commit)
+**Step 5**: Fix compilation errors
+**Step 6**: Verify with clean build + existing tests
+
+### Commit 2 Parity Impact
+
+**Expected**: No change (structural refactoring only)
+
+**Actual**: Not yet tested (will validate in next commit)
+
+**Verification Plan**: Run `cargo test --test graph_parity_tests` to confirm zero regression
+
+### Commit 2 Related Commits
+
+- **147b4c2** (Day 5 Session 1): "feat(graph): T-02-01 Day 4 - multi-target alias resolution and wildcard export handling"
+- **3083e00** (Day 3): "feat(graph): implement export tracking system and resolve import parity"
+- **00da9c2** (Day 2): "feat(graph): add parity harness and refine import resolution"
+
+### Commit 2 Follow-up Actions
+
+- [ ] Run parity tests to confirm zero regression
+- [ ] Document module architecture in README or rustdoc
+- [ ] Consider moving alias functions from imports.rs to aliases.rs
+- [ ] Add rustdoc comments to all public modules
+
+---
+
+End of Commit Log - Day 5 (2 commits)
