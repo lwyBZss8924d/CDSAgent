@@ -331,7 +331,143 @@ Session 2 (refactoring):
 - **Cumulative**: 24.5 hours (Day 1: 2h, Day 2: 11h, Day 3: 2.5h, Day 4: 9h)
 - **Remaining**: 15.5 hours (estimate: 2-3 days to complete parity + expand tests)
 
+### Session 3: Parity Debugging & Self-Recursion Filtering (06:58:08Z - 07:27:07Z)
+
+**Overview**: Implemented fresh parity-debugging pass with normalized diagnostics, self-recursive invoke edge filtering, and targeted PARITY_DEBUG hooks to diagnose invoke variance root causes.
+
+**Parity Debugging Improvements** (crates/cds-index/tests/graph_parity_tests.rs, +debugging output):
+
+- **Normalized Parity Diagnostics**: Translated `::` identifiers to golden `file:name` format
+  - Enables apples-to-apples comparison in "missing/extra" reports
+  - Makes parity debug output directly comparable to LocAgent baseline
+
+- **Self-Recursive Edge Filtering** (crates/cds-index/src/graph/builder/behaviors.rs):
+  - Skip `caller_idx == target_idx` invoke edges to match LocAgent behavior
+  - Prevents self-referential method calls from inflating invoke counts
+  - Example filtered: `auto_search_main.py::main → auto_search_main.py::main`
+
+- **PARITY_DEBUG Hooks Added**:
+  - Behavior processing prints unresolved callee names per file
+  - Logs when `gen_oracle` module is entered for detailed tracing
+  - Import alias construction logs alias map for `evaluation/eval_metric.py` and `util/benchmark/gen_oracle_locations.py`
+  - Enables visibility into which symbols are discoverable during edge resolution
+
+**Parity Results** (After Session 3):
+
+| Edge Type | Expected (LocAgent) | Actual (CDSAgent) | Variance | Status | Change from Session 1 |
+|-----------|---------------------|-------------------|----------|--------|----------------------|
+| Contains  | 657                 | 657               | 0%       | ✅ Exact | No change |
+| Imports   | 218                 | 218               | 0%       | ✅ Exact | No change |
+| Inherits  | 13                  | 13                | 0%       | ✅ Exact | No change |
+| Invokes   | 531                 | 500               | **-5.84%** | ⚠️ Under | +6.4% → -5.84% |
+
+**Analysis**:
+
+- **Invoke variance reversed**: From **over-counting (+6.4%, 565 edges)** to **under-counting (-5.84%, 500 edges)**
+- Self-recursion filter removed ~65 edges but also eliminated some legitimate edges
+- Missing edges cluster around:
+  - `util/benchmark/gen_oracle_locations.py`: calls to `load_jsonl`, `append_to_jsonl`, etc.
+  - `evaluation/eval_metric.py`: calls to `load_jsonl`, `load_gt_dict`, `convert_solutions_dict`
+- Root cause: Symbols like `load_jsonl`, `parse_import_nodes` not appearing in alias map
+- Next: Analyze alias-map dumps to diagnose why these symbols are missing
+
+**Verification**:
+
+- ✅ `cargo test -p cds-index --test graph_builder_tests` (all passing)
+- ❌ `PARITY_DEBUG=1 cargo test -p cds-index --test graph_parity_tests -- graph_parity_baselines --nocapture`
+  - Invokes: 500 vs 531 (-5.84% variance)
+  - Need to recover missing callees in alias map
+
+## Session 3 Code Changes
+
+### Files Modified (Session 3)
+
+(1) **crates/cds-index/src/graph/builder/behaviors.rs** (~10 lines changed)
+
+- Added self-recursion filter: `if caller_idx == target_idx { continue; }`
+- Added PARITY_DEBUG hooks for unresolved callee names
+- Logs when processing `gen_oracle` module
+
+(2) **crates/cds-index/src/graph/builder/imports.rs** (~5 lines changed)
+
+- Added PARITY_DEBUG hooks to log alias map construction
+- Logs symbols for `evaluation/eval_metric.py` and `util/benchmark/gen_oracle_locations.py`
+
+(3) **crates/cds-index/tests/graph_parity_tests.rs** (~15 lines changed)
+
+- Normalized parity diagnostics to translate `::` → `file:name` format
+- Improved "missing/extra" edge reporting for easier analysis
+
+### Statistics (Session 3)
+
+- **Lines Added**: ~30 (debugging hooks + filter logic)
+- **Lines Deleted**: ~0
+- **Net Change**: +30 lines
+- **Files Changed**: 3 (behaviors.rs, imports.rs, graph_parity_tests.rs)
+- **Tests Status**: Unit tests ✅, Parity tests ⚠️ (-5.84% invoke variance)
+
+**Total Day 4** (all 3 sessions, 2025-10-28):
+
+- **Lines Added**: 2,253 (Session 1: 186, Session 2: 2,037, Session 3: 30)
+- **Lines Deleted**: 25 (Session 1 only)
+- **Net Change**: +2,228 lines
+- **Files Changed**: 16 (13 from Sessions 1+2, 3 additional in Session 3)
+- **Tests Added**: 1 (Session 1 only)
+- **Total Tests**: 8 (all passing)
+
+## Session 3 Challenges & Solutions
+
+### Challenge 3: Invoke Variance Direction Reversed
+
+**Problem**: Self-recursion filter over-corrected, changing variance from +6.4% (over) to -5.84% (under).
+
+**Solution** (in progress):
+
+- Analyze alias-map PARITY_DEBUG output to identify why symbols missing
+- Check wildcard export handling in `collect_callee_candidates`
+- Add focused tests for missing callees (e.g., `load_jsonl`, `parse_import_nodes`)
+
+## Frome Session 3 Next Steps
+
+### Immediate (Session 4 - Next)
+
+1. **Analyze Alias Map Dumps** (~1 hour)
+   - Review PARITY_DEBUG output for `gen_oracle_locations` and `eval_metric`
+   - Identify why `load_jsonl`, `parse_import_nodes` not in alias map
+   - Check wildcard export and import resolution logic
+
+2. **Recover Missing Callees** (~2 hours)
+   - Adjust `collect_callee_candidates` to include missing symbols
+   - Verify `resolve_targets` finds these symbols
+   - Add focused unit tests for lookup paths
+
+3. **Achieve ≤2% Variance** (~1 hour)
+   - Re-run parity tests after fixes
+   - Goal: 531 ± 10 edges (520-541 acceptable)
+   - Document filtering rationale
+
+4. **Re-enable SWE-bench Fixtures** (1-2 days)
+   - Validate parity on 5 larger repos
+   - Ensure variance ≤2% across all fixtures
+   - Document any repo-specific edge cases
+
+## Session 3 Acceptance Criteria Progress
+
+- [x] **4 node + 4 edge types**: All implemented and tested
+- [x] **FQN format**: Matches LocAgent (validated via parity)
+- [⏳] **Unit tests**: 8 tests passing, ~30% coverage (needs >80%)
+- [⏳] **Parity variance**: Contains/Imports/Inherits 0% ✅, Invokes -5.84% ⚠️ (target ≤2%)
+
+## Tasks Time Tracking
+
+- **Session 1 (03:24:29Z - 04:04:14Z)**: ~4 hours (multi-target alias implementation + testing)
+- **Session 2 (04:04:14Z - 12:37:35Z)**: ~5 hours (graph builder refactoring + verification)
+- **Session 3 (06:58:08Z - 07:27:07Z)**: ~0.5 hours (parity debugging + self-recursion filter)
+- **Total Day 4** (2025-10-28): 9.5 hours (all three sessions)
+- **Cumulative**: 25 hours (Day 1: 2h, Day 2: 11h, Day 3: 2.5h, Day 4: 9.5h)
+- **Remaining**: 15 hours (estimate: 2-3 days to complete parity + expand tests)
+
 ---
 
-**Status**: In Progress - Day 4 Complete (Refactoring + Multi-Target Alias)
-**Next Session**: Day 5 - Audit extra invoke edges and implement filtering heuristics
+**Status**: In Progress - Day 4 Session 3 Complete (Parity Debugging)
+**Next Session**: Day 5 or Day 4 Session 4

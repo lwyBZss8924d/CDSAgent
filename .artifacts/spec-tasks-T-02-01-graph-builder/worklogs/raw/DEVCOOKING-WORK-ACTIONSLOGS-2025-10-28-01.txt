@@ -343,3 +343,52 @@ rename crates/cds-index/src/graph/{builder.rs => builder_backup.rs} (100%)
   2. Analyze Next Steps T-02-01 TODOs
 
 ==============================================================
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-28T06:58:08Z
+
+--CONTINUE 2025-10-28 next Session-3 [TODO]:
+• Next Steps
+
+  - Triage invoke variance: Compare parity debug output against tmp/LocAgent/dependency_graph/
+    build_graph.py::find_all_possible_callee to pin down why aliases like auto_search_main.py::main → merge are emitted; start by
+    filtering self-recursive calls and module-level helper invocations that LocAgent skips.
+  - Recover missing callees: For entries such as ResponseParser.parse → response_to_actions, trace the new alias map to confirm
+    the target appears in resolve_targets; add focused tests if the lookup path is broken.
+  - Finish parity harness rollout: Once invoke counts align (≤ 2 % variance), re-run graph_parity_baselines across the SWE-bench
+    fixtures and tighten assertions as originally planned.
+  - Stabilize module split: Populate or remove the empty placeholders (aliases.rs, python/call_extractor.rs, python/
+    import_resolver.rs) so the new structure reflects actual boundaries, and update docs/worklogs to reference the modular layout.
+
+--CONTINUE "working on..."
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-28T07:27:07Z
+
+• Implemented a fresh parity‑debugging pass:
+
+  - Normalized parity diagnostics by translating our :: identifiers to the golden file:name format so the “missing/extra” reports
+    now compare apples to apples (crates/cds-index/tests/graph_parity_tests.rs).
+  - Filtered out self-recursive invoke edges (skip caller_idx == target_idx) to match LocAgent’s behaviour (crates/cds-index/src/
+    graph/builder/behaviors.rs).
+  - Added targeted PARITY_DEBUG hooks:
+      - behaviour processing now prints unresolved callee names (per file) and notes when the gen_oracle module is entered;
+      - import alias construction logs the alias map for evaluation/eval_metric.py and util/benchmark/gen_oracle_locations.py so
+        we can see exactly which symbols are discoverable (crates/cds-index/src/graph/builder/behaviors.rs, imports.rs).
+
+  Verification snapshot:
+
+  - cargo test -p cds-index --test graph_builder_tests ✅
+  - PARITY_DEBUG=1 cargo test -p cds-index --test graph_parity_tests -- graph_parity_baselines --nocapture ❌ – invokes now 500
+    vs 531 (‒5.84 %). Missing edges cluster around util/benchmark/gen_oracle_locations.py (calls to load_jsonl, append_to_jsonl,
+    etc.) and evaluation/eval_metric.py (calls to load_jsonl, load_gt_dict, convert_solutions_dict). Extra edges still surface for
+    some helper traversals.
+
+  What’s next:
+
+  1. Analyse the alias-map dumps for gen_oracle_locations / eval_metric to see why symbols like load_jsonl or parse_import_nodes
+     aren’t present; adjust collect_callee_candidates / wildcard export handling accordingly.
+  2. Once real callees show up, re-run the parity harness; goal is ≤ 2 % variance, then re-enable the SWE-bench fixtures.
+  3. After parity is green, prune or gate the extra PARITY_DEBUG prints if they’re no longer needed and update the worklogs.
+
+==============================================================

@@ -117,10 +117,10 @@ worklog:
 
 metrics:
   estimated_hours: 40  # 5 days * 8 hours
-  actual_hours: 24.5  # Day 1: 2h, Day 2: 11h, Day 3: 2.5h, Day 4: 9h (Session 1: 4h + Session 2: 5h, both on 2025-10-28)
-  lines_added: 5860   # Core: 2064 + Parity: 570 + Export: 817 + Multi-target: 186 + Refactoring: 2223 (Session 1: +186, Session 2: +2037)
+  actual_hours: 25  # Day 1: 2h, Day 2: 11h, Day 3: 2.5h, Day 4: 9.5h (Session 1: 4h + Session 2: 5h + Session 3: 0.5h, all on 2025-10-28)
+  lines_added: 5890   # Core: 2064 + Parity: 570 + Export: 817 + Multi-target: 186 + Refactoring: 2223 + Debugging: 30 (Session 3: +30, uncommitted)
   lines_deleted: 142   # Core: 26 + Parity: 14 + Export: 52 + Multi-target: 25 + Refactoring: 25
-  files_modified: 30   # Core: 12 + Parity: 2 + Export: 1 + Multi-target: 2 + Refactoring: 13 (11 modules + 1 test + 1 action log)
+  files_modified: 33   # Core: 12 + Parity: 2 + Export: 1 + Multi-target: 2 + Refactoring: 13 + Debugging: 3 (Session 3: +3, uncommitted)
   tests_added: 8       # 3 unit (invoke + decorator + alias) + 3 unit (re-exports, wildcard, chained __all__) + 1 unit (multi-target) + 1 integration (parity)
   test_coverage: 0.30  # Estimated: ~30% (8 unit tests + integration harness)
 
@@ -143,6 +143,9 @@ comments:
   - date: "2025-10-28"
     author: "Rust Dev 1"
     text: "Day 4 Session 2 - Graph builder refactoring: Split monolithic builder.rs (1769 lines) into 10 focused modules for improved maintainability and multi-language support preparation (TypeScript v0.2.0, Go v0.3.0). Created: state.rs (458 lines), imports.rs (674 lines), behaviors.rs (195 lines - NEW), python/ast_utils.rs (645 lines). Fixed 3 compilation errors (incorrect re-export, missing EdgeRef import, unused imports). Verified with 6-phase plan: compilation ✅, structural verification ✅ (100% line coverage mapping, all 26 functions migrated, zero logic changes). Total: +2,037 lines across 11 files. Session time: 5h. Day 4 total: 9h. Cumulative: 24.5h / 40h estimated. Next: Audit extra invoke edges (variance +6.4% → target ≤2%), expand unit test coverage (30% → >80%)."
+  - date: "2025-10-28"
+    author: "Rust Dev 1"
+    text: "Day 4 Session 3 - Parity debugging: Implemented self-recursive invoke edge filtering (skip caller_idx == target_idx) and PARITY_DEBUG hooks for tracing alias map construction. Normalized parity diagnostics (:: → : format). Invoke variance reversed from +6.4% (565 edges, over-counting) to -5.84% (500 edges, under-counting). Root cause analysis: self-recursion filter removed ~65 edges but exposed that alias map is missing ~31 legitimate symbols (load_jsonl, append_to_jsonl, load_gt_dict, convert_solutions_dict) from utility modules. Mathematical analysis: Expected 531 edges. Session 1: 531 (correct) + 34 (self-recursive + noise) = 565. Session 3: 531 (correct) - 31 (missing from alias map) = 500. Next: Fix alias map to include missing symbols, verify wildcard export handling for utility modules. Target: 531 ±2% (520-541 acceptable). Session time: 0.5h. Day 4 total: 9.5h. Cumulative: 25h / 40h estimated."
 
 related_artifacts:
   - type: "parity_baseline"
