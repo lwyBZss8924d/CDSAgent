@@ -51,6 +51,16 @@ git:
       date: "2025-10-27"
       files_changed: 8
       notes: "ModuleExports model (+548 lines), 3 new unit tests (+182 lines). Import parity RESOLVED: 0% variance. Invoke variance: +1.9%. Total +1,361 lines, -64 deleted. 8 files: builder.rs, tests, metadata, worklogs, action logs."
+    - hash: "147b4c2"
+      message: "feat(graph): T-02-01 Day 4 - multi-target alias resolution and wildcard export handling"
+      date: "2025-10-28"
+      files_changed: 19
+      notes: "Session 1: Multi-target alias resolution. Alias map refactored to Vec<GraphNodeIndex> (+150 lines). Added resolve_targets(), PendingWildcardExport. New unit test for multi-alias invoke edges (+61 lines). Total: +186 lines, -25 deleted. Invoke variance increased to +6.4% (565 vs 531, up from +1.9%)."
+    - hash: "956c108"
+      message: "refactor(graph): modularize builder.rs into focused submodules"
+      date: "2025-10-28"
+      files_changed: 11
+      notes: "Session 2: Graph builder refactoring. Split monolithic builder.rs (1769 lines) into 10 focused modules. Created: state.rs (458), imports.rs (674), behaviors.rs (195), python/ast_utils.rs (645). Fixed 3 compilation errors. Total: +2,037 lines. Zero logic changes - 100% structural refactoring."
   pr:
     number: null
     url: null
@@ -107,10 +117,10 @@ worklog:
 
 metrics:
   estimated_hours: 40  # 5 days * 8 hours
-  actual_hours: 19.5  # Day 1: 2h planning, Day 2: 11h implementation, Day 3: 2.5h export tracking, Day 4: 4h multi-target alias
-  lines_added: 3637   # Core: 2064 + Parity: 570 + Export tracking: 817 + Multi-target: 186
-  lines_deleted: 117   # Core: 26 + Parity: 14 + Export tracking: 52 + Multi-target: 25
-  files_modified: 16   # Core: 12 + Parity: 2 + Export tracking: 1 + Multi-target: 1 more (tests)
+  actual_hours: 28.5  # Day 1: 2h, Day 2: 11h, Day 3: 2.5h, Day 4: 4h, Day 5: 9h (Session 1: 4h + Session 2: 5h)
+  lines_added: 5860   # Core: 2064 + Parity: 570 + Export: 817 + Multi-target: 186 + Refactoring: 2223 (Session 1: +186, Session 2: +2037)
+  lines_deleted: 142   # Core: 26 + Parity: 14 + Export: 52 + Multi-target: 25 + Refactoring: 25
+  files_modified: 30   # Core: 12 + Parity: 2 + Export: 1 + Multi-target: 2 + Refactoring: 13 (11 modules + 1 test + 1 action log)
   tests_added: 8       # 3 unit (invoke + decorator + alias) + 3 unit (re-exports, wildcard, chained __all__) + 1 unit (multi-target) + 1 integration (parity)
   test_coverage: 0.30  # Estimated: ~30% (8 unit tests + integration harness)
 
@@ -130,6 +140,9 @@ comments:
   - date: "2025-10-28"
     author: "Rust Dev 1"
     text: "Day 4 multi-target alias resolution: Rewrote alias map to Vec<GraphNodeIndex> for multi-target support. Added resolve_targets() and PendingWildcardExport handling. New unit test confirms invoke edges now attach to all reachable alias candidates. Parity: imports still 0% ✅, but invokes increased to +6.4% (565 vs 531 - up from +1.9%). Root cause: multi-target resolution discovers more edges than LocAgent (e.g., auto_search_main.py::main → merge, batch_build_graph.py::run → setup_repo). Need to audit extra edges and align call resolution heuristics with LocAgent before next parity run."
+  - date: "2025-10-28"
+    author: "Rust Dev 1"
+    text: "Day 5 graph builder refactoring: Split monolithic builder.rs (1769 lines) into 10 focused modules for improved maintainability and multi-language support preparation (TypeScript v0.2.0, Go v0.3.0). Created: state.rs (458 lines), imports.rs (674 lines), behaviors.rs (195 lines - NEW), python/ast_utils.rs (645 lines). Fixed 3 compilation errors (incorrect re-export, missing EdgeRef import, unused imports). Verified with 6-phase plan: compilation ✅, structural verification ✅ (100% line coverage mapping, all 26 functions migrated, zero logic changes). Total: +2,037 lines across 11 files. Session 1 (4h) + Session 2 (5h) = 9h total. Cumulative: 28.5h / 40h estimated. Next: Audit extra invoke edges (variance +6.4% → target ≤2%), expand unit test coverage (30% → >80%)."
 
 related_artifacts:
   - type: "parity_baseline"
