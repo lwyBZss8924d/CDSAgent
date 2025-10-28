@@ -1,0 +1,29 @@
+T-02-01 Graph Builder - Checkpoint Documentation Update
+Timestamp: 2025-10-28T03:52:03Z
+
+## Purpose
+Add missing Day 4 commit-log documentation for multi-target alias resolution work
+
+## Changes
+Updated worklogs:
+- 2025-10-28-commit-log.md: Added Commit 1 entry (147b4c2)
+- 2025-10-28-work-summary.md: Enhanced Session 1 section
+- 2025-10-28-notes.md: Added Decision 1-2 (alias map, wildcard exports)
+
+## Documentation Additions
+- Commit details: hash, message, date, files changed
+- Statistics: 19 files, +3,349 / -2,385
+- Context notes: multi-target resolution rationale
+- Parity results: invoke variance +6.4% analysis
+
+## Files Changed
+3 files: +321 / -7
+
+## Related
+- Follows WORK_SESSION_CHECKPOINT_WORKFLOW.md Phase 3
+- Documents commit 147b4c2 (Session 1 work)
+
+## Artifacts
+- .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-28-commit-log.md
+- .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-28-work-summary.md
+- .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-28-notes.md
