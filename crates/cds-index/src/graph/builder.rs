@@ -99,6 +99,11 @@ struct DeferredAttributeImport {
     alias: Option<String>,
 }
 
+struct PendingWildcardExport {
+    source_idx: GraphNodeIndex,
+    module_path: PathBuf,
+}
+
 impl Default for GraphBuilderConfig {
     fn default() -> Self {
         Self {
@@ -193,6 +198,7 @@ struct BuilderState {
     parsed_modules: HashMap<PathBuf, Rc<Suite>>,
     behavior_edge_cache: HashSet<(GraphNodeIndex, GraphNodeIndex, EdgeKind)>,
     deferred_attribute_imports: Vec<DeferredAttributeImport>,
+    pending_wildcard_exports: Vec<PendingWildcardExport>,
     module_exports: HashMap<PathBuf, ModuleExports>,
     module_aliases: HashMap<PathBuf, HashMap<String, PathBuf>>,
     resolved_exports: HashMap<PathBuf, HashSet<String>>,
@@ -228,6 +234,7 @@ impl BuilderState {
             parsed_modules: HashMap::new(),
             behavior_edge_cache: HashSet::new(),
             deferred_attribute_imports: Vec::new(),
+            pending_wildcard_exports: Vec::new(),
             module_exports: HashMap::new(),
             module_aliases: HashMap::new(),
             resolved_exports: HashMap::new(),
@@ -430,6 +437,7 @@ impl BuilderState {
             }
         }
 
+        self.resolve_pending_wildcard_exports();
         self.resolve_deferred_attribute_imports();
     }
 
@@ -520,6 +528,9 @@ impl BuilderState {
                 if let Some(ref module_path) = base_module_path {
                     self.add_file_import_edge(file_idx, module_path, None);
                     self.expand_wildcard_import(file_idx, module_path);
+                    if !self.add_wildcard_export_edges(file_idx, module_path) {
+                        self.enqueue_wildcard_export(file_idx, module_path);
+                    }
                 }
                 continue;
             }
@@ -542,7 +553,7 @@ impl BuilderState {
             }
 
             if let Some(ref module_path) = base_module_path {
-                self.add_attribute_import_edge(
+                let _ = self.add_attribute_import_edge(
                     file_idx,
                     module_path,
                     &entity.name,
@@ -550,6 +561,30 @@ impl BuilderState {
                 );
             }
         }
+    }
+
+    fn add_wildcard_export_edges(
+        &mut self,
+        source_idx: GraphNodeIndex,
+        module_path: &Path,
+    ) -> bool {
+        let has_explicit_exports = self
+            .module_exports
+            .get(module_path)
+            .map(|info| !info.names.is_empty() || !info.sources.is_empty())
+            .unwrap_or(false);
+        if !has_explicit_exports {
+            return false;
+        }
+
+        let exports = self.resolve_exports(module_path);
+        let mut added = false;
+        for name in exports {
+            if self.add_attribute_import_edge(source_idx, module_path, &name, None) {
+                added = true;
+            }
+        }
+        added
     }
 
     fn add_file_import_edge(
@@ -569,9 +604,9 @@ impl BuilderState {
         module_path: &Path,
         name: &str,
         alias: Option<&str>,
-    ) {
+    ) -> bool {
         if self.try_add_attribute_import_edge(source_idx, module_path, name, alias) {
-            return;
+            return true;
         }
 
         self.deferred_attribute_imports
@@ -581,6 +616,7 @@ impl BuilderState {
                 name: name.to_string(),
                 alias: alias.map(|value| value.to_string()),
             });
+        false
     }
 
     fn try_add_attribute_import_edge(
@@ -637,7 +673,8 @@ impl BuilderState {
         }
 
         let alias_map = self.build_alias_map(module_idx);
-        alias_map.get(name).copied()
+        let targets = self.resolve_targets(module_path, &alias_map, name);
+        targets.into_iter().next()
     }
 
     fn resolve_deferred_attribute_imports(&mut self) {
@@ -715,6 +752,32 @@ impl BuilderState {
         self.deferred_attribute_imports = still_unresolved;
     }
 
+    fn resolve_pending_wildcard_exports(&mut self) {
+        if self.pending_wildcard_exports.is_empty() {
+            return;
+        }
+
+        let mut remaining = Vec::new();
+        let mut progress = true;
+        let mut attempts = 0;
+
+        while progress && attempts < 4 {
+            progress = false;
+            attempts += 1;
+            let pending = std::mem::take(&mut self.pending_wildcard_exports);
+            for entry in pending {
+                if self.add_wildcard_export_edges(entry.source_idx, &entry.module_path) {
+                    progress = true;
+                } else {
+                    remaining.push(entry);
+                }
+            }
+
+            self.pending_wildcard_exports = remaining;
+            remaining = Vec::new();
+        }
+    }
+
     fn record_module_alias(&mut self, source_path: &Path, alias: String, target_path: PathBuf) {
         if alias.is_empty() {
             return;
@@ -742,6 +805,20 @@ impl BuilderState {
                 entry.push(module_path.to_path_buf());
             }
         }
+    }
+
+    fn enqueue_wildcard_export(&mut self, source_idx: GraphNodeIndex, module_path: &Path) {
+        if self
+            .pending_wildcard_exports
+            .iter()
+            .any(|entry| entry.source_idx == source_idx && entry.module_path == module_path)
+        {
+            return;
+        }
+        self.pending_wildcard_exports.push(PendingWildcardExport {
+            source_idx,
+            module_path: module_path.to_path_buf(),
+        });
     }
 
     fn resolve_exports(&mut self, module_path: &Path) -> HashSet<String> {
@@ -881,8 +958,11 @@ impl BuilderState {
         }
     }
 
-    fn build_alias_map(&mut self, file_idx: GraphNodeIndex) -> HashMap<String, GraphNodeIndex> {
-        let mut aliases = HashMap::new();
+    fn build_alias_map(
+        &mut self,
+        file_idx: GraphNodeIndex,
+    ) -> HashMap<String, Vec<GraphNodeIndex>> {
+        let mut aliases: HashMap<String, Vec<GraphNodeIndex>> = HashMap::new();
         let mut visited = HashSet::new();
         self.collect_callee_candidates(file_idx, &mut visited, &mut aliases);
 
@@ -893,7 +973,7 @@ impl BuilderState {
                     for name in exports {
                         if let Some(target_idx) = self.resolve_attribute_target(&module_path, &name)
                         {
-                            aliases.entry(name).or_insert(target_idx);
+                            Self::insert_alias(&mut aliases, name, target_idx);
                         }
                     }
                 }
@@ -902,11 +982,25 @@ impl BuilderState {
         aliases
     }
 
+    fn insert_alias(
+        aliases: &mut HashMap<String, Vec<GraphNodeIndex>>,
+        name: String,
+        target: GraphNodeIndex,
+    ) {
+        if name.is_empty() {
+            return;
+        }
+        let entry = aliases.entry(name).or_default();
+        if !entry.contains(&target) {
+            entry.push(target);
+        }
+    }
+
     fn collect_callee_candidates(
         &self,
         file_idx: GraphNodeIndex,
         visited: &mut HashSet<GraphNodeIndex>,
-        aliases: &mut HashMap<String, GraphNodeIndex>,
+        aliases: &mut HashMap<String, Vec<GraphNodeIndex>>,
     ) {
         if !visited.insert(file_idx) {
             return;
@@ -915,7 +1009,7 @@ impl BuilderState {
         if let Some(rel_path) = self.file_index_lookup.get(&file_idx) {
             if let Some(symbols) = self.file_symbols.get(rel_path) {
                 for (name, &idx) in symbols {
-                    aliases.entry(name.clone()).or_insert(idx);
+                    Self::insert_alias(aliases, name.clone(), idx);
                 }
             }
         }
@@ -926,7 +1020,7 @@ impl BuilderState {
             }
             let target = edge.target();
             if let Some(alias) = &edge.weight().alias {
-                aliases.entry(alias.clone()).or_insert(target);
+                Self::insert_alias(aliases, alias.clone(), target);
             }
             let Some(node) = self.graph.node(target) else {
                 continue;
@@ -936,17 +1030,17 @@ impl BuilderState {
                 NodeKind::File => {
                     if let Some(path) = node.file_path.as_ref() {
                         if let Some(stem) = path.file_stem().and_then(|stem| stem.to_str()) {
-                            aliases.entry(stem.to_string()).or_insert(target);
+                            Self::insert_alias(aliases, stem.to_string(), target);
                         }
                     }
                     self.collect_callee_candidates(target, visited, aliases);
                 }
                 NodeKind::Class => {
-                    aliases.entry(node.display_name.clone()).or_insert(target);
+                    Self::insert_alias(aliases, node.display_name.clone(), target);
                     self.collect_enclosed_entities(target, aliases);
                 }
                 NodeKind::Function => {
-                    aliases.entry(node.display_name.clone()).or_insert(target);
+                    Self::insert_alias(aliases, node.display_name.clone(), target);
                 }
                 NodeKind::Directory => {}
             }
@@ -956,7 +1050,7 @@ impl BuilderState {
     fn collect_enclosed_entities(
         &self,
         parent_idx: GraphNodeIndex,
-        aliases: &mut HashMap<String, GraphNodeIndex>,
+        aliases: &mut HashMap<String, Vec<GraphNodeIndex>>,
     ) {
         for edge in self.graph.graph().edges(parent_idx) {
             if edge.weight().kind != EdgeKind::Contain {
@@ -968,10 +1062,10 @@ impl BuilderState {
             };
             match node.kind {
                 NodeKind::Function => {
-                    aliases.entry(node.display_name.clone()).or_insert(child);
+                    Self::insert_alias(aliases, node.display_name.clone(), child);
                 }
                 NodeKind::Class => {
-                    aliases.entry(node.display_name.clone()).or_insert(child);
+                    Self::insert_alias(aliases, node.display_name.clone(), child);
                     self.collect_enclosed_entities(child, aliases);
                 }
                 _ => {}
@@ -983,13 +1077,14 @@ impl BuilderState {
         &mut self,
         caller_idx: GraphNodeIndex,
         rel_path: &Path,
-        alias_map: &HashMap<String, GraphNodeIndex>,
+        alias_map: &HashMap<String, Vec<GraphNodeIndex>>,
         names: &[String],
         kind: EdgeKind,
     ) {
         let mut seen_targets = HashSet::new();
         for name in names {
-            if let Some(target_idx) = self.resolve_name(rel_path, alias_map, name) {
+            let targets = self.resolve_targets(rel_path, alias_map, name);
+            for target_idx in targets {
                 if seen_targets.insert(target_idx)
                     && self
                         .behavior_edge_cache
@@ -1001,21 +1096,26 @@ impl BuilderState {
         }
     }
 
-    fn resolve_name(
+    fn resolve_targets(
         &self,
         rel_path: &Path,
-        alias_map: &HashMap<String, GraphNodeIndex>,
+        alias_map: &HashMap<String, Vec<GraphNodeIndex>>,
         name: &str,
-    ) -> Option<GraphNodeIndex> {
-        if let Some(&idx) = alias_map.get(name) {
-            return Some(idx);
+    ) -> Vec<GraphNodeIndex> {
+        let mut result = Vec::new();
+        if let Some(entries) = alias_map.get(name) {
+            result.extend(entries.iter().copied());
         }
+
         if let Some(symbols) = self.file_symbols.get(rel_path) {
             if let Some(&idx) = symbols.get(name) {
-                return Some(idx);
+                if !result.contains(&idx) {
+                    result.push(idx);
+                }
             }
         }
-        None
+
+        result
     }
 }
 

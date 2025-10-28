@@ -1,0 +1,73 @@
+DEV-COOKING-WORKLOGS-2025-10-28-01
+DEV-COOKING-WORKLOGS: T-02-01-graph-builder
+DATE: 2025-10-28T02:00:00Z -->
+TASKS: @.worktrees/T-02-01-graph-builder/spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md
+FROME: .worktrees/T-02-01-graph-builder/.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-27-01.txt
+
+---
+
+==============================================================
+
+TODO FROM: DEVCOOKING-WORK-ACTIONSLOGS-2025-10-27-01.txt last session's "What's Next"
+
+[TODO]: --continue DeepResearch, develop, fix, and test these current all issues:
+
+```text
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-27T18:30:00Z
+
+  What's Next
+
+  1. Mirror LocAgent’s callee search (“find_all_possible_callee”) so invoke edges discover nested methods, recursive imports, and
+     package __init__ exports; add unit coverage for decorators and class base traversal.
+  2. Re-run graph_parity_tests—first on LocAgent, then across the SWE-bench fixtures—to understand residual gaps (node blow-up on
+     Django indicates more filtering work).
+  3. Once invoke variance is within ≤2 %, update parity assertions, refresh the task artifacts/worklogs, and plan the broader
+     sweep of crates/cds-index/tests per the TODO.
+```
+
+==============================================================
+
+--CONTINUE "working on..."
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'                                    
+2025-10-28T03:24:29Z
+
+• Graph Builder Updates
+
+  - crates/cds-index/src/graph/builder.rs:531 queues wildcard re-export expansion until explicit __all__/alias data is available,
+    then hydrates imports via deferred retries.
+  - crates/cds-index/src/graph/builder.rs:566-784 rewrites the alias map to store Vec<GraphNodeIndex>, adds resolve_targets,
+    and extends callee discovery to follow nested entities without dropping duplicates; also introduces PendingWildcardExport
+    handling.
+  - crates/cds-index/src/graph/builder.rs:961-1099 adjusts alias collection helpers to dedupe inserts and makes behavior-edge
+    wiring iterate over all candidate callees.
+  - crates/cds-index/tests/graph_builder_tests.rs:420 adds the invoke_edges_include_all_alias_candidates regression test to
+    confirm multi-alias imports attach invoke edges to every reachable definition.
+
+  Verification
+
+  - cargo test -p cds-index --test graph_builder_tests
+  - cargo test -p cds-index --test graph_parity_tests -- graph_parity_baselines --nocapture (fails: imports now match but invokes
+    = 565 vs 531 expected; see PARITY_DEBUG output for extra edges such as auto_search_main.py::main -> auto_search_main.py::merge
+    and dependency_graph/batch_build_graph.py::run -> util/benchmark/setup_repo.py::setup_repo.)
+
+  Follow-up
+
+  1. Audit the extra invoke edges reported by the parity harness; start by filtering obvious self-recursive matches and aligning
+     call resolution with LocAgent’s heuristics before re-running parity.
+  2. Review the “missing invokes” list (e.g. ResponseParser.parse → response_to_actions) to make sure the new multi-target alias
+     map still covers legitimate edges.
+  3. Once parity stabilizes, refresh the task artifacts/worklogs and extend parity coverage to the SWE-bench fixtures as planned.
+
+==============================================================
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+
+--CONTINUE
+
+"""
+In order to facilitate code maintainability and readability during subsequent development iterations, before starting today's Next Steps work objectives, you should first consider a precise and reasonable architectural split of /crates/cds-index/src/graph/builder.rs (the current code file of this module is already approaching the normal line count, too long, so it is best to organize the code reasonably and split it completely and accurately).
+"""
+
+...

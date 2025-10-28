@@ -415,3 +415,64 @@ def handler():
         "decorator alias should record invoke edge to audit()"
     );
 }
+
+#[test]
+fn invoke_edges_include_all_alias_candidates() {
+    let files = [
+        ("pkg/__init__.py", ""),
+        (
+            "pkg/alpha.py",
+            r#"
+def handler():
+    return "alpha"
+"#,
+        ),
+        (
+            "pkg/beta.py",
+            r#"
+def handler():
+    return "beta"
+"#,
+        ),
+        (
+            "main.py",
+            r#"
+from pkg.alpha import handler as shared
+from pkg.beta import handler as shared
+
+def caller():
+    return shared()
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let caller_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::Function && node.id.ends_with("main.py::caller")
+    })
+    .expect("caller function");
+    let alpha_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::Function && node.id.ends_with("pkg/alpha.py::handler")
+    })
+    .expect("alpha handler");
+    let beta_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::Function && node.id.ends_with("pkg/beta.py::handler")
+    })
+    .expect("beta handler");
+
+    let mut targets = Vec::new();
+    for edge in graph.graph().edges(caller_idx) {
+        if edge.weight().kind == EdgeKind::Invoke {
+            targets.push(edge.target());
+        }
+    }
+
+    assert!(
+        targets.contains(&alpha_idx),
+        "caller() should include alpha handler as possible callee"
+    );
+    assert!(
+        targets.contains(&beta_idx),
+        "caller() should include beta handler as possible callee"
+    );
+}

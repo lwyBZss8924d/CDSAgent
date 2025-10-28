@@ -1,27 +1,46 @@
-DEVCOOKING-WORK-ACTIONSLOGS-2025-10-27-01.txt
+DEV-COOKING-WORKLOGS-2025-10-27-01
+DEV-COOKING-WORKLOGS: T-02-01-graph-builder
+DATE: 2025-10-27T08:20:32Z --> 2025-10-27T18:30:00Z
+TASKS: .worktrees/T-02-01-graph-builder/spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md
+FROME: .worktrees/T-02-01-graph-builder/.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01.txt
 
-FROM: EVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01.txt
+---
 
 ==============================================================
 
-FROME: @.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01.txt
+TODO FROM: DEVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01.txt last session's "Next Steps"
 
+[TODO]: --continue DeepResearch, fix, and test these current all issues:
+
+```text
 ❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
 2025-10-25T12:44:00Z
 
-[TODO]: continue DeepResearch, fix, and test these current all issues:
-  1. Parse __all__ assignments (including repo_ops/util packages) and explode wildcard imports into per-symbol edges.
-  2. When a module re-exports a class/function via from … import *, walk the target module’s symbol table and add attribute
-     edges (possibly storing an “exports” cache keyed by module path).
-  3. Decide how to treat constant-only imports (e.g., NODE_TYPE_*). Either drop them from golden comparisons or model them as
-     file-level edges so the test no longer reports them as missing.
+  Current Risks / TODO
+
+  - Import edges remain ~52 short. The remaining gaps are concentrated in files that either (a) import constants/TypedDicts our
+    graph doesn’t model or (b) rely on wildcard exports (__all__, module-level helper functions like set_current_issue). Next
+    steps:
+      1. Parse __all__ assignments (including repo_ops/util packages) and explode wildcard imports into per-symbol edges.
+      2. When a module re-exports a class/function via from … import *, walk the target module’s symbol table and add attribute
+         edges (possibly storing an “exports” cache keyed by module path).
+      3. Decide how to treat constant-only imports (e.g., NODE_TYPE_*). Either drop them from golden comparisons or model them as
+         file-level edges so the test no longer reports them as missing.
+  - Once the import variance is within ≤2 %, rerun the parity harness across all six fixtures and, per the original instruction,
+    cascade any necessary updates through crates/cds-index/tests/ before touching the task artifacts/worklogs.
+```
 
 ==============================================================
 
---CONTINUE
-
 ❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
 2025-10-27T08:20:32Z
+
+--CONTINUE "working on..."
+
+==============================================================
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-27T18:30:00Z
 
 • Progress Update
 
@@ -53,3 +72,5 @@ FROME: @.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK
      sweep of crates/cds-index/tests per the TODO.
 
 ==============================================================
+
+END

@@ -80,10 +80,10 @@ acceptance_criteria:
     notes: "✅ FQN format implemented (filename:Class.method). ✅ Validated against golden baselines (parity tests pass)."
   - criterion: "Unit tests cover typical and edge cases (decorators, nested classes, async functions)"
     status: "in_progress"
-    notes: "✅ Unit tests: 6 tests (2 invoke + 3 re-exports/wildcard/chained __all__). ✅ Integration: Parity harness for 6 repos. ⏳ Needs expansion to >80% coverage (currently ~25%)."
+    notes: "✅ Unit tests: 8 tests (3 invoke + 3 re-exports/wildcard/chained __all__ + 1 decorator + 1 alias). ✅ Integration: Parity harness for 6 repos. ⏳ Needs expansion to >80% coverage (currently ~30%)."
   - criterion: "Graph parity script reports ≤2% variance in node/edge counts vs. LocAgent baseline"
     status: "in_progress"
-    notes: "✅ Parity harness running. ✅ Import variance RESOLVED: 0% (was +23.85%). ⏳ Invoke variance: +1.9% (was -15.63%, improved but needs final pass)."
+    notes: "✅ Parity harness running. ✅ Import variance RESOLVED: 0% (exact match 218/218). ⏳ Invoke variance: +6.4% (565 vs 531 expected, up from +1.9% due to multi-target alias resolution - needs audit)."
 
 worklog:
   base_path: ".artifacts/spec-tasks-T-02-01-graph-builder/worklogs/"
@@ -100,15 +100,19 @@ worklog:
       summary: "worklogs/2025-10-27-work-summary.md"
       commits: "worklogs/2025-10-27-commit-log.md"
       notes: "worklogs/2025-10-27-notes.md"
+    - date: "2025-10-28"
+      summary: "worklogs/2025-10-28-work-summary.md"
+      commits: "worklogs/2025-10-28-commit-log.md"
+      notes: "worklogs/2025-10-28-notes.md"
 
 metrics:
   estimated_hours: 40  # 5 days * 8 hours
-  actual_hours: 15.5  # Day 1: 2h planning, Day 2: 11h implementation, Day 3: 2.5h export tracking
-  lines_added: 3451   # Core: 2064 + Parity: 570 + Export tracking: 817
-  lines_deleted: 92    # Core: 26 + Parity: 14 + Export tracking: 52
-  files_modified: 15   # Core: 12 + Parity: 2 + Export tracking: 1 more (worklogs)
-  tests_added: 6       # 2 unit (invoke) + 1 integration (parity) + 3 unit (re-exports, wildcard, chained __all__)
-  test_coverage: 0.25  # Estimated: ~25% (6 unit tests + integration harness)
+  actual_hours: 19.5  # Day 1: 2h planning, Day 2: 11h implementation, Day 3: 2.5h export tracking, Day 4: 4h multi-target alias
+  lines_added: 3637   # Core: 2064 + Parity: 570 + Export tracking: 817 + Multi-target: 186
+  lines_deleted: 117   # Core: 26 + Parity: 14 + Export tracking: 52 + Multi-target: 25
+  files_modified: 16   # Core: 12 + Parity: 2 + Export tracking: 1 + Multi-target: 1 more (tests)
+  tests_added: 8       # 3 unit (invoke + decorator + alias) + 3 unit (re-exports, wildcard, chained __all__) + 1 unit (multi-target) + 1 integration (parity)
+  test_coverage: 0.30  # Estimated: ~30% (8 unit tests + integration harness)
 
 comments:
   - date: "2025-10-24"
@@ -123,6 +127,9 @@ comments:
   - date: "2025-10-27"
     author: "Rust Dev 1"
     text: "Day 3 breakthrough: Import parity RESOLVED 🎉! Implemented comprehensive export tracking system with ModuleExports model, deferred attribute resolution, and wildcard import handling. Import edges now match LocAgent golden baseline exactly (218/218, 0% variance). Added 3 new unit tests. Invoke variance improved from -15.63% to +1.9%. Next: Mirror LocAgent's find_all_possible_callee to eliminate remaining invoke variance."
+  - date: "2025-10-28"
+    author: "Rust Dev 1"
+    text: "Day 4 multi-target alias resolution: Rewrote alias map to Vec<GraphNodeIndex> for multi-target support. Added resolve_targets() and PendingWildcardExport handling. New unit test confirms invoke edges now attach to all reachable alias candidates. Parity: imports still 0% ✅, but invokes increased to +6.4% (565 vs 531 - up from +1.9%). Root cause: multi-target resolution discovers more edges than LocAgent (e.g., auto_search_main.py::main → merge, batch_build_graph.py::run → setup_repo). Need to audit extra edges and align call resolution heuristics with LocAgent before next parity run."
 
 related_artifacts:
   - type: "parity_baseline"
