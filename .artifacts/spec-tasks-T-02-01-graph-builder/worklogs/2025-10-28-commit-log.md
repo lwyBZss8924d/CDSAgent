@@ -5,10 +5,31 @@
 
 ---
 
+## Commits Made Today
+
+```table
+| #   | Commit  | Title                            | git notes Title                       |
+Timestamp (UTC)      | Status |
+|-----|---------|----------------------------------|----------------------------------|---------
+-------------|--------|
+| 1   | 147b4c2 | Multi-target alias resolution    | Day 4 Session 1 Checkpoint       |
+2025-10-28T03:48:30Z | ✅      |
+| 2   | 956c108 | Modularize builder.rs            | Day 4 Session 2 Checkpoint       |
+2025-10-28T04:37:35Z | ✅      |
+| 3   | 8ea5e8a | Add missing Day 4 commit-log     | Checkpoint Documentation Update  |
+2025-10-28T03:52:03Z | ✅      |
+| 4   | cf44fbc | Complete Day 4 worklog artifacts | Complete Day 4 Worklog Artifacts |
+2025-10-28T06:20:06Z | ✅      |
+| 5   | 8f329d2 | Update metadata.yaml             | Metadata Update for Day 4        |
+2025-10-28T06:25:37Z | ✅      |
+| 6   | 757bd05 | Correct Day 4/Day 5 labeling     | Day Numbering Correction         |
+2025-10-28T06:29:02Z | ✅      |
+```
+
 ## Commit 1: feat(graph): T-02-01 Day 4 - multi-target alias resolution and wildcard export handling
 
 **Hash**: `147b4c2`
-**Date**: 2025-10-28
+**Date**: 2025-10-28T03:48:30Z
 **Branch**: feat/task/T-02-01-graph-builder
 
 ### Summary
@@ -292,7 +313,7 @@ fn invoke_edges_include_all_alias_candidates() {
 ## Commit 2: refactor(graph): modularize builder.rs into focused submodules
 
 **Hash**: `956c108`
-**Date**: 2025-10-28T12:37:35+0800
+**Date**: 2025-10-28T04:37:35Z
 **Branch**: feat/task/T-02-01-graph-builder
 
 ### Session-02 Summary
@@ -472,7 +493,7 @@ No breaking changes - all existing code compiles without modification.
 
 ### Commit 2 Related Commits
 
-- **147b4c2** (Day 5 Session 1): "feat(graph): T-02-01 Day 4 - multi-target alias resolution and wildcard export handling"
+- **147b4c2** (Day 4 Session 1): "feat(graph): T-02-01 Day 4 - multi-target alias resolution and wildcard export handling"
 - **3083e00** (Day 3): "feat(graph): implement export tracking system and resolve import parity"
 - **00da9c2** (Day 2): "feat(graph): add parity harness and refine import resolution"
 
@@ -485,4 +506,185 @@ No breaking changes - all existing code compiles without modification.
 
 ---
 
-End of Commit Log - Day 5 (2 commits)
+## Commit 3: docs(checkpoint): update WORK_SESSION_CHECKPOINT_WORKFLOW.md with Day 4 session details
+
+**Hash**: `8ea5e8a`
+**Date**: 2025-10-28T03:52:03Z
+**Branch**: feat/task/T-02-01-graph-builder
+
+### Summary
+
+Checkpoint documentation update - added reminder about Day 4 Session 1 checkpoint completion.
+
+### Files Changed
+
+- `.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/action-XX-checkpoint-docs.log`
+
+### Commit Message
+
+```
+docs(checkpoint): update WORK_SESSION_CHECKPOINT_WORKFLOW.md with Day 4 session details
+```
+
+### Context
+
+Procedural commit to document checkpoint workflow execution for Day 4 Session 1.
+
+---
+
+## Commit 4: docs(checkpoint): complete Day 4 worklog artifacts with Session 2 refactoring details
+
+**Hash**: `cf44fbc`
+**Date**: 2025-10-28T06:20:06Z
+**Branch**: feat/task/T-02-01-graph-builder
+
+### Summary
+
+Completed worklog artifacts for Day 4 with comprehensive Session 2 refactoring documentation. Updated work-summary.md, commit-log.md, and notes.md to reflect the graph builder modular refactoring work.
+
+### Files Changed (3)
+
+- `.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-28-work-summary.md` (+169 lines)
+- `.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-28-commit-log.md` (+196 lines)
+- `.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-28-notes.md` (+115 lines)
+
+### Commit Message
+
+```
+docs(checkpoint): complete Day 4 worklog artifacts with Session 2 refactoring details
+
+Added comprehensive documentation for Day 4 Session 2 (graph builder refactoring):
+
+Work Summary Updates:
+- Session 2 overview (refactoring objectives and module structure)
+- Module breakdown (10 files, 2,037 lines)
+- Verification results (6-phase plan)
+- Updated statistics (Total Day 4: +2,223 lines, 13 files)
+- Corrected time tracking (24.5h cumulative)
+
+Commit Log Updates:
+- Full Commit 2 entry (956c108) with Session-02 details
+- File-by-file change summary
+- Verification plan and structural analysis
+- Related commits and follow-up actions
+
+Development Notes Updates:
+- Decision 3: Modular Builder Structure
+- Decision 4: Placeholder Module Strategy
+- Decision 5: behaviors.rs Extraction Strategy
+```
+
+### Context
+
+This commit ensures 100% consistency between git operations and worklog documentation by adding all missing Session 2 refactoring details.
+
+---
+
+## Commit 5: docs(metadata): update metadata.yaml with Day 4 commits and metrics
+
+**Hash**: `8f329d2`
+**Date**: 2025-10-28T06:25:37Z
+**Branch**: feat/task/T-02-01-graph-builder
+
+### Summary
+
+Updated task metadata with Day 4 commits and cumulative metrics.
+
+### Files Changed (1)
+
+- `.artifacts/spec-tasks-T-02-01-graph-builder/metadata.yaml`
+
+### Changes Made
+
+**Added 2 Git Commits**:
+- 147b4c2: Day 4 Session 1 (multi-target alias resolution)
+- 956c108: Day 4 Session 2 (graph builder refactoring)
+
+**Updated Metrics**:
+- `actual_hours`: 19.5h → 24.5h
+- `lines_added`: 3,637 → 5,860
+- `lines_deleted`: 117 → 142
+- `files_modified`: 16 → 30
+
+**Added Comments**:
+- Day 4 Session 1 summary (multi-target alias implementation)
+- Day 4 Session 2 summary (modular refactoring)
+
+### Commit Message
+
+```
+docs(metadata): update metadata.yaml with Day 4 commits and metrics
+
+Updated metadata.yaml with both Day 4 sessions:
+
+Git Commits Added:
+- 147b4c2: Multi-target alias resolution (+186 lines)
+- 956c108: Graph builder refactoring (+2,037 lines)
+
+Metrics Updated:
+- actual_hours: 24.5h (Day 1: 2h, Day 2: 11h, Day 3: 2.5h, Day 4: 9h)
+- lines_added: 5,860 (cumulative)
+- lines_deleted: 142 (cumulative)
+- files_modified: 30 (cumulative)
+
+Comments:
+- Day 4 Session 1: Multi-target alias resolution details
+- Day 4 Session 2: Refactoring and verification results
+```
+
+### Context
+
+Ensures metadata.yaml accurately reflects all Day 4 work with correct cumulative totals.
+
+---
+
+## Commit 6: fix(checkpoint): correct Day 4/Day 5 labeling - both sessions on 2025-10-28 are Day 4
+
+**Hash**: `757bd05`
+**Date**: 2025-10-28T06:29:02Z
+**Branch**: feat/task/T-02-01-graph-builder
+
+### Summary
+
+Fixed incorrect day numbering - both sessions on 2025-10-28 are Day 4, not Day 4 and Day 5.
+
+### Files Changed (2)
+
+- `.artifacts/spec-tasks-T-02-01-graph-builder/metadata.yaml`
+- `.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-28-work-summary.md`
+
+### Changes Made
+
+**metadata.yaml**:
+- Fixed comment text: "Day 5 Session 1/2" → "Day 4 Session 1/2"
+- Corrected metrics.actual_hours: 28.5h → 24.5h (was double-counting)
+
+**work-summary.md**:
+- Fixed section titles: "Total Day 5" → "Total Day 4"
+- Corrected time tracking to show 24.5h cumulative (not 28.5h)
+
+### Commit Message
+
+```
+fix(checkpoint): correct Day 4/Day 5 labeling - both sessions on 2025-10-28 are Day 4
+
+Timeline correction:
+- Day 1: 2025-10-24 (2h)
+- Day 2: 2025-10-25 (11h)
+- Day 3: 2025-10-27 (2.5h)
+- Day 4: 2025-10-28 (9h - both sessions)
+
+Both sessions on 2025-10-28 are the same calendar day (Day 4), not separate days.
+
+Fixed:
+- metadata.yaml: Updated comments and corrected actual_hours (28.5h → 24.5h)
+- work-summary.md: Changed "Day 5" → "Day 4" in section titles and time tracking
+```
+
+### Context
+
+User correctly identified that both commits (147b4c2 and 956c108) occurred on the same calendar day (2025-10-28), so they should both be labeled as Day 4 Session 1 and Session 2, not Day 4 and Day 5.
+
+---
+
+End of Commit Log - Day 4 (6 commits)
