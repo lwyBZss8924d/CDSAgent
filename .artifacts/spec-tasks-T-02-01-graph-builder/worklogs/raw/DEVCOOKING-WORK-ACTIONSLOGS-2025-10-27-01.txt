@@ -1,0 +1,76 @@
+DEV-COOKING-WORKLOGS-2025-10-27-01
+DEV-COOKING-WORKLOGS: T-02-01-graph-builder
+DATE: 2025-10-27T08:20:32Z --> 2025-10-27T18:30:00Z
+TASKS: .worktrees/T-02-01-graph-builder/spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md
+FROME: .worktrees/T-02-01-graph-builder/.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01.txt
+
+---
+
+==============================================================
+
+TODO FROM: DEVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01.txt last session's "Next Steps"
+
+[TODO]: --continue DeepResearch, fix, and test these current all issues:
+
+```text
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-25T12:44:00Z
+
+  Current Risks / TODO
+
+  - Import edges remain ~52 short. The remaining gaps are concentrated in files that either (a) import constants/TypedDicts our
+    graph doesn’t model or (b) rely on wildcard exports (__all__, module-level helper functions like set_current_issue). Next
+    steps:
+      1. Parse __all__ assignments (including repo_ops/util packages) and explode wildcard imports into per-symbol edges.
+      2. When a module re-exports a class/function via from … import *, walk the target module’s symbol table and add attribute
+         edges (possibly storing an “exports” cache keyed by module path).
+      3. Decide how to treat constant-only imports (e.g., NODE_TYPE_*). Either drop them from golden comparisons or model them as
+         file-level edges so the test no longer reports them as missing.
+  - Once the import variance is within ≤2 %, rerun the parity harness across all six fixtures and, per the original instruction,
+    cascade any necessary updates through crates/cds-index/tests/ before touching the task artifacts/worklogs.
+```
+
+==============================================================
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-27T08:20:32Z
+
+--CONTINUE "working on..."
+
+==============================================================
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-27T18:30:00Z
+
+• Progress Update
+
+  - Extended graph::builder with full AST-driven export tracking: new ModuleExports model parses __all__, wildcard re-exports, and
+    chained exports; deferred attribute imports now resolve after all files load, with a targeted fallback that preserves alias
+    names when we truly only know the module.
+  - Reworked alias resolution: import alias caching understands package __init__ re-exports, wildcard imports are recorded
+    (without inflating edge counts), and build_alias_map now folds in wildcard exposure lazily so invoke resolution can see those
+    names.
+  - Added three focused unit tests (import_edges_follow_package_reexports, wildcard_imports_expand_all_exports,
+    exports_follow_module_all_aliases) to pin the new behavior. All graph_builder_tests green (6/6 passing).
+  - Parity harness: for the LocAgent fixture, imports now match the golden totals exactly (218 / 218). Remaining variance sits in
+    invoke edges (+10, ~1.9%), which is the next big item.
+
+  Statistics
+
+  - Files changed: 8 (builder.rs, graph_builder_tests.rs, metadata.yaml, 3 worklogs, 2 action logs)
+  - Lines added: +1,361 (code: +730, worklogs: +554, action logs: +135, metadata: +36, deletions: -64)
+  - Tests: 3 new unit tests (total 6/6 passing)
+  - Test coverage: ~25% (6 unit tests + parity harness)
+
+  What's Next
+
+  1. Mirror LocAgent’s callee search (“find_all_possible_callee”) so invoke edges discover nested methods, recursive imports, and
+     package __init__ exports; add unit coverage for decorators and class base traversal.
+  2. Re-run graph_parity_tests—first on LocAgent, then across the SWE-bench fixtures—to understand residual gaps (node blow-up on
+     Django indicates more filtering work).
+  3. Once invoke variance is within ≤2 %, update parity assertions, refresh the task artifacts/worklogs, and plan the broader
+     sweep of crates/cds-index/tests per the TODO.
+
+==============================================================
+
+END

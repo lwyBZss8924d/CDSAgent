@@ -45,7 +45,7 @@ A **Spec-Task** is a fully-specified development task with:
 
 ---
 
-## Quick Decision Flowchart
+## QUICK DECISION FLOW
 
 **Question: Which task should I start next?**
 
@@ -92,7 +92,7 @@ START
 
 **Quick Commands:**
 
-```bash
+```shell
 # Check current milestone
 cat spacs/tasks/0.1.0-mvp/README.md | grep -A 10 "Milestone M"
 
@@ -218,7 +218,7 @@ code .  # or your preferred IDE
 
 **Check milestone completion**:
 
-```bash
+```shell
 # View current milestone status
 cat spacs/tasks/0.1.0-mvp/README.md | grep -A 30 "Milestone M"
 
@@ -237,7 +237,7 @@ yq '.milestones' spacs/tasks/0.1.0-mvp/TODO.yaml
 
 **List all not-started tasks in current milestone**:
 
-```bash
+```shell
 # Example: List M1 tasks
 yq '.tasks | to_entries |
     map(select(.value.milestone == "M1" and .value.status == "not_started")) |
@@ -247,7 +247,7 @@ yq '.tasks | to_entries |
 
 **Filter by critical path**:
 
-```bash
+```shell
 # Check critical-path tasks for current milestone
 yq '.milestones.M1.critical_path' spacs/tasks/0.1.0-mvp/TODO.yaml
 ```
@@ -256,7 +256,7 @@ yq '.milestones.M1.critical_path' spacs/tasks/0.1.0-mvp/TODO.yaml
 
 **For each candidate task, check dependencies**:
 
-```bash
+```shell
 # Check what a task requires
 yq '.tasks.T-XX-XX.dependencies.requires' spacs/tasks/0.1.0-mvp/TODO.yaml
 
@@ -268,7 +268,7 @@ yq '.tasks.T-XX-XX.dependencies.blocks' spacs/tasks/0.1.0-mvp/TODO.yaml
 
 **Verify prerequisites merged**:
 
-```bash
+```shell
 # Check recent merged PRs
 gh pr list --state merged --limit 10
 
@@ -356,7 +356,7 @@ T-02-01-graph-builder:
       text: "Blocked on T-06-01 parity methodology - waiting for baseline data"
 ```
 
-### Decision Flowchart Quick Reference
+### DECISION FLOWCHART QUICK REFERENCE
 
 ```text
 ┌──────────────────────────────────┐
@@ -1055,7 +1055,7 @@ actual_hours: 22  # After day 3
 
 **Solution**:
 
-```bash
+```shell
 cd ~/dev-space/CDSAgent-T-XX-XX
 git fetch origin main
 git rebase origin/main
@@ -1072,7 +1072,7 @@ git rebase origin/main
 
 **Solution**:
 
-```bash
+```shell
 # In worktree, commit or stash changes
 git stash
 # or
@@ -1088,7 +1088,7 @@ git checkout main
 
 **Solution**:
 
-```bash
+```shell
 # Remove all symlinks
 ./scripts/worktree-symlink.sh remove
 
@@ -1100,7 +1100,7 @@ git checkout main
 
 **Solution**:
 
-```bash
+```shell
 # Create worklog for specific date
 ./scripts/create-daily-worklog.sh T-XX-XX YYYY-MM-DD
 
@@ -1120,7 +1120,7 @@ See detailed explanation in [Phase 1: Step 4 - Initialize Artifacts FROM WORKTRE
 
 **Quick fix**:
 
-```bash
+```shell
 # Option 1: Re-run from worktree (Recommended)
 cd ~/dev-space/CDSAgent-T-XX-XX-task-name
 /Users/arthur/dev-space/CDSAgent/scripts/create-task-worklog.sh \
@@ -1140,7 +1140,7 @@ ls -la ~/dev-space/CDSAgent-T-XX-XX-task-name/.artifacts/spec-tasks-T-XX-XX-task
 
 **Solution**:
 
-```bash
+```shell
 # DON'T PANIC!
 
 # Option 1: Move commits to task branch

@@ -1,0 +1,40 @@
+T-02-01 Graph Builder — Completion Snapshot (2025-10-30T09:35:00Z)
+
+────────────────────────────────────────────────────────────────────────────────
+
+**Status**: 🟢 100 % Complete — Task closed on schedule (Day 6 of 6).  
+**Branch**: `feat/task/T-02-01-graph-builder` @ 894bb53 + latest Day 6 changes.  
+**Acceptance Criteria**: All four ✅ verified (nodes/edges implemented, FQN parity, ≥80 % coverage, ≤2 % variance).
+
+---
+
+## Summary of Work Since 05:05 UTC Analysis
+
+| Area | Action | Evidence |
+|------|--------|----------|
+| Regression Fix | Restored `process_from_import` alias emission for package re-exports. | `cargo test import_edges_follow_package_reexports` → PASS. |
+| Coverage | Added 15 unit tests (nested structures, TYPE_CHECKING, async, decorator, circular & relative imports, syntax failure). | `graph_builder_tests.rs` now 23 tests. |
+| Documentation | Added doc comments for `GraphBuilder`, `CodeGraph`, `NodeKind`, `EdgeKind`; benches updated to `std::hint::black_box`. | `graph/mod.rs`, `graph_bench.rs`, `search_bench.rs`. |
+| Verification | `cargo test -p cds-index` (unit + parity + contract suites) PASS; `cargo clippy --all-targets --all-features` PASS. | Logs recorded in work summary. |
+| Artifacts | Updated metadata (status=completed, coverage=0.82, tests_added=23, actual_hours≈39); created Day 6 work summary, notes, commit log skeleton. | `.artifacts/spec-tasks-T-02-01-graph-builder/*`. |
+
+---
+
+## Final Metrics
+- **Parity**: locagent/django/matplotlib 0 % variance; pytest invokes +1.29 %; requests imports +0.28 %, invokes +0.46 %; scikit-learn imports +0.09 %.  
+- **Tests**: 23 unit + 1 integration (parity) + 30 contract tests (service layer).  
+- **Coverage**: ~82 % (graph builder modules).  
+- **Effort**: ≈39 h cumulative (Day 6 contributed ~4 h).  
+- **Diff vs main**: +619 / −58 lines today (tests + docs + benches).
+
+---
+
+## Remaining Administrative Actions
+1. **Commit & Push** final code + artifact updates (and attach git note referencing parity/test snapshots).  
+2. **Raise PR** summarizing deliverables, metrics, parity table, coverage numbers.  
+3. **Update downstream tracking** once PR open / merged:
+   - `spacs/tasks/0.1.0-mvp/TODO.yaml` — mark T-02-01 completed, unblock T-02-02.
+   - `spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md` — add resolution note.  
+4. Notify T-02-02 & T-03-01 owners that dependency cleared.
+
+No further engineering tasks required for T-02-01. Focus shifts to packaging work for review and transitioning to T-02-02 sparse index.

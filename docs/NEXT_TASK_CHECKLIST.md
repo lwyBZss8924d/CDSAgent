@@ -7,7 +7,7 @@
 
 ---
 
-## Quick Decision Tree
+## QUICK DECISION TREE
 
 ```text
 START: What task should I start next?
@@ -33,7 +33,7 @@ START: What task should I start next?
 
 ### 1.1 Check Milestone Progress
 
-```bash
+```shell
 # View current milestone status
 cat spacs/tasks/0.1.0-mvp/README.md | grep -A 30 "Milestone M"
 
@@ -50,7 +50,7 @@ yq '.milestones' spacs/tasks/0.1.0-mvp/TODO.yaml
 
 ### 1.2 Review Recently Completed Tasks
 
-```bash
+```shell
 # Check last merged PRs
 gh pr list --state merged --limit 10
 
@@ -73,7 +73,7 @@ git worktree list
 
 ### 2.1 List Candidate Tasks
 
-```bash
+```shell
 # List all not-started tasks in current milestone
 yq '.tasks | to_entries |
     map(select(.value.milestone == "M1" and .value.status == "not_started")) |
@@ -94,7 +94,7 @@ yq '.milestones.M1.critical_path' spacs/tasks/0.1.0-mvp/TODO.yaml
 
 For each candidate task:
 
-```bash
+```shell
 # Check dependencies
 yq '.tasks.T-XX-XX.dependencies.requires' spacs/tasks/0.1.0-mvp/TODO.yaml
 
@@ -144,7 +144,7 @@ gh pr list --state merged --search "T-05-01"
 
 ⚠️ **CRITICAL: Do this BEFORE creating worktree!**
 
-```bash
+```shell
 # Navigate to main repo
 cd ~/dev-space/CDSAgent
 
@@ -168,13 +168,13 @@ git log -1 --oneline
 
 **Check if worktree already exists** (from M0):
 
-```bash
+```shell
 git worktree list | grep T-XX-XX
 ```
 
 **If worktree doesn't exist, create it**:
 
-```bash
+```shell
 # Create worktree from synced main
 git worktree add .worktrees/T-XX-XX-task-name \
   -b feat/task/T-XX-XX-task-name main
@@ -192,7 +192,7 @@ git worktree add .worktrees/T-05-02-typescript-bindings \
 
 ### 3.3 Create IDE Symlink
 
-```bash
+```shell
 # Create symlink for easy access
 ./scripts/worktree-symlink.sh create T-XX-XX-task-name
 
@@ -216,7 +216,7 @@ ls -la ~/dev-space/CDSAgent-T-XX-XX-task-name
 
 **Reason**: Worktrees have independent file systems. Running from main creates artifacts that worktrees can't see.
 
-```bash
+```shell
 # Navigate to worktree FIRST
 cd ~/dev-space/CDSAgent-T-XX-XX-task-name
 
@@ -241,7 +241,7 @@ ls -la .artifacts/spec-tasks-T-XX-XX-task-name/
 
 **Purpose**: Add task context for AI-assisted development
 
-```bash
+```shell
 cd ~/dev-space/CDSAgent-T-XX-XX-task-name
 vim CLAUDE.md
 ```
@@ -258,7 +258,7 @@ vim CLAUDE.md
 
 ### 3.6 Create Daily Worklog
 
-```bash
+```shell
 # From worktree
 cd ~/dev-space/CDSAgent-T-XX-XX-task-name
 
@@ -277,7 +277,7 @@ ls -la .artifacts/spec-tasks-T-XX-XX-task-name/worklogs/$(date +%Y-%m-%d)-*.md
 
 ### 3.7 Read Task Specification
 
-```bash
+```shell
 # Read task spec
 cat spacs/tasks/0.1.0-mvp/{category}/T-XX-XX-task-name.md
 
@@ -299,7 +299,7 @@ cat spacs/issues/04-0.1.0-mvp/{XX}-{issue-name}.md
 
 ### 3.8 Final Environment Check
 
-```bash
+```shell
 cd ~/dev-space/CDSAgent-T-XX-XX-task-name
 
 # Verify branch
@@ -365,7 +365,7 @@ code .
 
 1. Verify worktree is synced with main:
 
-   ```bash
+   ```shell
    cd ~/dev-space/CDSAgent-T-XX-XX
    git fetch origin main
    git rebase origin/main
@@ -378,7 +378,7 @@ code .
 
 ## Quick Commands Reference
 
-```bash
+```shell
 # Check milestone
 cat spacs/tasks/0.1.0-mvp/README.md | grep -A 30 "Milestone M"
 
@@ -427,7 +427,7 @@ cat spacs/tasks/0.1.0-mvp/{category}/T-XX-XX-task-name.md
 
 **Quick fix**:
 
-```bash
+```shell
 cd ~/dev-space/CDSAgent-T-XX-XX
 /Users/arthur/dev-space/CDSAgent/scripts/create-task-worklog.sh \
   T-XX-XX-task-name "Task Title" "Your Name"

@@ -369,12 +369,14 @@ tasks:
     milestone: M2
     week: 2
     priority: P0
-    status: not_started
+    status: completed
     owner: Rust Dev 1
-    duration_days: 5
+    duration_days: 6  # Completed in 6 days (2025-10-24 to 2025-10-30)
     worktree: .worktrees/T-02-01-graph-builder
     branch: feat/task/T-02-01-graph-builder
     symlink: ~/dev-space/CDSAgent-T-02-01-graph-builder
+    completed_date: "2025-10-30"
+    pr: "https://github.com/lwyBZss8924d/CDSAgent/pull/6"
 
     specs:
       prds:
@@ -394,18 +396,35 @@ tasks:
 
     deliverables:
       - crates/cds-index/src/graph/parser.rs
-      - crates/cds-index/src/graph/builder.rs
+      - crates/cds-index/src/graph/builder/ (10 modules, 2,037 lines)
       - crates/cds-index/src/graph/traversal.rs
-      - Unit tests (>80% coverage)
-      - Parity validation (<= 2% variance from LocAgent)
+      - crates/cds-index/tests/graph_builder_tests.rs (23 unit tests)
+      - crates/cds-index/tests/graph_parity_tests.rs (6 fixtures validation)
+      - API documentation (crates/cds-index/src/graph/mod.rs)
 
     acceptance_criteria:
-      - Parses Python repos with 4 node types + 4 edge types
-      - Fully-qualified names match LocAgent format
-      - Unit tests cover edge cases
-      - Graph parity script reports ≤2% variance
+      - "✅ Parses Python repos with 4 node types + 4 edge types"
+      - "✅ Fully-qualified names match LocAgent format"
+      - "✅ Unit tests cover edge cases (23 tests, ~82% coverage)"
+      - "✅ Graph parity ≤2% variance (all 6 fixtures pass)"
 
-    worklog_path: .artifacts/spec-tasks-T-02-01/worklogs/
+    worklog_path: .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/
+
+    git_commits:
+      - cd863be: "checkpoint(worklog): T-02-01 Day 6 - initialize 2025-10-30 session worklogs"
+      - 72f9db5: "feat(graph): T-02-01 complete - parity, coverage, docs"
+      - c0b8f2c: "checkpoint(worklog): T-02-01 Day 6 complete"
+      - af5a537: "chore(config): update Claude auto-approval settings for checkpoint workflow"
+
+    metrics:
+      estimated_hours: 40
+      actual_hours: 39
+      lines_added: 8884
+      lines_deleted: 353
+      files_modified: 74
+      tests_added: 23
+      test_coverage: 0.82
+      parity_variance_max: 0.0129  # +1.29% on pytest invokes
 
   T-02-02-sparse-index:
     title: "Sparse Index - Name/ID + BM25 Search"
@@ -910,8 +929,9 @@ tasks:
 
 # Workflow metadata tracking
 workflows:
-  current_phase: "M2 - Core Indexing Prototype (Starting)"
-  active_tasks: []  # Ready to start T-02-01
+  current_phase: "M2 - Core Indexing Prototype (In Progress)"
+  active_tasks:
+    - T-02-01-graph-builder  # PR #6 awaiting review (completed 2025-10-30)
 
   completed_tasks:
     - T-00-01-worktree-setup  # M0
@@ -923,8 +943,7 @@ workflows:
   blocked_tasks: []
 
   next_up:
-    - T-02-01-graph-builder  # Week 2, M2 start (requires T-06-01 ✅ - START HERE)
-    - T-02-02-sparse-index  # Week 2, M2 (requires T-02-01)
+    - T-02-02-sparse-index  # Week 2, M2 (requires T-02-01 ✅ - DEPENDENCY CLEARED, PR #6 pending review)
 
 # Artifact tracking
 artifacts:
@@ -949,4 +968,7 @@ comments:
   - "2025-10-24: T-06-01 Phase 2 baselines extracted (6 graphs, 60 traversals, 50 search queries)"
   - "2025-10-24: Known limitation documented - llama-index retriever requires .py at repo root"
   - "2025-10-24: Fixed benchmark-performance.py with dummy __init__.py workaround (d78c687)"
-  - "Next action: Start T-02-01 in ~/dev-space/CDSAgent-T-02-01-graph-builder (M2 begins)"
+  - "2025-10-30: T-02-01 completed - Graph Builder with ≤2% parity across 6 fixtures"
+  - "2025-10-30: PR #6 created - 23 unit tests, ~82% coverage, 8,884 lines added"
+  - "2025-10-30: M2 milestone in progress - T-02-02 dependency cleared"
+  - "Next action: T-02-02 owner can start Sparse Index implementation (blocked on T-02-01 PR #6 review)"

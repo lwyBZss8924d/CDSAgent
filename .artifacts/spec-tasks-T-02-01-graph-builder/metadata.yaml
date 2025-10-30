@@ -1,0 +1,201 @@
+# Task Metadata - T-02-01 Graph Builder
+
+task:
+  id: "T-02-01-graph-builder"
+  title: "Graph Builder - AST Parsing & Construction"
+  status: "completed"  # not_started | in_progress | blocked | completed
+  priority: "P0"
+  milestone: "M2"
+  week: 2
+  duration_days: 5
+
+owner:
+  primary: "Rust Dev 1"
+  secondary: ["Refactor Parity Lead"]
+
+dates:
+  started: "2025-10-24"
+  target_completion: "2025-10-30"  # 5 business days from start
+  actual_completion: "2025-10-30"
+
+specs:
+  prds:
+    - "spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md"
+    - "spacs/prd/0.1.0-MVP-PRDs-v0/06-rust-refactoring-plan.md"
+  issues:
+    - "spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md"
+  tasks:
+    - "spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md"
+
+git:
+  worktree: ".worktrees/T-02-01-graph-builder"
+  branch: "feat/task/T-02-01-graph-builder"
+  symlink: "~/dev-space/CDSAgent-T-02-01-graph-builder"
+  commits:
+    - hash: "f0e4858"
+      message: "docs(task): T-02-01 - initialize task artifacts and Day 1 spec review"
+      date: "2025-10-24"
+      files_changed: 5
+    - hash: "82936fa"
+      message: "feat(graph): T-02-01 - implement core graph builder with AST parsing and edge resolution"
+      date: "2025-10-25"
+      files_changed: 16
+      notes: "Core implementation: parser (426 lines), builder (1040 lines), traversal (64 lines), tests (232 lines). Total +4,265 lines."
+    - hash: "00da9c2"
+      message: "feat(graph): T-02-01 - add parity harness and refine import resolution"
+      date: "2025-10-25"
+      files_changed: 5
+      notes: "Parity harness (359 lines), builder AST refinement (+159 lines). Current variance: imports +23.85%, invokes -15.63%. Total +570 lines."
+    - hash: "3083e00"
+      message: "feat(graph): T-02-01 - implement export tracking system and resolve import parity"
+      date: "2025-10-27"
+      files_changed: 8
+      notes: "ModuleExports model (+548 lines), 3 new unit tests (+182 lines). Import parity RESOLVED: 0% variance. Invoke variance: +1.9%. Total +1,361 lines, -64 deleted. 8 files: builder.rs, tests, metadata, worklogs, action logs."
+    - hash: "147b4c2"
+      message: "feat(graph): T-02-01 Day 4 - multi-target alias resolution and wildcard export handling"
+      date: "2025-10-28"
+      files_changed: 19
+      notes: "Session 1: Multi-target alias resolution. Alias map refactored to Vec<GraphNodeIndex> (+150 lines). Added resolve_targets(), PendingWildcardExport. New unit test for multi-alias invoke edges (+61 lines). Total: +186 lines, -25 deleted. Invoke variance increased to +6.4% (565 vs 531, up from +1.9%)."
+    - hash: "956c108"
+      message: "refactor(graph): modularize builder.rs into focused submodules"
+      date: "2025-10-28"
+      files_changed: 11
+      notes: "Session 2: Graph builder refactoring. Split monolithic builder.rs (1769 lines) into 10 focused modules. Created: state.rs (458), imports.rs (674), behaviors.rs (195), python/ast_utils.rs (645). Fixed 3 compilation errors. Total: +2,037 lines. Zero logic changes - 100% structural refactoring."
+    - hash: "52c2b7e"
+      message: "fix(parity): align SWE fixtures with TYPE_CHECKING import semantics"
+      date: "2025-10-29"
+      files_changed: 7
+      notes: "Day 5 (Sessions 3-03 to 3-07): Scoped TYPE_CHECKING & SWE parity improvements. Extended find_in_block() to descend into if TYPE_CHECKING blocks (restores pytest mark decorator inherits, 0% variance). Updated process_from_import() fallback for grouped imports (emits alias-labelled file edges, restores Django SWE fixture import parity 0% variance). Removed ad-hoc PARITY_DEBUG traces. Parity results: All fixtures ≤2% variance (imports/inherits 0%, invokes pytest +1.29%). Total: +1,072 lines, -140 deleted."
+    - hash: "72f9db5"
+      message: "feat(graph): T-02-01 complete - parity, coverage, docs"
+      date: "2025-10-30"
+      files_changed: 11
+      notes: "Day 6 (Sessions 4-01 to 4-03): Finalized T-02-01. Resolved re-export regression, added 15 additional unit tests (total 23, ~82% coverage), documented public graph API, refreshed benches, and reran full test/parity suite. All acceptance criteria satisfied; task ready for PR."
+    - hash: "HEAD"
+      message: "checkpoint(worklog): T-02-01 Day 6 complete"
+      date: "2025-10-30"
+      files_changed: 7
+      notes: "Day 6 artifacts commit: marked task completed in metadata, recorded work summary/notes/TODO snapshot, updated commit log with parity metrics, and extended git-refs."
+  pr:
+    number: null
+    url: null
+    status: null  # draft | open | merged | closed
+    merged_at: null
+
+dependencies:
+  requires:
+    - "T-06-01-parity-methodology"  # ✅ Completed 2025-10-24
+  blocks:
+    - "T-02-02-sparse-index"
+    - "T-03-01-core-commands"
+
+deliverables:
+  - "crates/cds-index/src/graph/parser.rs"
+  - "crates/cds-index/src/graph/builder.rs"
+  - "crates/cds-index/src/graph/traversal.rs"
+  - "crates/cds-index/tests/graph_builder_tests.rs"
+  - "tests/fixtures/repos/"
+
+acceptance_criteria:
+  - criterion: "Parses Python repositories and produces a graph with all 4 node types and 4 edge types"
+    status: "completed"
+    notes: "✅ All 4 node types implemented. ✅ All 4 edge types implemented. ✅ Parity harness validates against 6 repos. ✅ Nodes/contains/inherits/imports exact match. ✅ Invoke variance ≤1.29% (pytest fixture, within tolerance)."
+  - criterion: "Fully-qualified names match LocAgent format (e.g., path/to/file.py::Class::method)"
+    status: "completed"
+    notes: "✅ FQN format implemented (filename:Class.method). ✅ Validated against golden baselines (parity tests pass)."
+  - criterion: "Unit tests cover typical and edge cases (decorators, nested classes, async functions)"
+    status: "completed"
+    notes: "✅ Unit tests: 23 targeted scenarios (re-exports, wildcard, TYPE_CHECKING, nested classes/functions, async, decorators, circular + relative imports). ✅ Integration: Parity harness for 6 repos. ✅ Coverage ~82% (23 unit tests + parity harness)."
+  - criterion: "Graph parity script reports ≤2% variance in node/edge counts vs. LocAgent baseline"
+    status: "completed"
+    notes: "✅ All fixtures ≤2% variance. Nodes/contains/imports/inherits exact matches for locagent/django/matplotlib. Pytest invokes +1.29% (2474 vs. 2442). Requests imports +0.28%, invokes +0.46%. Scikit-learn imports +0.09%."
+
+worklog:
+  base_path: ".artifacts/spec-tasks-T-02-01-graph-builder/worklogs/"
+  entries:
+    - date: "2025-10-24"
+      summary: "worklogs/2025-10-24-work-summary.md"
+      commits: "worklogs/2025-10-24-commit-log.md"
+      notes: "worklogs/2025-10-24-notes.md"
+    - date: "2025-10-25"
+      summary: "worklogs/2025-10-25-work-summary.md"
+      commits: "worklogs/2025-10-25-commit-log.md"
+      notes: "worklogs/2025-10-25-notes.md"
+    - date: "2025-10-27"
+      summary: "worklogs/2025-10-27-work-summary.md"
+      commits: "worklogs/2025-10-27-commit-log.md"
+      notes: "worklogs/2025-10-27-notes.md"
+    - date: "2025-10-28"
+      summary: "worklogs/2025-10-28-work-summary.md"
+      commits: "worklogs/2025-10-28-commit-log.md"
+      notes: "worklogs/2025-10-28-notes.md"
+    - date: "2025-10-29"
+      summary: "worklogs/2025-10-29-work-summary.md"
+      commits: "worklogs/2025-10-29-commit-log.md"
+      notes: "worklogs/2025-10-29-notes.md"
+    - date: "2025-10-30"
+      summary: "worklogs/2025-10-30-work-summary.md"
+      commits: "worklogs/2025-10-30-commit-log.md"
+      notes: "worklogs/2025-10-30-notes.md"
+      action_logs:
+        - "worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-01.txt"
+        - "worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-02.txt"
+        - "worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-03.txt"
+        - "worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-04.txt"
+        - "worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-05.txt"
+
+metrics:
+  estimated_hours: 40  # 5 days * 8 hours
+  actual_hours: 39  # Day 1: 2h, Day 2: 11h, Day 3: 2.5h, Day 4: 9.5h, Day 5: 5h, Day 6: 4h (Sessions 4-01 to 4-03, 05:30-09:30Z)
+  lines_added: 8884   # Previous 8,265 + Day 6 additions (+619: doc comments, expanded tests, benches)
+  lines_deleted: 353   # Previous 295 + Day 6 cleanups (-58: bench hygiene, redundant helpers)
+  files_modified: 74   # Total unique files modified in branch (git diff main --name-only | wc -l)
+  tests_added: 23       # 23 unit tests (15 new today) + 1 integration (parity)
+  test_coverage: 0.82  # Estimated via cargo llvm-cov sampling (23 unit tests + integration harness)
+
+comments:
+  - date: "2025-10-24"
+    author: "Rust Dev 1"
+    text: "Task preparation complete. Spec review documented in 2025-10-24-notes.md. 6 baseline fixtures available (658 to 6,876 nodes). Ready to begin implementation."
+  - date: "2025-10-25"
+    author: "Rust Dev 1"
+    text: "Day 2 implementation: Core graph builder complete with all 4 node/edge types. Implemented parser (426 lines), builder (1040 lines), traversal (64 lines), initial tests (232 lines). Total: ~1,964 lines of Rust code. Next: Expand unit tests and run parity validation."
+  - date: "2025-10-25"
+    author: "Rust Dev 1"
+    text: "Day 2 parity session: Added parity harness (359 lines), refactored builder with AST-based imports (+159 lines). Parity results: nodes/contains/inherits exact match ✅, imports +23.85% ❌, invokes -15.63% ❌. Root causes: missing re-exports, need graph-based callee traversal. Next: Implement __init__.py awareness and LocAgent's find_all_possible_callee."
+  - date: "2025-10-27"
+    author: "Rust Dev 1"
+    text: "Day 3 breakthrough: Import parity RESOLVED 🎉! Implemented comprehensive export tracking system with ModuleExports model, deferred attribute resolution, and wildcard import handling. Import edges now match LocAgent golden baseline exactly (218/218, 0% variance). Added 3 new unit tests. Invoke variance improved from -15.63% to +1.9%. Next: Mirror LocAgent's find_all_possible_callee to eliminate remaining invoke variance."
+  - date: "2025-10-28"
+    author: "Rust Dev 1"
+    text: "Day 4 Session 1 - Multi-target alias resolution: Rewrote alias map to Vec<GraphNodeIndex> for multi-target support. Added resolve_targets() and PendingWildcardExport handling. New unit test confirms invoke edges now attach to all reachable alias candidates. Parity: imports still 0% ✅, but invokes increased to +6.4% (565 vs 531 - up from +1.9%). Root cause: multi-target resolution discovers more edges than LocAgent (e.g., auto_search_main.py::main → merge, batch_build_graph.py::run → setup_repo). Session time: 4h."
+  - date: "2025-10-28"
+    author: "Rust Dev 1"
+    text: "Day 4 Session 2 - Graph builder refactoring: Split monolithic builder.rs (1769 lines) into 10 focused modules for improved maintainability and multi-language support preparation (TypeScript v0.2.0, Go v0.3.0). Created: state.rs (458 lines), imports.rs (674 lines), behaviors.rs (195 lines - NEW), python/ast_utils.rs (645 lines). Fixed 3 compilation errors (incorrect re-export, missing EdgeRef import, unused imports). Verified with 6-phase plan: compilation ✅, structural verification ✅ (100% line coverage mapping, all 26 functions migrated, zero logic changes). Total: +2,037 lines across 11 files. Session time: 5h. Day 4 total: 9h. Cumulative: 24.5h / 40h estimated. Next: Audit extra invoke edges (variance +6.4% → target ≤2%), expand unit test coverage (30% → >80%)."
+  - date: "2025-10-28"
+    author: "Rust Dev 1"
+    text: "Day 4 Session 3 - Parity debugging: Implemented self-recursive invoke edge filtering (skip caller_idx == target_idx) and PARITY_DEBUG hooks for tracing alias map construction. Normalized parity diagnostics (:: → : format). Invoke variance reversed from +6.4% (565 edges, over-counting) to -5.84% (500 edges, under-counting). Root cause analysis: self-recursion filter removed ~65 edges but exposed that alias map is missing ~31 legitimate symbols (load_jsonl, append_to_jsonl, load_gt_dict, convert_solutions_dict) from utility modules. Mathematical analysis: Expected 531 edges. Session 1: 531 (correct) + 34 (self-recursive + noise) = 565. Session 3: 531 (correct) - 31 (missing from alias map) = 500. Next: Fix alias map to include missing symbols, verify wildcard export handling for utility modules. Target: 531 ±2% (520-541 acceptable). Session time: 0.5h. Day 4 total: 9.5h. Cumulative: 25h / 40h estimated."
+  - date: "2025-10-29"
+    author: "Rust Dev 1"
+    text: "Day 5 (Sessions 3-03 to 3-07, 13:30-18:30Z) – Scoped TYPE_CHECKING & SWE parity breakthrough: Extended find_in_block() to descend into if TYPE_CHECKING blocks (restoring pytest mark decorator inherits, 0% variance). Updated process_from_import() fallback to emit alias-labelled file edges for grouped imports (Django imports restored to 0% variance). Pytest invokes now +1.29% (≤2% tolerance). All fixtures within tolerance. Removed ad-hoc PARITY_DEBUG traces. Code changes: +1,159/-0 lines across 6 files (behaviors.rs, imports.rs, ast_utils.rs, state.rs, parser.rs, tests). Commit pending final invoke variance audit. Artifacts updated via checkpoint workflow."
+  - date: "2025-10-30"
+    author: "Rust Dev 1"
+    text: "Day 6 (Sessions 4-01 to 4-03, 05:30-09:30Z) – Finalization: resolved re-export regression, added 15 new edge-case unit tests (total 23, ~82% coverage), documented public graph API, and verified full parity/test suite. Clippy + cargo test clean. All acceptance criteria satisfied and task marked completed. Ready to unblock T-02-02."
+
+related_artifacts:
+  - type: "parity_baseline"
+    path: "tests/fixtures/parity/golden_outputs/graph_locagent.json"
+  - type: "parity_baseline"
+    path: "tests/fixtures/parity/golden_outputs/graph_django__django-10914.json"
+  - type: "parity_baseline"
+    path: "tests/fixtures/parity/golden_outputs/graph_matplotlib__matplotlib-18869.json"
+  - type: "parity_baseline"
+    path: "tests/fixtures/parity/golden_outputs/graph_psf__requests-1963.json"
+  - type: "parity_baseline"
+    path: "tests/fixtures/parity/golden_outputs/graph_pytest-dev__pytest-11143.json"
+  - type: "parity_baseline"
+    path: "tests/fixtures/parity/golden_outputs/graph_scikit-learn__scikit-learn-10297.json"
+  - type: "reference_implementation"
+    path: "tmp/LocAgent/dependency_graph/build_graph.py"
+  - type: "methodology"
+    path: "docs/parity-validation-methodology.md"

@@ -28,6 +28,7 @@
 This document establishes the **Standard Operating Procedure (SOP)** for validating that CDSAgent's Rust refactoring maintains algorithmic fidelity with LocAgent's Python implementation while achieving 2-5x performance improvements.
 
 **Parity** means:
+
 - ✅ **Same Results**: Graph structure, search rankings, traversal outputs match LocAgent
 - ✅ **Same Algorithms**: BFS traversal, BM25 scoring, tree-sitter parsing logic preserved
 - ✅ **Same Behavior**: Edge cases, error handling, output formatting identical
@@ -81,6 +82,7 @@ cargo test --package cds-index --test module_api_tests
 **Decision**: Reuse LocAgent's `.scm` query files verbatim for AST parsing.
 
 **Rationale**:
+
 - Guarantees identical entity extraction logic
 - Avoids reimplementation errors
 - Proven by LocAgent paper benchmarks
@@ -430,13 +432,13 @@ cargo test --test traverse_tests::test_traversal_parity
 
 **LocAgent Format**:
 
-```
+```text
 {type} {name} - {file}:{line}
 ```
 
 **Example**:
 
-```
+```text
 function parse_file - dependency_graph/build_graph.py:42
 ```
 
@@ -469,7 +471,7 @@ cargo test --test format_tests::test_fold_snippet_parity
 
 **Example**:
 
-```
+```python
 def parse_file(file_path, graph):
     \"\"\"Parse a Python file and add entities to graph.\"\"\"
     with open(file_path, 'r') as f:
@@ -498,7 +500,7 @@ cargo test --test format_tests::test_preview_snippet_parity
 
 **LocAgent Format**:
 
-```
+```text
 src/
 ├─[contain]→ dependency_graph/
 │   ├─[contain]→ build_graph.py
@@ -783,7 +785,7 @@ cargo test --all --release
 
 **Output Format**:
 
-```
+```text
 ✅ Graph Parity Check: PASSED
    - Node count: 1234 (expected: 1234, variance: 0%)
    - Edge count: 5678 (expected: 5678, variance: 0%)
@@ -855,7 +857,7 @@ jobs:
 
 **Symptoms**:
 
-```
+```text
 ❌ Graph Parity Check: FAILED
    - Node count: 1250 (expected: 1234, variance: 1.3%)
    - Edge count: 5800 (expected: 5678, variance: 2.1%)
@@ -864,6 +866,7 @@ jobs:
 **Debugging Steps**:
 
 1. **Check directory traversal order**:
+
    ```bash
    # Compare file lists
    diff <(python tmp/LocAgent/scripts/list_files.py) \
@@ -871,18 +874,21 @@ jobs:
    ```
 
 2. **Compare tree-sitter queries**:
+
    ```bash
    diff crates/cds-index/src/graph/ast_parser/queries/python.scm \
         tmp/LocAgent/repo_index/codeblocks/parser/queries/python.scm
    ```
 
 3. **Debug entity extraction**:
+
    ```bash
    # Enable debug logging
    RUST_LOG=debug cargo test --test graph_builder_tests::test_entity_extraction
    ```
 
 4. **Inspect specific files with mismatches**:
+
    ```bash
    # Find files with different entity counts
    ./scripts/debug-graph-diff.sh
@@ -898,7 +904,7 @@ jobs:
 
 **Symptoms**:
 
-```
+```text
 ❌ Search Parity Check: FAILED
    - Overlap@10: 40/50 queries (80% match)
    - Failing queries: "sanitize input", "parse_ast", ...
@@ -907,12 +913,14 @@ jobs:
 **Debugging Steps**:
 
 1. **Check tokenization**:
+
    ```bash
    cargo test --test tokenizer_tests -- --nocapture
    # Compare tokenized output with LocAgent
    ```
 
 2. **Verify BM25 parameters**:
+
    ```rust
    // Ensure k1=1.5, b=0.75
    assert_eq!(index.k1, 1.5);
@@ -920,6 +928,7 @@ jobs:
    ```
 
 3. **Compare BM25 scores**:
+
    ```bash
    # Run search with score logging
    RUST_LOG=debug cargo run --bin cds search "sanitize input" --repo . --debug
@@ -927,6 +936,7 @@ jobs:
    ```
 
 4. **Check stop word list**:
+
    ```bash
    diff crates/cds-index/src/index/stop_words.txt \
         tmp/LocAgent/repo_index/utils/stop_words.txt
@@ -943,7 +953,7 @@ jobs:
 
 **Symptoms**:
 
-```
+```text
 ❌ Traverse Parity Check: FAILED
    - Exact matches: 9/10 scenarios
    - FAILED: scenario "invoke_depth_2" (expected 20 nodes, got 18)
@@ -952,6 +962,7 @@ jobs:
 **Debugging Steps**:
 
 1. **Visualize graph difference**:
+
    ```bash
    ./scripts/visualize-graph-diff.sh invoke_depth_2
    # Outputs: golden_graph.dot, actual_graph.dot
@@ -960,17 +971,20 @@ jobs:
    ```
 
 2. **Check BFS traversal logic**:
+
    ```bash
    cargo test --test traverse_tests::test_bfs_order -- --nocapture
    ```
 
 3. **Verify relation filtering**:
+
    ```bash
    # Ensure "invoke" edges are being followed
    cargo test --test traverse_tests::test_relation_filter
    ```
 
 4. **Compare visited sets**:
+
    ```bash
    # Log visited nodes
    RUST_LOG=trace cargo test --test traverse_tests::test_invoke_depth_2
@@ -1206,6 +1220,7 @@ python scripts/extract-parity-baseline.py \
 During T-06-01 Phase 2 baseline extraction, we discovered that `llama-index` (v0.11.22) `SimpleDirectoryReader` has a validation bug that prevents search and performance baseline extraction for SWE-bench repos with code in subdirectories.
 
 **Technical Details**:
+
 ```python
 # LocAgent's bm25_retriever.py uses:
 reader = SimpleDirectoryReader(
@@ -1216,11 +1231,13 @@ reader = SimpleDirectoryReader(
 ```
 
 For repos where Python code is in subdirectories (e.g., `django/django/`, `sklearn/sklearn/`), the validator fails:
-```
+
+```text
 ValueError: No files found in /path/to/repo.
 ```
 
 **Affected Baselines**:
+
 - ❌ `search_queries.jsonl`: Only contains LocAgent data (1/6 repos)
 - ❌ `performance_baselines.json`: Only contains LocAgent data (1/6 repos)
 - ✅ `graph_*.json`: Complete for all 6 repos (most critical)
@@ -1255,12 +1272,14 @@ ValueError: No files found in /path/to/repo.
 #### Impact on Milestone M1 & M2
 
 **M1 (API Contracts & Parity)**:
+
 - T-06-01 acceptance criteria adjusted:
   - ✅ Graph baselines: Complete (core requirement)
   - ✅ Traverse baselines: Complete (important)
   - ⚠️ Search/perf baselines: Partial (documented limitation)
 
 **M2 (Core Indexing Prototype)**:
+
 - T-02-01 Graph Builder: ✅ No impact (uses graph baselines)
 - T-02-02 Sparse Index: ✅ No impact (Rust BM25, no llama-index dependency)
 - T-02-04 Serialization: ✅ No impact
@@ -1268,6 +1287,7 @@ ValueError: No files found in /path/to/repo.
 #### CDSAgent Implementation Plan
 
 **T-02-02 BM25 Search Implementation** (Rust):
+
 ```rust
 // crates/cds-index/src/index/bm25.rs
 use walkdir::WalkDir;
@@ -1287,6 +1307,7 @@ pub fn build_from_repo(repo_path: &Path) -> Result<BM25Index> {
 ```
 
 **T-08-03 Parity Validation Strategy**:
+
 ```bash
 # Primary validation (graph structure)
 ./scripts/parity-check.sh graph django__django-10914
@@ -1324,7 +1345,7 @@ python tmp/LocAgent/auto_search_main.py --query "query" > locagent_results.json
 
 ---
 
-**End of Parity Validation Methodology**
+End of Parity Validation Methodology
 
 **Next Steps**:
 

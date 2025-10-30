@@ -37,6 +37,7 @@ colored = "3.0"
 tantivy = "0.25"
 tree-sitter = "0.25"
 tree-sitter-python = "0.25"
+rustpython-parser = "0.4"
 
 # Data structures
 petgraph = "0.8"

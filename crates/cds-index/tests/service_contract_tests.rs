@@ -93,7 +93,10 @@ fn validate_entity_schema(entity: &Value) -> Result<(), String> {
             let error_msgs: Vec<String> = errors
                 .map(|e| format!("{} at {}", e, e.instance_path))
                 .collect();
-            Err(format!("Entity validation failed:\n  {}", error_msgs.join("\n  ")))
+            Err(format!(
+                "Entity validation failed:\n  {}",
+                error_msgs.join("\n  ")
+            ))
         }
     }
 }
@@ -305,7 +308,7 @@ mod entity_schema_tests {
 
         // Validate score is between 0 and 1
         let score = entity.get("score").unwrap().as_f64().unwrap();
-        assert!(score >= 0.0 && score <= 1.0);
+        assert!((0.0..=1.0).contains(&score));
 
         // Validate snippet structure
         let snippet = entity.get("snippet").unwrap();
@@ -385,7 +388,10 @@ mod entity_schema_tests {
 
         match validate_entity_schema(&entity) {
             Ok(()) => {}
-            Err(e) => panic!("Entity with fold-only snippet should validate. Error: {}", e),
+            Err(e) => panic!(
+                "Entity with fold-only snippet should validate. Error: {}",
+                e
+            ),
         }
     }
 
@@ -596,7 +602,7 @@ mod retrieve_entity_contract_tests {
 
         let result = response.get("result").unwrap();
         let entities = result.get("entities").unwrap().as_array().unwrap();
-        assert!(entities.len() > 0);
+        assert!(!entities.is_empty());
 
         let entity = &entities[0];
         assert!(entity.get("code").is_some());
@@ -650,7 +656,13 @@ mod error_contract_tests {
 
         assert!(validate_jsonrpc_response(&response).is_ok());
         assert_eq!(
-            response.get("error").unwrap().get("code").unwrap().as_i64().unwrap(),
+            response
+                .get("error")
+                .unwrap()
+                .get("code")
+                .unwrap()
+                .as_i64()
+                .unwrap(),
             -32002
         );
     }
@@ -796,7 +808,7 @@ mod embedded_schema_validation_tests {
             .get("methods")
             .and_then(|m| m.get(method_name))
             .and_then(|m| m.get("result"))
-            .expect(&format!("{} result schema not found", method_name));
+            .unwrap_or_else(|| panic!("{} result schema not found", method_name));
 
         // Get all definitions to inline
         let definitions = schema.get("definitions").expect("definitions not found");
@@ -813,7 +825,7 @@ mod embedded_schema_validation_tests {
         JSONSchema::options()
             .with_draft(Draft::Draft7)
             .compile(&inline_schema)
-            .expect(&format!("Failed to compile {} result schema", method_name))
+            .unwrap_or_else(|_| panic!("Failed to compile {} result schema", method_name))
     }
 
     fn compile_search_result_validator() -> JSONSchema {
@@ -832,8 +844,8 @@ mod embedded_schema_validation_tests {
     fn test_search_entities_fixture_validates() {
         // Load actual fixture (embedded at compile time)
         let fixture = include_str!("../../../tests/fixtures/api/search-response.json");
-        let response: Value = serde_json::from_str(fixture)
-            .expect("Failed to parse search-response.json");
+        let response: Value =
+            serde_json::from_str(fixture).expect("Failed to parse search-response.json");
 
         // Validate JSON-RPC wrapper
         assert!(validate_jsonrpc_response(&response).is_ok());
@@ -867,8 +879,8 @@ mod embedded_schema_validation_tests {
     #[test]
     fn test_traverse_graph_fixture_validates() {
         let fixture = include_str!("../../../tests/fixtures/api/traverse-response.json");
-        let response: Value = serde_json::from_str(fixture)
-            .expect("Failed to parse traverse-response.json");
+        let response: Value =
+            serde_json::from_str(fixture).expect("Failed to parse traverse-response.json");
 
         // Validate JSON-RPC wrapper
         assert!(validate_jsonrpc_response(&response).is_ok());
@@ -936,8 +948,8 @@ mod embedded_schema_validation_tests {
     #[test]
     fn test_error_response_fixture_validates() {
         let fixture = include_str!("../../../tests/fixtures/api/error-index-not-found.json");
-        let response: Value = serde_json::from_str(fixture)
-            .expect("Failed to parse error-index-not-found.json");
+        let response: Value =
+            serde_json::from_str(fixture).expect("Failed to parse error-index-not-found.json");
 
         // Validate JSON-RPC error format
         assert!(validate_jsonrpc_response(&response).is_ok());
@@ -1009,10 +1021,11 @@ mod embedded_schema_validation_tests {
         assert!(methods.get("rebuild_index").is_some());
 
         // Verify entity definition exists
-        let entity_def = schema
-            .get("definitions")
-            .and_then(|d| d.get("entity"));
-        assert!(entity_def.is_some(), "Entity definition missing from schema");
+        let entity_def = schema.get("definitions").and_then(|d| d.get("entity"));
+        assert!(
+            entity_def.is_some(),
+            "Entity definition missing from schema"
+        );
 
         // Verify snippet is properly defined with fold as required
         let snippet_def = entity_def

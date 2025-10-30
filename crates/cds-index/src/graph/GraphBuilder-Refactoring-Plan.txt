@@ -1,0 +1,461 @@
+# (builder.rs) Refactoring Plan: Multi-Language Ready Architecture
+
+ Executive Plan Summary
+
+ Refactoring proposal is solid for immediate needs (reducing 1769-line file) but needs
+ enhancements for multi-language support (v0.2.0 TypeScript, v0.3.0 Go per PRD-01 §4.2).
+
+ Recommended Approach: Two-phase refactoring:
+ - Phase 1 (Now, T-02-01): module split + language isolation prep
+ - Phase 2 (v0.2.0): Language abstraction layer for TypeScript/JS support
+
+ ---
+ Analysis plan
+
+ ✅ Strengths (All Valid)
+
+ 1. Logical separation - imports/behaviors/aliases/ast_utils are distinct concerns
+ 2. Reduced file length - Each module ~200-400 lines (maintainable)
+ 3. Testability - Can test import logic separately from behavior edges
+ 4. Cognitive load - Developers can focus on one subsystem at a time
+
+ ⚠️ Gaps for Multi-Language (Critical for v0.2.0+)
+
+ | Gap                                  | Impact                                        |
+ Example                                 |
+ |--------------------------------------|-----------------------------------------------|-----
+ ------------------------------------|
+ | Python-specific AST types everywhere | Can't swap rustpython_parser for tree-sitter  |
+ pyast::Stmt, pyast::Expr in all helpers |
+ | Import resolution assumes Python     | Won't work for TypeScript import or Go import |
+ __init__.py, relative imports with dots |
+ | Call extraction is Python-only       | Decorators, __init__, async functions         |
+ @decorator, class.__init__              |
+ | No language abstraction              | Must duplicate all logic per language         |
+ Copy-paste for TS, Go, Java             |
+
+ Root Issue: Your proposed modules still mix language-agnostic (graph building) with
+ Python-specific (AST visiting).
+
+ ---
+ Recommended Enhanced Structure
+
+ Directory Layout
+
+ crates/cds-index/src/graph/
+ ├── mod.rs                          # Public API (GraphBuilder, types)
+ ├── builder/
+ │   ├── mod.rs                      # GraphBuilder + orchestration
+ │   ├── state.rs                    # BuilderState (language-agnostic)
+ │   ├── language.rs                 # Language trait + config
+ │   ├── imports.rs                  # Generic import edge building
+ │   ├── behaviors.rs                # Generic invoke/inherit edges
+ │   ├── aliases.rs                  # Generic alias resolution
+ │   └── python/                     # Python-specific implementation
+ │       ├── mod.rs                  # PythonLanguage trait impl
+ │       ├── ast_parser.rs           # rustpython_parser wrapper
+ │       ├── ast_utils.rs            # Python AST visitors
+ │       ├── import_resolver.rs      # Python module system
+ │       └── call_extractor.rs       # Decorators, __init__, bases
+ ├── parser.rs                       # tree-sitter wrapper (unchanged)
+ └── traversal.rs                    # BFS algorithms (unchanged)
+
+ Key Addition: builder/python/ submodule isolates Python-specific code.
+
+ ---
+ Phase 1: Immediate Refactoring (This Sprint, T-02-01)
+
+ Step 1: Create Module Skeleton (Your Proposal + Python Isolation)
+
+ Files to create:
+ // builder/mod.rs - Re-export public types
+ pub use self::state::{BuilderState, GraphBuildStats};
+ pub use self::language::LanguageConfig;
+ mod state;
+ mod language;
+ mod imports;
+ mod behaviors;
+ mod aliases;
+ mod python;
+
+ // builder/language.rs - Placeholder for v0.2.0
+ pub struct LanguageConfig {
+     pub name: &'static str,
+     pub file_extensions: &'static [&'static str],
+ }
+
+ // builder/python/mod.rs - All Python-specific code goes here
+ pub mod ast_parser;
+ pub mod ast_utils;
+ pub mod import_resolver;
+ pub mod call_extractor;
+
+ Step 2: Move Code to Modules (Your Proposed Breakdown)
+
+ builder/state.rs (~250 lines)
+
+ Move from builder.rs:
+ - BuilderState struct (lines 187-207)
+ - BuilderState::new(), finish() (lines 209-254)
+ - ensure_directory_node(), ensure_file_node(), add_entities() (lines 301-413)
+ - Helper types: ModuleExports, ExportSource, DeferredAttributeImport, PendingWildcardExport
+
+ Keep language-agnostic: File/directory/entity node creation.
+
+ builder/imports.rs (~400 lines)
+
+ Move from builder.rs:
+ - process_pending_imports() (lines 415-442)
+ - process_from_import() (lines 518-564)
+ - add_file_import_edge(), add_attribute_import_edge() (lines 590-634)
+ - resolve_deferred_attribute_imports(), resolve_pending_wildcard_exports() (lines 680-779)
+ - expand_wildcard_import(), resolve_exports() family (lines 798-895)
+
+ Keep language-agnostic: Graph edge creation, deferred resolution.
+
+ builder/behaviors.rs (~350 lines)
+
+ Move from builder.rs:
+ - process_behavior_edges() (lines 444-516)
+ - connect_behavior_edges(), resolve_targets() (lines 1076-1119)
+
+ Delegate to Python: Call PythonLanguage::extract_calls() instead of inline AST visiting.
+
+ builder/aliases.rs (~200 lines)
+
+ Move from builder.rs:
+ - build_alias_map() (lines 961-983)
+ - collect_callee_candidates(), collect_enclosed_entities() (lines 999-1074)
+ - resolve_attribute_target() (lines 636-678)
+
+ Keep language-agnostic: Alias HashMap operations.
+
+ builder/python/ast_utils.rs (~500 lines)
+
+ Move from builder.rs (Python-specific):
+ - collect_module_data_from_ast(), visit_ast_statements() (lines 1122-1199)
+ - process_all_assignment(), collect_exports_from_expr() (lines 1201-1273)
+ - find_entity_ast(), find_in_block(), EntityAstRef (lines 1408-1452)
+ - visit_block(), collect_calls_in_stmt(), collect_calls_in_expr() (lines 1454-1688)
+ - collect_decorator_calls(), collect_base_names(), collect_class_init_calls() (lines
+ 1698-1735)
+
+ All use rustpython_parser types: Safe to isolate.
+
+ builder/python/import_resolver.rs (~150 lines)
+
+ Move from builder.rs (Python-specific):
+ - module_components() (lines 1338-1357)
+ - split_entity_segments() (lines 1361-1368)
+ - finalize_module_path() (lines 1370-1398)
+ - Python import directives conversion (lines 1275-1327)
+
+ Python module system logic: __init__.py, relative imports.
+
+ builder/python/call_extractor.rs (~100 lines)
+
+ Move from builder.rs (Python-specific):
+ - extract_call_name(), extract_name_from_expr() (lines 1737-1752)
+ - Decorator/base class extraction helpers
+
+ Python syntax specifics: Decorators, __init__.
+
+ Step 3: Update Imports and Tests
+
+ Update crates/cds-index/tests/graph_builder_tests.rs:
+ use cds_index::graph::builder::python::ast_utils;
+ use cds_index::graph::builder::state::BuilderState;
+
+ Run validation:
+ cargo test -p cds-index -- graph_builder_tests
+ cargo fmt --all
+ cargo clippy --all-targets --all-features
+
+ ---
+ Phase 2: Language Abstraction (v0.2.0, Future)
+
+ Language Trait Design
+
+ // builder/language.rs
+ pub trait Language: Send + Sync {
+     type ModuleData;
+     type EntityAst;
+
+     /// Parse file source into language-specific AST
+     fn parse_file(&mut self, source: &str, path: &Path)
+         -> Result<Self::ModuleData, ParserError>;
+
+     /// Extract code entities (classes, functions)
+     fn extract_entities(&self, tree: &Tree, source: &str)
+         -> Vec<ParsedEntity>;
+
+     /// Extract import directives
+     fn extract_imports(&self, data: &Self::ModuleData)
+         -> Vec<ImportDirective>;
+
+     /// Extract module exports (__all__ in Python, export in TS)
+     fn extract_exports(&self, data: &Self::ModuleData)
+         -> ModuleExports;
+
+     /// Find entity AST by FQN segments
+     fn find_entity_ast(&self, data: &Self::ModuleData, segments: &[String])
+         -> Option<Self::EntityAst>;
+
+     /// Extract function calls from entity
+     fn extract_calls(&self, ast: &Self::EntityAst) -> Vec<String>;
+
+     /// Extract base classes (inheritance)
+     fn extract_bases(&self, ast: &Self::EntityAst) -> Vec<String>;
+ }
+
+ /// Python implementation
+ pub struct PythonLanguage {
+     parser: PythonParser,
+ }
+
+ impl Language for PythonLanguage {
+     type ModuleData = Rc<Suite>;
+     type EntityAst = EntityAstRef;
+
+     fn parse_file(&mut self, source: &str, path: &Path)
+         -> Result<Self::ModuleData, ParserError> {
+         Suite::parse(source, path.to_string_lossy().as_ref())
+             .map(Rc::new)
+             .map_err(|e| ParserError::PythonSyntax(e))
+     }
+
+     fn extract_imports(&self, data: &Self::ModuleData) -> Vec<ImportDirective> {
+         python::import_resolver::collect_imports(data)
+     }
+
+     fn extract_calls(&self, ast: &Self::EntityAst) -> Vec<String> {
+         python::call_extractor::collect_calls(ast)
+     }
+
+     // ... other methods delegate to python/ submodule
+ }
+
+ Builder with Language Abstraction
+
+ // builder/mod.rs
+ pub struct GraphBuilder<L: Language> {
+     repo_root: PathBuf,
+     config: GraphBuilderConfig,
+     language: L,
+ }
+
+ impl GraphBuilder<PythonLanguage> {
+     pub fn new_python(repo_root: impl Into<PathBuf>) -> Self {
+         Self {
+             repo_root: repo_root.into(),
+             config: GraphBuilderConfig::default(),
+             language: PythonLanguage::new(),
+         }
+     }
+ }
+
+ impl<L: Language> GraphBuilder<L> {
+     pub fn build(&mut self) -> Result<GraphBuilderResult, GraphError> {
+         // Language-agnostic orchestration
+         let mut state = BuilderState::new(self.repo_root.clone());
+
+         for file in walk_files(&self.repo_root) {
+             let source = fs::read_to_string(&file)?;
+             let module_data = self.language.parse_file(&source, &file)?;
+
+             // Use trait methods instead of Python-specific calls
+             let entities = self.language.extract_entities(&module_data);
+             let imports = self.language.extract_imports(&module_data);
+
+             state.add_entities(entities);
+             state.add_imports(imports);
+         }
+
+         state.process_pending_imports();
+         state.process_behavior_edges(&self.language);
+
+         Ok(state.finish())
+     }
+ }
+
+ Future Language Implementations
+
+ // builder/typescript/mod.rs (v0.2.0)
+ pub struct TypeScriptLanguage {
+     parser: tree_sitter::Parser,
+ }
+
+ impl Language for TypeScriptLanguage {
+     type ModuleData = tree_sitter::Tree;
+     type EntityAst = Node;
+
+     fn extract_imports(&self, tree: &Tree) -> Vec<ImportDirective> {
+         // Parse `import { foo } from './bar'` syntax
+     }
+
+     fn extract_calls(&self, node: &Node) -> Vec<String> {
+         // Parse `functionName()` calls
+     }
+ }
+
+ // builder/go/mod.rs (v0.3.0)
+ pub struct GoLanguage { ... }
+
+ ---
+ Implementation Steps for Phase 1
+
+ Before Refactoring
+
+ 1. ✅ Read builder.rs fully - Understand all dependencies
+ 2. ✅ Run tests - cargo test -p cds-index -- graph_builder_tests
+ 3. ✅ Backup - Git commit current state
+
+ During Refactoring (7 steps)
+
+ Step 1: Create module files (empty skeletons)
+ mkdir -p crates/cds-index/src/graph/builder/python
+ touch crates/cds-index/src/graph/builder/{mod,state,language,imports,behaviors,aliases}.rs
+ touch
+ crates/cds-index/src/graph/builder/python/{mod,ast_utils,import_resolver,call_extractor}.rs
+
+ Step 2: Move BuilderState to state.rs (lines 187-413)
+ - Copy struct definition + core methods
+ - Update mod.rs to re-export
+ - Fix imports in builder.rs
+ - Test: cargo check -p cds-index
+
+ Step 3: Move Python AST utils to python/ast_utils.rs (lines 1122-1752)
+ - Copy all visit_ast_*, collect_*, find_entity_ast functions
+ - Keep use rustpython_parser::ast imports
+ - Test: cargo check -p cds-index
+
+ Step 4: Move import resolution to imports.rs + python/import_resolver.rs
+ - Generic edge-building stays in imports.rs
+ - Python module resolution goes to python/import_resolver.rs
+ - Test: cargo check -p cds-index
+
+ Step 5: Move behavior edges to behaviors.rs + python/call_extractor.rs
+ - Generic edge-building stays in behaviors.rs
+ - Python call extraction goes to python/call_extractor.rs
+ - Test: cargo check -p cds-index
+
+ Step 6: Move alias logic to aliases.rs
+ - All HashMap operations (language-agnostic)
+ - Test: cargo check -p cds-index
+
+ Step 7: Delete builder.rs (should be empty now), finalize builder/mod.rs
+ // builder/mod.rs
+ pub use state::{BuilderState, GraphBuildStats, GraphBuilderResult};
+ pub use language::LanguageConfig;
+
+ mod state;
+ mod language;
+ mod imports;
+ mod behaviors;
+ mod aliases;
+ pub mod python;  // Public for now, will be trait-based in v0.2.0
+
+ pub struct GraphBuilder { ... }
+ pub struct GraphBuilderConfig { ... }
+ pub enum GraphError { ... }
+
+ Step 8: Update tests, run full validation
+ cargo test -p cds-index -- graph_builder_tests
+ cargo fmt --all
+ cargo clippy --all-targets --all-features
+ scripts/parity-check.sh  # Ensure no regression
+
+ After Refactoring
+
+ 1. ✅ Update TODO.yaml - Record refactoring in metadata
+ 2. ✅ Update worklog - Document module split in notes.md
+ 3. ✅ Git commit - Conventional commit message
+
+ ---
+ Validation Checklist
+
+ Correctness
+
+ - All 2 unit tests pass (graph_builder_tests.rs)
+ - Parity tests still pass (graph_parity_tests.rs)
+ - No clippy warnings
+ - cargo fmt clean
+
+ Organization
+
+ - No file >500 lines
+ - Each module has clear responsibility
+ - Python-specific code in python/ submodule
+ - Generic code stays in top-level modules
+
+ Future-Proofing
+
+ - Language-specific types isolated in python/
+ - Generic modules don't import rustpython_parser
+ - Clear path to add builder/typescript/ in v0.2.0
+
+ ---
+ Risk Mitigation
+
+ | Risk                   | Impact | Mitigation
+          |
+ |------------------------|--------|----------------------------------------------------------
+ ---------|
+ | Break parity tests     | High   | Run parity checks after each step
+          |
+ | Circular dependencies  | Medium | Use top-down module hierarchy (mod.rs → state → imports →
+  python) |
+ | Performance regression | Low    | Inline hints, profile after refactoring
+          |
+ | Incomplete migration   | High   | Use git branches, merge only after 100% tests pass
+          |
+
+ ---
+ Timeline Estimate
+
+ | Step                     | Duration   | Dependencies |
+ |--------------------------|------------|--------------|
+ | Create skeletons         | 30 min     | None         |
+ | Move state.rs            | 1 hour     | Skeleton     |
+ | Move python/ast_utils.rs | 2 hours    | Skeleton     |
+ | Move imports + behaviors | 3 hours    | ast_utils    |
+ | Move aliases             | 1 hour     | None         |
+ | Update tests             | 1 hour     | All moves    |
+ | Total                    | 8-10 hours | Sequential   |
+
+ Recommendation: Do this in one focused session to avoid partial state.
+
+ ---
+ Benefits Summary
+
+ Immediate (Phase 1)
+
+ 1. ✅ Maintainability: 1769 lines → 6 modules (~200-400 lines each)
+ 2. ✅ Testability: Can test imports, behaviors, aliases in isolation
+ 3. ✅ Readability: Clear module boundaries (imports vs behaviors vs aliases)
+ 4. ✅ Python isolation: All Python-specific code in python/ submodule
+
+ Future (Phase 2, v0.2.0+)
+
+ 5. ✅ Multi-language ready: Language trait abstracts parser differences
+ 6. ✅ Extensibility: Add TypeScript/Go without modifying generic modules
+ 7. ✅ Parallel development: Different devs work on different language implementations
+ 8. ✅ Clean architecture: Follows Rust best practices (trait-based polymorphism)
+
+ ---
+ Recommendation
+
+ Proceed with Phase 1 refactoring NOW (T-02-01):
+ - Your proposed module split is correct
+ - Add Python isolation as recommended
+ - Defer Language trait to v0.2.0 (when TypeScript support starts)
+
+ Phase 1 is low-risk, high-reward:
+ - Improves code organization immediately
+ - Sets up for multi-language in v0.2.0
+ - No performance impact (same logic, just reorganized)
+ - Parity tests ensure correctness
+
+---
+
+END
