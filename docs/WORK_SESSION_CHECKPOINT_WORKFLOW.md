@@ -110,7 +110,9 @@ START: End of Work Session
           ↓
 ┌─────────────────────────────────────────┐
 │ 2. Check Git Operations                 │
-│    • git status | log | show | notes    │
+│    • git status | log                   │
+│    • git diff                           |
+│    • git notes list | show              |
 │    • Verify commit hashes               │
 └─────────┬───────────────────────────────┘
           ↓
@@ -130,18 +132,24 @@ START: End of Work Session
       ┌───┴───┐
       │ Issues│ YES → Fix Issues
       │ Found?│ ↓
-      └───┬───┘ ┌─────────────────────────┐
-          │     │ 5. Update Artifacts     │
-          │     │    • Fix metadata       │
-          │     │    • Update worklogs    │
-          │     │    • Add statistics     │
-          │     └──────────┬──────────────┘
+      └───┬───┘ ┌─────────────────────────────┐
+          │     │ 5. Update Artifacts         │
+          │     │    • Update metadata.yaml   │
+          │     │    • Update work-summary.md │
+          │     │    • Update notes.md        │
+          │     │    • Update commit-log.md   │
+          │     │    • Update statistics      │
+          │     └──────────┬──────────────────┘
           │                ↓
           │     ┌─────────────────────────┐
           │     │ 6. Git Operations       │
+          │     │    • git commit (code)  │
+          │     │    • git notes add  ⭐  │
+          │     │    • update metadata    │
           │     │    • git add artifacts  │
-          │     │    • git commit         │
-          │     │    • git push           │
+          │     │    • git commit (chkpt) │
+          │     │    • git push commits   │
+          │     │    • git push notes ⭐  │
           │     └──────────┬──────────────┘
           │                ↓
           NO               ↓
