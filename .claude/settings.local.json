@@ -71,7 +71,8 @@
       "Bash(awk:*)",
       "Bash(cargo test:*)",
       "Bash(find:*)",
-      "Bash(paste:*)"
+      "Bash(paste:*)",
+      "Bash(./scripts/parity-check.sh:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
