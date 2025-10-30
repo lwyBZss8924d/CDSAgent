@@ -1,0 +1,9 @@
+spec-tasks/T-02-01-graph-builder
+Day: 6
+Date: 2025-10-30
+Sessions: 4-01 to 4-03 (05:30-09:30 UTC)
+Duration: 4h
+Worklog: .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-30-*
+Parity: All fixtures ≤2% (pytest invokes +1.29%, requests imports +0.28% / invokes +0.46%, scikit-learn imports +0.09%)
+Status: T-02-01 completed (23 unit tests, ~82% coverage, doc comments added)
+Files: 11 code files (+612/-57 lines)
