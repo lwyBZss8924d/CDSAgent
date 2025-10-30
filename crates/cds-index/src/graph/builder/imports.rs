@@ -136,7 +136,7 @@ fn process_from_import(
             let alias_value = entity
                 .alias
                 .as_deref()
-                .unwrap_or_else(|| entity.name.as_str());
+                .unwrap_or(entity.name.as_str());
             for &idx in scoped_indices {
                 add_file_import_edge(state, idx, &path, Some(alias_value));
             }
@@ -160,15 +160,7 @@ fn process_from_import(
                     resolved = true;
                 }
             }
-            if is_scoped {
-                let _ = add_attribute_import_edge(
-                    state,
-                    file_idx,
-                    module_path,
-                    &entity.name,
-                    entity.alias.as_deref(),
-                );
-            } else if !resolved {
+            if is_scoped || !resolved {
                 let _ = add_attribute_import_edge(
                     state,
                     file_idx,
@@ -180,7 +172,7 @@ fn process_from_import(
             let alias_value = entity
                 .alias
                 .as_deref()
-                .unwrap_or_else(|| entity.name.as_str());
+                .unwrap_or(entity.name.as_str());
             add_file_import_edge(state, file_idx, module_path, Some(alias_value));
             for &idx in scoped_indices {
                 if idx != file_idx {
@@ -284,9 +276,7 @@ fn resolve_attribute_target(
         }
     }
 
-    let Some(&module_idx) = state.file_nodes.get(module_path) else {
-        return None;
-    };
+    let module_idx = *state.file_nodes.get(module_path)?;
 
     if let Some(symbols) = state.file_symbols.get(module_path) {
         if let Some(indices) = symbols.get(name) {
@@ -306,6 +296,17 @@ fn resolve_attribute_target(
 
     let alias_map = build_alias_map(state, module_idx);
     let targets = resolve_targets(state, module_path, &alias_map, name);
+    if targets.is_empty() {
+        return None;
+    }
+    for idx in &targets {
+        if let Some(node) = state.graph.node(*idx) {
+            match node.kind {
+                NodeKind::Class | NodeKind::Function => return Some(*idx),
+                _ => {}
+            }
+        }
+    }
     targets.into_iter().next()
 }
 

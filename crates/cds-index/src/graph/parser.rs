@@ -443,7 +443,7 @@ fn parse_import_entities(raw: &str) -> Vec<ImportEntity> {
         .to_string();
     cleaned
         .split(',')
-        .filter_map(|entry| parse_import_entity(entry))
+        .filter_map(parse_import_entity)
         .collect()
 }
 

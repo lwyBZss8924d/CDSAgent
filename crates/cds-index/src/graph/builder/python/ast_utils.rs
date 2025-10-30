@@ -342,9 +342,7 @@ pub(in crate::graph::builder) fn find_entity_ast<'a>(
 }
 
 fn find_in_block<'a>(block: &'a [Stmt], segments: &[String]) -> Option<EntityAstRef<'a>> {
-    let Some((first, rest)) = segments.split_first() else {
-        return None;
-    };
+    let (first, rest) = segments.split_first()?;
     let target = first.as_str();
 
     for stmt in block {
@@ -530,10 +528,8 @@ fn collect_calls_in_expr(expr: &Expr, calls: &mut Vec<String>) {
             collect_calls_in_expr(&ifexp.orelse, calls);
         }
         pyast::Expr::Dict(dict) => {
-            for key in &dict.keys {
-                if let Some(k) = key {
-                    collect_calls_in_expr(k, calls);
-                }
+            for key in dict.keys.iter().flatten() {
+                collect_calls_in_expr(key, calls);
             }
             for value in &dict.values {
                 collect_calls_in_expr(value, calls);

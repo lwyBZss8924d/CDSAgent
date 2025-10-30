@@ -116,8 +116,10 @@ fn graph_parity_baselines() {
         );
 
         let golden = load_golden(&golden_path);
-        let mut config = GraphBuilderConfig::default();
-        config.max_python_files = golden.extraction_metadata.max_files;
+        let mut config = GraphBuilderConfig {
+            max_python_files: golden.extraction_metadata.max_files,
+            ..GraphBuilderConfig::default()
+        };
         if let Some(nodes) = &golden.nodes {
             let allowed: HashSet<String> = nodes
                 .iter()

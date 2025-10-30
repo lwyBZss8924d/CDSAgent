@@ -308,7 +308,7 @@ mod entity_schema_tests {
 
         // Validate score is between 0 and 1
         let score = entity.get("score").unwrap().as_f64().unwrap();
-        assert!(score >= 0.0 && score <= 1.0);
+        assert!((0.0..=1.0).contains(&score));
 
         // Validate snippet structure
         let snippet = entity.get("snippet").unwrap();
@@ -602,7 +602,7 @@ mod retrieve_entity_contract_tests {
 
         let result = response.get("result").unwrap();
         let entities = result.get("entities").unwrap().as_array().unwrap();
-        assert!(entities.len() > 0);
+        assert!(!entities.is_empty());
 
         let entity = &entities[0];
         assert!(entity.get("code").is_some());
@@ -808,7 +808,7 @@ mod embedded_schema_validation_tests {
             .get("methods")
             .and_then(|m| m.get(method_name))
             .and_then(|m| m.get("result"))
-            .expect(&format!("{} result schema not found", method_name));
+            .unwrap_or_else(|| panic!("{} result schema not found", method_name));
 
         // Get all definitions to inline
         let definitions = schema.get("definitions").expect("definitions not found");
@@ -825,7 +825,7 @@ mod embedded_schema_validation_tests {
         JSONSchema::options()
             .with_draft(Draft::Draft7)
             .compile(&inline_schema)
-            .expect(&format!("Failed to compile {} result schema", method_name))
+            .unwrap_or_else(|_| panic!("Failed to compile {} result schema", method_name))
     }
 
     fn compile_search_result_validator() -> JSONSchema {

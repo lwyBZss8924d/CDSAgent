@@ -31,11 +31,23 @@ where
     F: Fn(&cds_index::graph::GraphNode) -> bool,
 {
     graph.graph().node_indices().find(|idx| {
-        graph
-            .graph()
-            .node_weight(*idx)
-            .map_or(false, |node| predicate(node))
+        matches!(
+            graph.graph().node_weight(*idx),
+            Some(node) if predicate(node)
+        )
     })
+}
+
+fn has_edge(
+    graph: &cds_index::graph::DependencyGraph,
+    source: cds_index::graph::GraphNodeIndex,
+    target: cds_index::graph::GraphNodeIndex,
+    kind: EdgeKind,
+) -> bool {
+    graph
+        .graph()
+        .edges(source)
+        .any(|edge| edge.weight().kind == kind && edge.target() == target)
 }
 
 #[test]
@@ -474,5 +486,537 @@ def caller():
     assert!(
         targets.contains(&beta_idx),
         "caller() should include beta handler as possible callee"
+    );
+}
+
+#[test]
+fn nested_classes_create_containment_hierarchy() {
+    let files = [(
+        "pkg.py",
+        r#"
+class Outer:
+    class Inner:
+        class Deep:
+            pass
+"#,
+    )];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let outer_idx = find_node(&graph, |node| node.id.ends_with("pkg.py::Outer")).expect("Outer class");
+    let inner_idx = find_node(&graph, |node| node.id.ends_with("pkg.py::Outer::Inner"))
+        .expect("Inner class");
+    let deep_idx = find_node(&graph, |node| node.id.ends_with("pkg.py::Outer::Inner::Deep"))
+        .expect("Deep class");
+
+    assert!(
+        has_edge(&graph, outer_idx, inner_idx, EdgeKind::Contain),
+        "Outer should contain Inner"
+    );
+    assert!(
+        has_edge(&graph, inner_idx, deep_idx, EdgeKind::Contain),
+        "Inner should contain Deep"
+    );
+}
+
+#[test]
+fn nested_functions_create_containment_hierarchy() {
+    let files = [(
+        "module.py",
+        r#"
+def outer():
+    def inner():
+        def deep():
+            return 42
+        return deep()
+    return inner()
+"#,
+    )];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let outer_idx = find_node(&graph, |node| node.id.ends_with("module.py::outer")).expect("outer()");
+    let inner_idx =
+        find_node(&graph, |node| node.id.ends_with("module.py::outer::inner")).expect("inner()");
+    let deep_idx = find_node(&graph, |node| node.id.ends_with("module.py::outer::inner::deep"))
+        .expect("deep()");
+
+    assert!(
+        has_edge(&graph, outer_idx, inner_idx, EdgeKind::Contain),
+        "outer() should contain inner()"
+    );
+    assert!(
+        has_edge(&graph, inner_idx, deep_idx, EdgeKind::Contain),
+        "inner() should contain deep()"
+    );
+}
+
+#[test]
+fn async_functions_recorded_as_function_nodes() {
+    let files = [(
+        "mod.py",
+        r#"
+async def fetch(session):
+    await session.request()
+"#,
+    )];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let fetch_idx = find_node(&graph, |node| node.id.ends_with("mod.py::fetch")).expect("fetch()");
+    let fetch_node = graph.graph().node_weight(fetch_idx).expect("fetch node");
+
+    assert_eq!(fetch_node.kind, NodeKind::Function);
+}
+
+#[test]
+fn type_checking_imports_are_resolved() {
+    let files = [
+        ("pkg/__init__.py", ""),
+        (
+            "pkg/core.py",
+            r#"
+class Service:
+    def perform(self):
+        pass
+"#,
+        ),
+        (
+            "main.py",
+            r#"
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pkg.core import Service
+
+def factory(svc: "Service") -> "Service":
+    return svc
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let main_idx = find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "main.py")
+        .expect("main.py node");
+    let service_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service"))
+        .expect("Service class");
+
+    assert!(
+        has_edge(&graph, main_idx, service_idx, EdgeKind::Import),
+        "TYPE_CHECKING import should resolve to Service class"
+    );
+}
+
+#[test]
+fn relative_imports_single_dot_resolve() {
+    let files = [
+        ("pkg/__init__.py", ""),
+        (
+            "pkg/core.py",
+            r#"
+class Helper:
+    pass
+"#,
+        ),
+        (
+            "pkg/util.py",
+            r#"
+from .core import Helper
+
+def build():
+    return Helper()
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let util_idx =
+        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "util.py")
+            .expect("util.py");
+    let helper_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Helper"))
+        .expect("Helper class");
+
+    assert!(
+        has_edge(&graph, util_idx, helper_idx, EdgeKind::Import),
+        "relative import .core should resolve to Helper"
+    );
+}
+
+#[test]
+fn relative_imports_parent_resolve() {
+    let files = [
+        ("pkg/__init__.py", ""),
+        ("pkg/sub/__init__.py", ""),
+        (
+            "pkg/core.py",
+            r#"
+class Service:
+    pass
+"#,
+        ),
+        (
+            "pkg/sub/module.py",
+            r#"
+from ..core import Service
+
+def make():
+    return Service()
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let module_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::File && node.display_name == "module.py"
+    })
+    .expect("module.py");
+    let service_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service"))
+        .expect("Service class");
+
+    assert!(
+        has_edge(&graph, module_idx, service_idx, EdgeKind::Import),
+        "relative parent import ..core should resolve to Service"
+    );
+}
+
+#[test]
+fn circular_imports_emit_edges_both_directions() {
+    let files = [
+        (
+            "alpha.py",
+            r#"
+from beta import worker
+
+def make():
+    return worker()
+"#,
+        ),
+        (
+            "beta.py",
+            r#"
+from alpha import make
+
+def worker():
+    return make
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let alpha_idx =
+        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "alpha.py")
+            .expect("alpha.py");
+    let beta_idx =
+        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "beta.py")
+            .expect("beta.py");
+    let worker_idx =
+        find_node(&graph, |node| node.id.ends_with("beta.py::worker")).expect("worker()");
+    let make_idx = find_node(&graph, |node| node.id.ends_with("alpha.py::make")).expect("make()");
+
+    assert!(
+        has_edge(&graph, alpha_idx, worker_idx, EdgeKind::Import),
+        "alpha.py should import beta.worker"
+    );
+    assert!(
+        has_edge(&graph, beta_idx, make_idx, EdgeKind::Import),
+        "beta.py should import alpha.make"
+    );
+}
+
+#[test]
+fn multiple_inheritance_generates_multiple_edges() {
+    let files = [(
+        "models.py",
+        r#"
+class BaseA:
+    pass
+
+class BaseB:
+    pass
+
+class Child(BaseA, BaseB):
+    pass
+"#,
+    )];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let child_idx =
+        find_node(&graph, |node| node.id.ends_with("models.py::Child")).expect("Child");
+    let base_a_idx =
+        find_node(&graph, |node| node.id.ends_with("models.py::BaseA")).expect("BaseA");
+    let base_b_idx =
+        find_node(&graph, |node| node.id.ends_with("models.py::BaseB")).expect("BaseB");
+
+    assert!(
+        has_edge(&graph, child_idx, base_a_idx, EdgeKind::Inherit),
+        "Child should inherit BaseA"
+    );
+    assert!(
+        has_edge(&graph, child_idx, base_b_idx, EdgeKind::Inherit),
+        "Child should inherit BaseB"
+    );
+}
+
+#[test]
+fn set_based_all_exports_surface_symbols() {
+    let files = [
+        (
+            "pkg/__init__.py",
+            r#"
+from pkg.core import Service
+__all__ = {"Service"}
+"#,
+        ),
+        (
+            "pkg/core.py",
+            r#"
+class Service:
+    pass
+"#,
+        ),
+        (
+            "main.py",
+            r#"
+from pkg import Service
+
+def make():
+    return Service()
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let main_idx =
+        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "main.py")
+            .expect("main.py");
+    let service_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service"))
+        .expect("Service class");
+
+    assert!(
+        has_edge(&graph, main_idx, service_idx, EdgeKind::Import),
+        "__all__ defined as set should export Service"
+    );
+}
+
+#[test]
+fn tuple_based_all_exports_surface_symbols() {
+    let files = [
+        (
+            "pkg/__init__.py",
+            r#"
+from pkg.core import Service
+__all__ = ("Service",)
+"#,
+        ),
+        (
+            "pkg/core.py",
+            r#"
+class Service:
+    pass
+"#,
+        ),
+        (
+            "main.py",
+            r#"
+from pkg import Service
+
+Service
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let main_idx =
+        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "main.py")
+            .expect("main.py");
+    let service_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service"))
+        .expect("Service class");
+
+    assert!(
+        has_edge(&graph, main_idx, service_idx, EdgeKind::Import),
+        "__all__ defined as tuple should export Service"
+    );
+}
+
+#[test]
+fn augassign_all_exports_append_symbols() {
+    let files = [
+        (
+            "pkg/__init__.py",
+            r#"
+from pkg.core import Service, Helper
+__all__ = ["Service"]
+__all__ += ["Helper"]
+"#,
+        ),
+        (
+            "pkg/core.py",
+            r#"
+class Service:
+    pass
+
+class Helper:
+    pass
+"#,
+        ),
+        (
+            "main.py",
+            r#"
+from pkg import Helper
+
+Helper
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let main_idx =
+        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "main.py")
+            .expect("main.py");
+    let helper_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Helper"))
+        .expect("Helper class");
+
+    assert!(
+        has_edge(&graph, main_idx, helper_idx, EdgeKind::Import),
+        "__all__ += should retain newly appended Helper symbol"
+    );
+}
+
+#[test]
+fn attribute_all_exports_follow_chain() {
+    let files = [
+        (
+            "pkg/base.py",
+            r#"
+__all__ = ["Service"]
+
+class Service:
+    pass
+"#,
+        ),
+        (
+            "pkg/__init__.py",
+            r#"
+from pkg import base
+__all__ = base.__all__
+"#,
+        ),
+        (
+            "main.py",
+            r#"
+from pkg import Service
+
+Service
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let main_idx =
+        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "main.py")
+            .expect("main.py");
+    let service_idx = find_node(&graph, |node| node.id.ends_with("pkg/base.py::Service"))
+        .expect("Service class");
+
+    assert!(
+        has_edge(&graph, main_idx, service_idx, EdgeKind::Import),
+        "__all__ = base.__all__ should expose Service"
+    );
+}
+
+#[test]
+fn reexport_chain_through_intermediate_module() {
+    let files = [
+        (
+            "pkg/a.py",
+            r#"
+from pkg.core import Service
+__all__ = ["Service"]
+"#,
+        ),
+        (
+            "pkg/core.py",
+            r#"
+class Service:
+    pass
+"#,
+        ),
+        (
+            "pkg/__init__.py",
+            r#"
+from pkg.a import *
+"#,
+        ),
+        (
+            "main.py",
+            r#"
+from pkg import Service
+
+Service
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let main_idx =
+        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "main.py")
+            .expect("main.py");
+    let service_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service"))
+        .expect("Service class");
+
+    assert!(
+        has_edge(&graph, main_idx, service_idx, EdgeKind::Import),
+        "re-export chain pkg.a -> pkg should expose Service"
+    );
+}
+
+#[test]
+fn lambda_expressions_do_not_create_function_nodes() {
+    let files = [(
+        "util.py",
+        r#"
+callback = lambda value: value + 1
+"#,
+    )];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let lambda_node = find_node(&graph, |node| {
+        node.kind == NodeKind::Function && node.display_name == "<lambda>"
+    });
+
+    assert!(
+        lambda_node.is_none(),
+        "lambdas should not produce standalone function nodes"
+    );
+}
+
+#[test]
+fn async_class_initializers_collect_invokes() {
+    let files = [
+        (
+            "pkg/helpers.py",
+            r#"
+async def setup():
+    return True
+"#,
+        ),
+        (
+            "main.py",
+            r#"
+from pkg.helpers import setup
+
+class Runner:
+    async def __init__(self):
+        await setup()
+"#,
+        ),
+    ];
+
+    let (_dir, graph) = build_graph_with_files(&files);
+    let runner_idx =
+        find_node(&graph, |node| node.id.ends_with("main.py::Runner")).expect("Runner class");
+    let setup_idx = find_node(&graph, |node| node.id.ends_with("pkg/helpers.py::setup"))
+        .expect("setup function");
+
+    assert!(
+        has_edge(&graph, runner_idx, setup_idx, EdgeKind::Invoke),
+        "async __init__ should record invoke edge to setup()"
     );
 }

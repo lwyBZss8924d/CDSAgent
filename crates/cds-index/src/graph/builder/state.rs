@@ -85,24 +85,13 @@ impl AstModuleData {
 }
 
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub struct GraphBuilderConfig {
     pub follow_symlinks: bool,
     pub max_python_files: Option<usize>,
     pub allowed_python_files: Option<HashSet<String>>,
     pub required_directories: Option<HashSet<String>>,
     pub allowed_edges: Option<HashMap<(String, String, EdgeKind), usize>>,
-}
-
-impl Default for GraphBuilderConfig {
-    fn default() -> Self {
-        Self {
-            follow_symlinks: false,
-            max_python_files: None,
-            allowed_python_files: None,
-            required_directories: None,
-            allowed_edges: None,
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -461,12 +450,12 @@ impl BuilderState {
         let symbol_table = self
             .file_symbols
             .entry(rel_path.to_path_buf())
-            .or_insert_with(HashMap::new);
+            .or_default();
         symbol_table.clear();
         let entity_list = self
             .file_entities
             .entry(rel_path.to_path_buf())
-            .or_insert_with(Vec::new);
+            .or_default();
 
         for entity in entities {
             let suffix = entity.qualified_name("::");
@@ -502,12 +491,12 @@ impl BuilderState {
             if let Some(identifier) = entity.identifier() {
                 let entry = symbol_table
                     .entry(identifier.to_string())
-                    .or_insert_with(Vec::new);
+                    .or_default();
                 if !entry.contains(&node_idx) {
                     entry.push(node_idx);
                 }
             }
-            let entry = symbol_table.entry(suffix.clone()).or_insert_with(Vec::new);
+            let entry = symbol_table.entry(suffix.clone()).or_default();
             if !entry.contains(&node_idx) {
                 entry.push(node_idx);
             }
