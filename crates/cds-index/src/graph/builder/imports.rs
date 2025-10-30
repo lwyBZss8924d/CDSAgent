@@ -35,9 +35,21 @@ pub(in crate::graph::builder) fn process_pending_imports(state: &mut BuilderStat
             continue;
         };
         for directive in directives {
+            let (scope_vec, source_idx) = match directive.scope() {
+                Some(scope) => {
+                    let indices = resolve_scope_indices(state, &rel_path, scope);
+                    let idx = indices.first().copied().unwrap_or(file_idx);
+                    (indices, idx)
+                }
+                None => (Vec::new(), file_idx),
+            };
             match directive {
-                ImportDirective::Module { module, alias } => {
+                ImportDirective::Module { module, alias, .. } => {
+                    let scoped_indices = scope_vec;
                     if let Some(path) = resolve_module_spec(state, &rel_path, &module) {
+                        for &idx in &scoped_indices {
+                            add_file_import_edge(state, idx, &path, alias.as_deref());
+                        }
                         add_file_import_edge(state, file_idx, &path, alias.as_deref());
                         let alias_name = alias.clone().or_else(|| module.segments.last().cloned());
                         if let Some(alias_value) = alias_name {
@@ -45,8 +57,19 @@ pub(in crate::graph::builder) fn process_pending_imports(state: &mut BuilderStat
                         }
                     }
                 }
-                ImportDirective::FromModule { module, entities } => {
-                    process_from_import(state, file_idx, &rel_path, &module, &entities);
+                ImportDirective::FromModule {
+                    module, entities, ..
+                } => {
+                    let scoped_indices = scope_vec;
+                    process_from_import(
+                        state,
+                        file_idx,
+                        source_idx,
+                        &scoped_indices,
+                        &rel_path,
+                        &module,
+                        &entities,
+                    );
                 }
             }
         }
@@ -59,18 +82,41 @@ pub(in crate::graph::builder) fn process_pending_imports(state: &mut BuilderStat
 fn process_from_import(
     state: &mut BuilderState,
     file_idx: GraphNodeIndex,
+    source_idx: GraphNodeIndex,
+    scoped_indices: &[GraphNodeIndex],
     source_path: &Path,
     module: &ModuleSpecifier,
     entities: &[ImportEntity],
 ) {
     let base_module_path = resolve_module_spec(state, source_path, module);
+    let is_scoped = source_idx != file_idx;
+    if let Some(ref module_path) = base_module_path {
+        add_file_import_edge(state, file_idx, module_path, None);
+        for &idx in scoped_indices {
+            add_file_import_edge(state, idx, module_path, None);
+        }
+    }
     for entity in entities {
         if entity.is_wildcard {
             if let Some(ref module_path) = base_module_path {
-                add_file_import_edge(state, file_idx, module_path, None);
                 expand_wildcard_import(state, file_idx, module_path);
-                if !add_wildcard_export_edges(state, file_idx, module_path) {
-                    enqueue_wildcard_export(state, file_idx, module_path);
+                let added_source = add_wildcard_export_edges(state, source_idx, module_path);
+                if !added_source {
+                    enqueue_wildcard_export(state, source_idx, module_path);
+                }
+                if is_scoped {
+                    let added_file = add_wildcard_export_edges(state, file_idx, module_path);
+                    if !added_file {
+                        enqueue_wildcard_export(state, file_idx, module_path);
+                    }
+                }
+                for &idx in scoped_indices {
+                    if idx != source_idx {
+                        let added_extra = add_wildcard_export_edges(state, idx, module_path);
+                        if !added_extra {
+                            enqueue_wildcard_export(state, idx, module_path);
+                        }
+                    }
                 }
             }
             continue;
@@ -87,20 +133,60 @@ fn process_from_import(
         );
 
         if let Some(path) = resolve_module_spec(state, source_path, &extended_spec) {
-            add_file_import_edge(state, file_idx, &path, entity.alias.as_deref());
+            let alias_value = entity
+                .alias
+                .as_deref()
+                .unwrap_or_else(|| entity.name.as_str());
+            for &idx in scoped_indices {
+                add_file_import_edge(state, idx, &path, Some(alias_value));
+            }
+            add_file_import_edge(state, file_idx, &path, Some(alias_value));
             let alias_name = entity.alias.clone().unwrap_or_else(|| entity.name.clone());
             record_module_alias(state, source_path, alias_name, path);
             continue;
         }
 
         if let Some(ref module_path) = base_module_path {
-            let _ = add_attribute_import_edge(
-                state,
-                file_idx,
-                module_path,
-                &entity.name,
-                entity.alias.as_deref(),
-            );
+            add_file_import_edge(state, file_idx, module_path, None);
+            let mut resolved = false;
+            for &idx in scoped_indices {
+                if add_attribute_import_edge(
+                    state,
+                    idx,
+                    module_path,
+                    &entity.name,
+                    entity.alias.as_deref(),
+                ) {
+                    resolved = true;
+                }
+            }
+            if is_scoped {
+                let _ = add_attribute_import_edge(
+                    state,
+                    file_idx,
+                    module_path,
+                    &entity.name,
+                    entity.alias.as_deref(),
+                );
+            } else if !resolved {
+                let _ = add_attribute_import_edge(
+                    state,
+                    file_idx,
+                    module_path,
+                    &entity.name,
+                    entity.alias.as_deref(),
+                );
+            }
+            let alias_value = entity
+                .alias
+                .as_deref()
+                .unwrap_or_else(|| entity.name.as_str());
+            add_file_import_edge(state, file_idx, module_path, Some(alias_value));
+            for &idx in scoped_indices {
+                if idx != file_idx {
+                    add_file_import_edge(state, idx, module_path, Some(alias_value));
+                }
+            }
         }
     }
 }
@@ -170,7 +256,8 @@ fn try_add_attribute_import_edge(
     alias: Option<&str>,
 ) -> bool {
     if let Some(target_idx) = resolve_attribute_target(state, module_path, name) {
-        add_import_edge_if_absent(state, source_idx, target_idx, alias);
+        let alias_name = alias.unwrap_or(name);
+        add_import_edge_if_absent(state, source_idx, target_idx, Some(alias_name));
         return true;
     }
     false
@@ -202,8 +289,10 @@ fn resolve_attribute_target(
     };
 
     if let Some(symbols) = state.file_symbols.get(module_path) {
-        if let Some(&idx) = symbols.get(name) {
-            return Some(idx);
+        if let Some(indices) = symbols.get(name) {
+            if let Some(&idx) = indices.first() {
+                return Some(idx);
+            }
         }
         if debug && module_id == "util/process_output.py" && name == "merge_sample_locations" {
             println!(
@@ -488,11 +577,22 @@ fn resolve_module_spec(
         module_components(current_file)
     };
 
-    if spec.level > components.len() {
-        return None;
-    }
-    for _ in 0..spec.level {
-        components.pop();
+    if spec.level > 0 {
+        let mut pops = spec.level;
+        if current_file
+            .file_name()
+            .and_then(|name| name.to_str())
+            .map(|value| value == "__init__.py")
+            .unwrap_or(false)
+        {
+            pops = pops.saturating_sub(1);
+        }
+        if pops > components.len() {
+            return None;
+        }
+        for _ in 0..pops {
+            components.pop();
+        }
     }
 
     for segment in &spec.segments {
@@ -502,6 +602,27 @@ fn resolve_module_spec(
     }
 
     finalize_module_path(&components, &state.file_nodes)
+}
+
+fn resolve_scope_indices(
+    state: &BuilderState,
+    rel_path: &Path,
+    scope: &[String],
+) -> Vec<GraphNodeIndex> {
+    let mut indices = Vec::new();
+    if let Some(idx) = state.resolve_scope_entity(rel_path, scope) {
+        indices.push(idx);
+    }
+    if scope.len() > 1 {
+        for parent_len in (1..scope.len()).rev() {
+            if let Some(parent_idx) = state.resolve_scope_entity(rel_path, &scope[..parent_len]) {
+                if !indices.contains(&parent_idx) {
+                    indices.push(parent_idx);
+                }
+            }
+        }
+    }
+    indices
 }
 
 pub(in crate::graph::builder) fn parse_module_ast(
@@ -534,6 +655,13 @@ pub(in crate::graph::builder) fn build_alias_map(
 ) -> HashMap<String, Vec<GraphNodeIndex>> {
     let mut aliases: HashMap<String, Vec<GraphNodeIndex>> = HashMap::new();
     let mut visited = HashSet::new();
+    let debug = std::env::var_os("PARITY_DEBUG").is_some();
+    if debug && !state.file_index_lookup.contains_key(&file_idx) {
+        println!(
+            "[PARITY DEBUG] Missing file_index_lookup entry for node {:?}",
+            file_idx.index()
+        );
+    }
     collect_callee_candidates(state, file_idx, &mut visited, &mut aliases);
 
     if let Some(rel_path) = state.file_index_lookup.get(&file_idx) {
@@ -545,6 +673,23 @@ pub(in crate::graph::builder) fn build_alias_map(
                         insert_alias(&mut aliases, name, target_idx);
                     }
                 }
+            }
+        }
+    }
+    if debug {
+        if let Some(rel_path) = state.file_index_lookup.get(&file_idx) {
+            let normalized = crate::graph::builder::state::normalized_path(rel_path);
+            if normalized.contains("gen_oracle_locations") {
+                println!(
+                    "[PARITY DEBUG] Building alias map for {} (debug target)",
+                    normalized
+                );
+            }
+            let should_log = normalized.contains("gen_oracle_locations")
+                || normalized.contains("evaluation/eval_metric.py");
+            if should_log {
+                let keys: Vec<_> = aliases.keys().cloned().collect();
+                println!("[PARITY DEBUG] Alias map {} -> {:?}", normalized, keys);
             }
         }
     }
@@ -577,12 +722,13 @@ fn collect_callee_candidates(
 
     if let Some(rel_path) = state.file_index_lookup.get(&file_idx) {
         if let Some(symbols) = state.file_symbols.get(rel_path) {
-            for (name, &idx) in symbols {
-                insert_alias(aliases, name.clone(), idx);
+            for (name, indices) in symbols {
+                for &idx in indices {
+                    insert_alias(aliases, name.clone(), idx);
+                }
             }
         }
     }
-
     for edge in state.graph.graph().edges(file_idx) {
         if edge.weight().kind != EdgeKind::Import {
             continue;
@@ -621,6 +767,11 @@ fn collect_enclosed_entities(
     parent_idx: GraphNodeIndex,
     aliases: &mut HashMap<String, Vec<GraphNodeIndex>>,
 ) {
+    let Some(parent_node) = state.graph.node(parent_idx) else {
+        return;
+    };
+    let parent_is_function = parent_node.kind == NodeKind::Function;
+
     for edge in state.graph.graph().edges(parent_idx) {
         if edge.weight().kind != EdgeKind::Contain {
             continue;
@@ -631,7 +782,9 @@ fn collect_enclosed_entities(
         };
         match node.kind {
             NodeKind::Function => {
-                insert_alias(aliases, node.display_name.clone(), child);
+                if !parent_is_function {
+                    insert_alias(aliases, node.display_name.clone(), child);
+                }
             }
             NodeKind::Class => {
                 insert_alias(aliases, node.display_name.clone(), child);
@@ -654,9 +807,11 @@ pub(in crate::graph::builder) fn resolve_targets(
     }
 
     if let Some(symbols) = state.file_symbols.get(rel_path) {
-        if let Some(&idx) = symbols.get(name) {
-            if !result.contains(&idx) {
-                result.push(idx);
+        if let Some(indices) = symbols.get(name) {
+            for &idx in indices {
+                if !result.contains(&idx) {
+                    result.push(idx);
+                }
             }
         }
     }

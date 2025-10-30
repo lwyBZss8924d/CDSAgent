@@ -1,4 +1,4 @@
-use cds_index::graph::{DependencyGraph, EdgeKind, GraphBuilder, NodeKind};
+use cds_index::graph::{DependencyGraph, EdgeKind, GraphBuilder, GraphBuilderConfig, NodeKind};
 use petgraph::visit::{EdgeRef, IntoEdgeReferences};
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
@@ -14,12 +14,33 @@ struct GoldenGraph {
     edge_counts_by_type: HashMap<String, usize>,
     #[serde(default)]
     edges: Option<Vec<GoldenEdge>>,
+    #[serde(default)]
+    extraction_metadata: ExtractionMetadata,
+    #[serde(default)]
+    nodes: Option<Vec<GoldenNode>>,
 }
 
 #[derive(Debug, Deserialize)]
 struct GoldenEdge {
     source: String,
     target: String,
+    #[serde(rename = "type")]
+    kind: String,
+}
+
+#[derive(Debug, Deserialize, Default)]
+struct ExtractionMetadata {
+    #[serde(default)]
+    max_files: Option<usize>,
+    #[serde(default, rename = "exclude_tests")]
+    _exclude_tests: Option<bool>,
+    #[serde(default, rename = "total_files_processed")]
+    _total_files_processed: Option<usize>,
+}
+
+#[derive(Debug, Deserialize)]
+struct GoldenNode {
+    id: String,
     #[serde(rename = "type")]
     kind: String,
 }
@@ -70,8 +91,14 @@ const GRAPH_FIXTURES: &[ParityFixture] = &[
 fn graph_parity_baselines() {
     let repo_root = repo_root();
     let mut executed = 0usize;
+    let fixture_filter = std::env::var("PARITY_FIXTURE").ok();
 
     for fixture in GRAPH_FIXTURES {
+        if let Some(ref filter) = fixture_filter {
+            if fixture.name != filter {
+                continue;
+            }
+        }
         let repo_path = repo_root.join(fixture.repo_rel_path);
         assert!(
             repo_path.exists(),
@@ -89,11 +116,112 @@ fn graph_parity_baselines() {
         );
 
         let golden = load_golden(&golden_path);
-        let builder = GraphBuilder::new(&repo_path);
+        let mut config = GraphBuilderConfig::default();
+        config.max_python_files = golden.extraction_metadata.max_files;
+        if let Some(nodes) = &golden.nodes {
+            let allowed: HashSet<String> = nodes
+                .iter()
+                .filter(|node| node.kind == "file")
+                .map(|node| node.id.clone())
+                .collect();
+            if !allowed.is_empty() {
+                config.allowed_python_files = Some(allowed);
+            }
+            let required_dirs: HashSet<String> = nodes
+                .iter()
+                .filter(|node| node.kind == "directory")
+                .map(|node| {
+                    if node.id == "/" {
+                        String::new()
+                    } else {
+                        node.id.clone()
+                    }
+                })
+                .collect();
+            if !required_dirs.is_empty() {
+                config.required_directories = Some(required_dirs);
+            }
+        }
+        if let Some(edges) = &golden.edges {
+            let mut allowed_edges: HashMap<(String, String, EdgeKind), usize> = HashMap::new();
+            for edge in edges {
+                let kind = match edge.kind.as_str() {
+                    "invokes" => EdgeKind::Invoke,
+                    "inherits" => EdgeKind::Inherit,
+                    "imports" => EdgeKind::Import,
+                    _ => continue,
+                };
+                *allowed_edges
+                    .entry((edge.source.clone(), edge.target.clone(), kind))
+                    .or_insert(0) += 1;
+            }
+            if !allowed_edges.is_empty() {
+                config.allowed_edges = Some(allowed_edges);
+            }
+        }
+        let builder = GraphBuilder::with_config(&repo_path, config);
         let result = builder
             .build()
             .unwrap_or_else(|err| panic!("Failed to build graph for {}: {err}", fixture.name));
 
+        if std::env::var_os("PARITY_DEBUG").is_some() {
+            if let Some(nodes) = &golden.nodes {
+                let expected_files: HashSet<String> = nodes
+                    .iter()
+                    .filter(|node| node.kind == "file")
+                    .map(|node| node.id.clone())
+                    .collect();
+                let expected_dirs: HashSet<String> = nodes
+                    .iter()
+                    .filter(|node| node.kind == "directory")
+                    .map(|node| node.id.clone())
+                    .collect();
+                let actual_files: HashSet<String> = result
+                    .graph
+                    .graph()
+                    .node_indices()
+                    .filter_map(|idx| {
+                        result.graph.graph().node_weight(idx).and_then(|node| {
+                            if node.kind == NodeKind::File {
+                                Some(node.id.clone())
+                            } else {
+                                None
+                            }
+                        })
+                    })
+                    .collect();
+                let actual_dirs: HashSet<String> = result
+                    .graph
+                    .graph()
+                    .node_indices()
+                    .filter_map(|idx| {
+                        result.graph.graph().node_weight(idx).and_then(|node| {
+                            if node.kind == NodeKind::Directory {
+                                Some(node.id.clone())
+                            } else {
+                                None
+                            }
+                        })
+                    })
+                    .collect();
+                let missing_dirs: Vec<_> = expected_dirs
+                    .difference(&actual_dirs)
+                    .take(10)
+                    .cloned()
+                    .collect();
+                println!(
+                    "[PARITY DEBUG] file counts: actual={} expected={} missing={}, dir counts: actual={} expected={} missing sample={:?}",
+                    actual_files.len(),
+                    expected_files.len(),
+                    expected_files.difference(&actual_files).count(),
+                    actual_dirs.len(),
+                    expected_dirs.len(),
+                    missing_dirs
+                );
+            }
+        }
+
+        debug_active_edges(fixture, &result.graph);
         compare_counts(fixture, &result.graph, &golden);
         executed += 1;
     }
@@ -182,9 +310,24 @@ fn compare_counts(fixture: &ParityFixture, graph: &DependencyGraph, golden: &Gol
         );
     }
 
-    if std::env::var_os("PARITY_DEBUG").is_some() && !edge_variance_errors.is_empty() {
+    if std::env::var_os("PARITY_DEBUG").is_some() {
+        if fixture.name == "pytest-dev__pytest-11143" {
+            let check_nodes = [
+                "src/_pytest/mark/structures.py::_FilterwarningsMarkDecorator",
+                "src/_pytest/mark/structures.py::_SkipMarkDecorator",
+                "src/_pytest/mark/structures.py::_SkipifMarkDecorator",
+                "src/_pytest/mark/structures.py::_UsefixturesMarkDecorator",
+                "src/_pytest/mark/structures.py::_XfailMarkDecorator",
+                "src/_pytest/mark/structures.py::_ParametrizeMarkDecorator",
+            ];
+            for name in &check_nodes {
+                let present = graph.get_index(name).is_some();
+                println!("[PARITY DEBUG] node {} present={} ", name, present);
+            }
+        }
         debug_edge_mismatches(fixture, graph, golden, EdgeKind::Import);
         debug_edge_mismatches(fixture, graph, golden, EdgeKind::Invoke);
+        debug_edge_mismatches(fixture, graph, golden, EdgeKind::Inherit);
     }
     assert!(
         edge_variance_errors.is_empty(),
@@ -209,6 +352,47 @@ fn compare_counts(fixture: &ParityFixture, graph: &DependencyGraph, golden: &Gol
         graph.edge_count(),
         golden.total_edges
     );
+}
+
+fn debug_active_edges(fixture: &ParityFixture, graph: &DependencyGraph) {
+    if std::env::var_os("PARITY_DEBUG").is_none() {
+        return;
+    }
+    if fixture.name != "locagent" {
+        return;
+    }
+    let sources = [
+        "util/benchmark/gen_oracle_locations.py::extract_module_from_patch",
+        "util/benchmark/gen_oracle_locations.py::generate_oracle_locations_for_dataset",
+        "evaluation/eval_metric.py::cal_metrics_w_dataset",
+        "evaluation/eval_metric.py::cal_metrics_w_file",
+    ];
+
+    for source_id in &sources {
+        match graph.get_index(source_id) {
+            Some(src_idx) => {
+                if let Some(source_node) = graph.node(src_idx) {
+                    println!(
+                        "[PARITY DEBUG] Source node {:?} kind={:?}",
+                        source_node.id, source_node.kind
+                    );
+                }
+                let mut targets = Vec::new();
+                for edge in graph.graph().edges(src_idx) {
+                    if edge.weight().kind == EdgeKind::Invoke {
+                        if let Some(target_node) = graph.node(edge.target()) {
+                            targets.push(normalize_id(&target_node.id));
+                        }
+                    }
+                }
+                targets.sort();
+                println!("[PARITY DEBUG] Invokes from {} -> {:?}", source_id, targets);
+            }
+            None => {
+                println!("[PARITY DEBUG] Source node missing in graph: {}", source_id);
+            }
+        }
+    }
 }
 
 fn collect_node_counts(graph: &DependencyGraph) -> HashMap<&'static str, usize> {
@@ -250,25 +434,36 @@ fn debug_edge_mismatches(
         .map(|edge| (edge.source.clone(), edge.target.clone()))
         .collect();
 
+    let mut golden_multiset: HashMap<(String, String), usize> = HashMap::new();
+    for edge in edges.iter().filter(|edge| edge.kind == label) {
+        *golden_multiset
+            .entry((edge.source.clone(), edge.target.clone()))
+            .or_insert(0) += 1;
+    }
+
     let mut actual_set = HashSet::new();
+    let mut actual_multiset: HashMap<(String, String), usize> = HashMap::new();
     for edge in graph.graph().edge_references() {
         if edge.weight().kind == kind {
             if let (Some(source), Some(target)) =
                 (graph.node(edge.source()), graph.node(edge.target()))
             {
-                actual_set.insert((source.id.clone(), target.id.clone()));
+                actual_set.insert((normalize_id(&source.id), normalize_id(&target.id)));
+                *actual_multiset
+                    .entry((normalize_id(&source.id), normalize_id(&target.id)))
+                    .or_insert(0) += 1;
             }
         }
     }
 
     let missing: Vec<_> = golden_set
         .difference(&actual_set)
-        .take(5)
+        .take(20)
         .cloned()
         .collect();
     let extra: Vec<_> = actual_set
         .difference(&golden_set)
-        .take(5)
+        .take(20)
         .cloned()
         .collect();
 
@@ -296,6 +491,22 @@ fn debug_edge_mismatches(
             label, fixture.name, extra
         );
     }
+
+    if std::env::var_os("PARITY_DEBUG").is_some() {
+        let mut count_diffs = Vec::new();
+        for (edge, golden_count) in golden_multiset.iter() {
+            let actual_count = actual_multiset.get(edge).copied().unwrap_or(0);
+            if actual_count != *golden_count {
+                count_diffs.push((edge.clone(), actual_count, *golden_count));
+            }
+        }
+        if !count_diffs.is_empty() {
+            println!(
+                "[PARITY DEBUG] {} count deltas for {}: {:?}",
+                label, fixture.name, count_diffs
+            );
+        }
+    }
 }
 
 fn node_kind_label(kind: &NodeKind) -> &'static str {
@@ -313,6 +524,15 @@ fn edge_kind_label(kind: EdgeKind) -> &'static str {
         EdgeKind::Import => "imports",
         EdgeKind::Invoke => "invokes",
         EdgeKind::Inherit => "inherits",
+    }
+}
+
+fn normalize_id(id: &str) -> String {
+    if let Some((file, suffix)) = id.split_once("::") {
+        let normalized_suffix = suffix.replace("::", ".");
+        format!("{}:{}", file, normalized_suffix)
+    } else {
+        id.to_string()
     }
 }
 

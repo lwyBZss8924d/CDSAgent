@@ -179,6 +179,10 @@ impl DependencyGraph {
         &self.graph
     }
 
+    pub fn graph_mut(&mut self) -> &mut GraphStorage {
+        &mut self.graph
+    }
+
     pub fn into_graph(self) -> GraphStorage {
         self.graph
     }

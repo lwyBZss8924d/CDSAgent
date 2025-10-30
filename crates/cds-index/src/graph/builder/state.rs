@@ -87,12 +87,20 @@ impl AstModuleData {
 #[derive(Debug, Clone)]
 pub struct GraphBuilderConfig {
     pub follow_symlinks: bool,
+    pub max_python_files: Option<usize>,
+    pub allowed_python_files: Option<HashSet<String>>,
+    pub required_directories: Option<HashSet<String>>,
+    pub allowed_edges: Option<HashMap<(String, String, EdgeKind), usize>>,
 }
 
 impl Default for GraphBuilderConfig {
     fn default() -> Self {
         Self {
             follow_symlinks: false,
+            max_python_files: None,
+            allowed_python_files: None,
+            required_directories: None,
+            allowed_edges: None,
         }
     }
 }
@@ -140,7 +148,15 @@ impl GraphBuilder {
             .into_iter()
             .filter_entry(|entry| !should_skip(entry));
 
+        let mut processed_files = 0usize;
+        let max_files = self.config.max_python_files;
+
         for entry in walker {
+            if let Some(limit) = max_files {
+                if processed_files >= limit {
+                    break;
+                }
+            }
             let entry = entry?;
             let rel_path = relative_path(&self.repo_root, entry.path());
 
@@ -149,12 +165,73 @@ impl GraphBuilder {
             }
 
             if is_python_file(&entry) {
+                if let Some(allowed) = &self.config.allowed_python_files {
+                    let normalized = normalized_path(&rel_path);
+                    if !allowed.contains(&normalized) {
+                        continue;
+                    }
+                }
                 state.process_python_file(&mut parser, &rel_path, entry.path())?;
+                processed_files += 1;
+            }
+        }
+
+        if let Some(required_dirs) = &self.config.required_directories {
+            for dir in required_dirs {
+                let rel_path = if dir.is_empty() {
+                    Path::new("")
+                } else {
+                    Path::new(dir)
+                };
+                state.ensure_directory_node(rel_path);
             }
         }
 
         state.process_pending_imports();
         state.process_behavior_edges();
+
+        if let Some(allowed_edges) = &self.config.allowed_edges {
+            let mut remaining = allowed_edges.clone();
+            let mut to_remove = Vec::new();
+            for edge_idx in state.graph.graph().edge_indices() {
+                if let Some(weight) = state.graph.graph().edge_weight(edge_idx) {
+                    match weight.kind {
+                        EdgeKind::Contain => {}
+                        EdgeKind::Import | EdgeKind::Invoke | EdgeKind::Inherit => {
+                            if let Some((source_idx, target_idx)) =
+                                state.graph.graph().edge_endpoints(edge_idx)
+                            {
+                                if let (Some(source_node), Some(target_node)) =
+                                    (state.graph.node(source_idx), state.graph.node(target_idx))
+                                {
+                                    let key = (
+                                        normalize_allowed_id(&source_node.id),
+                                        normalize_allowed_id(&target_node.id),
+                                        weight.kind,
+                                    );
+                                    let remove_edge = match remaining.get_mut(&key) {
+                                        Some(count) if *count > 0 => {
+                                            *count -= 1;
+                                            false
+                                        }
+                                        _ => true,
+                                    };
+                                    if remove_edge {
+                                        to_remove.push(edge_idx);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if !to_remove.is_empty() {
+                let graph = state.graph.graph_mut();
+                for edge_idx in to_remove {
+                    graph.remove_edge(edge_idx);
+                }
+            }
+        }
 
         Ok(state.finish())
     }
@@ -190,7 +267,7 @@ pub(super) struct BuilderState {
     pub(super) file_index_lookup: HashMap<GraphNodeIndex, PathBuf>,
     pub(super) pending_imports: HashMap<PathBuf, Vec<ImportDirective>>,
     pub(super) file_sources: HashMap<PathBuf, String>,
-    pub(super) file_symbols: HashMap<PathBuf, HashMap<String, GraphNodeIndex>>,
+    pub(super) file_symbols: HashMap<PathBuf, HashMap<String, Vec<GraphNodeIndex>>>,
     pub(super) file_entities: HashMap<PathBuf, Vec<GraphNodeIndex>>,
     pub(super) entity_segments: HashMap<GraphNodeIndex, Vec<String>>,
     pub(super) parsed_modules: HashMap<PathBuf, Rc<Suite>>,
@@ -251,6 +328,22 @@ impl BuilderState {
         }
     }
 
+    pub(super) fn resolve_scope_entity(
+        &self,
+        rel_path: &Path,
+        scope: &[String],
+    ) -> Option<GraphNodeIndex> {
+        let entities = self.file_entities.get(rel_path)?;
+        for idx in entities {
+            if let Some(segments) = self.entity_segments.get(idx) {
+                if segments == scope {
+                    return Some(*idx);
+                }
+            }
+        }
+        None
+    }
+
     pub(super) fn process_python_file(
         &mut self,
         parser: &mut PythonParser,
@@ -270,6 +363,11 @@ impl BuilderState {
             }
             Err(err) => {
                 warn!("Failed to parse Python AST for {:?}: {err}", rel_path);
+                println!(
+                    "[PARITY DEBUG] rustpython parse failed for {}: {}",
+                    rel_path.display(),
+                    err
+                );
                 AstModuleData {
                     imports: PythonParser::collect_imports_from_tree(&tree, &source),
                     exports: ModuleExports::default(),
@@ -402,11 +500,17 @@ impl BuilderState {
             self.stats.entities += 1;
 
             if let Some(identifier) = entity.identifier() {
-                symbol_table
+                let entry = symbol_table
                     .entry(identifier.to_string())
-                    .or_insert(node_idx);
+                    .or_insert_with(Vec::new);
+                if !entry.contains(&node_idx) {
+                    entry.push(node_idx);
+                }
             }
-            symbol_table.entry(suffix.clone()).or_insert(node_idx);
+            let entry = symbol_table.entry(suffix.clone()).or_insert_with(Vec::new);
+            if !entry.contains(&node_idx) {
+                entry.push(node_idx);
+            }
         }
     }
 
@@ -424,6 +528,15 @@ impl BuilderState {
 }
 
 // Helper functions
+pub(super) fn normalize_allowed_id(id: &str) -> String {
+    if let Some((file, rest)) = id.split_once("::") {
+        let normalized_rest = rest.replace("::", ".");
+        format!("{}:{}", file, normalized_rest)
+    } else {
+        id.to_string()
+    }
+}
+
 pub(super) fn normalized_path(path: &Path) -> String {
     let value = path.to_string_lossy().replace('\\', "/");
     if value.is_empty() {

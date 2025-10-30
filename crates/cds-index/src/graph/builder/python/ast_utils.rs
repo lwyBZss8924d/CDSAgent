@@ -17,24 +17,33 @@ use std::path::{Path, PathBuf};
 /// - Export declarations (__all__ assignments)
 pub(in crate::graph::builder) fn collect_module_data_from_ast(suite: &Suite) -> AstModuleData {
     let mut data = AstModuleData::default();
-    visit_ast_statements(suite, &mut data, true);
+    let mut scope_stack = Vec::new();
+    visit_ast_statements(suite, &mut data, true, &mut scope_stack);
     data
 }
 
-fn visit_ast_statements(statements: &[Stmt], data: &mut AstModuleData, module_level: bool) {
+fn visit_ast_statements(
+    statements: &[Stmt],
+    data: &mut AstModuleData,
+    module_level: bool,
+    scope_stack: &mut Vec<String>,
+) {
     for stmt in statements {
         match stmt {
             pyast::Stmt::Import(import_stmt) => {
                 for alias in &import_stmt.names {
-                    if let Some(directive) = convert_module_import(alias) {
+                    if let Some(directive) = convert_module_import(alias, scope_stack) {
                         data.imports.push(directive);
                     }
                 }
             }
             pyast::Stmt::ImportFrom(import_from) => {
-                if let Some(directive) = convert_from_import(import_from) {
+                if let Some(directive) = convert_from_import(import_from, scope_stack) {
                     if module_level {
-                        if let ImportDirective::FromModule { module, entities } = &directive {
+                        if let ImportDirective::FromModule {
+                            module, entities, ..
+                        } = &directive
+                        {
                             if entities.iter().any(|entity| entity.is_wildcard) {
                                 data.exports
                                     .add_source(ExportSource::Module(module.clone()));
@@ -54,39 +63,55 @@ fn visit_ast_statements(statements: &[Stmt], data: &mut AstModuleData, module_le
         }
 
         match stmt {
-            pyast::Stmt::FunctionDef(func) => visit_ast_statements(&func.body, data, false),
-            pyast::Stmt::AsyncFunctionDef(func) => visit_ast_statements(&func.body, data, false),
-            pyast::Stmt::ClassDef(class_def) => visit_ast_statements(&class_def.body, data, false),
+            pyast::Stmt::FunctionDef(func) => {
+                scope_stack.push(func.name.to_string());
+                visit_ast_statements(&func.body, data, false, scope_stack);
+                scope_stack.pop();
+            }
+            pyast::Stmt::AsyncFunctionDef(func) => {
+                scope_stack.push(func.name.to_string());
+                visit_ast_statements(&func.body, data, false, scope_stack);
+                scope_stack.pop();
+            }
+            pyast::Stmt::ClassDef(class_def) => {
+                scope_stack.push(class_def.name.to_string());
+                visit_ast_statements(&class_def.body, data, false, scope_stack);
+                scope_stack.pop();
+            }
             pyast::Stmt::If(stmt_if) => {
-                visit_ast_statements(&stmt_if.body, data, false);
-                visit_ast_statements(&stmt_if.orelse, data, false);
+                visit_ast_statements(&stmt_if.body, data, false, scope_stack);
+                visit_ast_statements(&stmt_if.orelse, data, false, scope_stack);
             }
             pyast::Stmt::For(stmt_for) => {
-                visit_ast_statements(&stmt_for.body, data, false);
-                visit_ast_statements(&stmt_for.orelse, data, false);
+                visit_ast_statements(&stmt_for.body, data, false, scope_stack);
+                visit_ast_statements(&stmt_for.orelse, data, false, scope_stack);
             }
             pyast::Stmt::AsyncFor(stmt_for) => {
-                visit_ast_statements(&stmt_for.body, data, false);
-                visit_ast_statements(&stmt_for.orelse, data, false);
+                visit_ast_statements(&stmt_for.body, data, false, scope_stack);
+                visit_ast_statements(&stmt_for.orelse, data, false, scope_stack);
             }
             pyast::Stmt::While(stmt_while) => {
-                visit_ast_statements(&stmt_while.body, data, false);
-                visit_ast_statements(&stmt_while.orelse, data, false);
+                visit_ast_statements(&stmt_while.body, data, false, scope_stack);
+                visit_ast_statements(&stmt_while.orelse, data, false, scope_stack);
             }
-            pyast::Stmt::With(stmt_with) => visit_ast_statements(&stmt_with.body, data, false),
-            pyast::Stmt::AsyncWith(stmt_with) => visit_ast_statements(&stmt_with.body, data, false),
+            pyast::Stmt::With(stmt_with) => {
+                visit_ast_statements(&stmt_with.body, data, false, scope_stack);
+            }
+            pyast::Stmt::AsyncWith(stmt_with) => {
+                visit_ast_statements(&stmt_with.body, data, false, scope_stack);
+            }
             pyast::Stmt::Try(stmt_try) => {
-                visit_ast_statements(&stmt_try.body, data, false);
-                visit_ast_statements(&stmt_try.orelse, data, false);
-                visit_ast_statements(&stmt_try.finalbody, data, false);
+                visit_ast_statements(&stmt_try.body, data, false, scope_stack);
+                visit_ast_statements(&stmt_try.orelse, data, false, scope_stack);
+                visit_ast_statements(&stmt_try.finalbody, data, false, scope_stack);
                 for handler in &stmt_try.handlers {
                     let pyast::ExceptHandler::ExceptHandler(except) = handler;
-                    visit_ast_statements(&except.body, data, false);
+                    visit_ast_statements(&except.body, data, false, scope_stack);
                 }
             }
             pyast::Stmt::Match(stmt_match) => {
                 for case in &stmt_match.cases {
-                    visit_ast_statements(&case.body, data, false);
+                    visit_ast_statements(&case.body, data, false, scope_stack);
                 }
             }
             _ => {}
@@ -168,7 +193,7 @@ fn attribute_segments(expr: &Expr) -> Option<Vec<String>> {
     }
 }
 
-fn convert_module_import(alias: &pyast::Alias) -> Option<ImportDirective> {
+fn convert_module_import(alias: &pyast::Alias, scope_stack: &[String]) -> Option<ImportDirective> {
     let module_name = alias.name.to_string();
     if module_name.is_empty() {
         return None;
@@ -176,10 +201,14 @@ fn convert_module_import(alias: &pyast::Alias) -> Option<ImportDirective> {
     Some(ImportDirective::Module {
         module: ModuleSpecifier::new(0, split_entity_segments(&module_name)),
         alias: alias.asname.as_ref().map(|value| value.to_string()),
+        scope: scope_from_stack(scope_stack),
     })
 }
 
-fn convert_from_import(import_from: &pyast::StmtImportFrom) -> Option<ImportDirective> {
+fn convert_from_import(
+    import_from: &pyast::StmtImportFrom,
+    scope_stack: &[String],
+) -> Option<ImportDirective> {
     let level = import_from
         .level
         .as_ref()
@@ -219,7 +248,19 @@ fn convert_from_import(import_from: &pyast::StmtImportFrom) -> Option<ImportDire
         return None;
     }
 
-    Some(ImportDirective::FromModule { module, entities })
+    Some(ImportDirective::FromModule {
+        module,
+        entities,
+        scope: scope_from_stack(scope_stack),
+    })
+}
+
+fn scope_from_stack(scope_stack: &[String]) -> Option<Vec<String>> {
+    if scope_stack.is_empty() {
+        None
+    } else {
+        Some(scope_stack.to_vec())
+    }
 }
 
 fn split_entity_segments(value: &str) -> Vec<String> {
@@ -326,6 +367,14 @@ fn find_in_block<'a>(block: &'a [Stmt], segments: &[String]) -> Option<EntityAst
                 if rest.is_empty() {
                     return Some(EntityAstRef::Class(class_def));
                 } else if let Some(result) = find_in_block(&class_def.body, rest) {
+                    return Some(result);
+                }
+            }
+            pyast::Stmt::If(stmt_if) => {
+                if let Some(result) = find_in_block(&stmt_if.body, segments) {
+                    return Some(result);
+                }
+                if let Some(result) = find_in_block(&stmt_if.orelse, segments) {
                     return Some(result);
                 }
             }

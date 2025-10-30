@@ -48,11 +48,23 @@ pub enum ImportDirective {
     Module {
         module: ModuleSpecifier,
         alias: Option<String>,
+        scope: Option<Vec<String>>,
     },
     FromModule {
         module: ModuleSpecifier,
         entities: Vec<ImportEntity>,
+        scope: Option<Vec<String>>,
     },
+}
+
+impl ImportDirective {
+    pub fn scope(&self) -> Option<&[String]> {
+        match self {
+            ImportDirective::Module { scope, .. } | ImportDirective::FromModule { scope, .. } => {
+                scope.as_deref()
+            }
+        }
+    }
 }
 
 /// Error returned by the parsing helpers.
@@ -251,42 +263,91 @@ fn range_from_node(node: &Node) -> SourceRange {
 
 fn collect_imports(tree: &Tree, source: &[u8]) -> Vec<ImportDirective> {
     let mut directives = Vec::new();
-    visit_import_nodes(tree.root_node(), source, &mut directives);
+    let mut scope_stack: Vec<String> = Vec::new();
+    visit_import_nodes(tree.root_node(), source, &mut directives, &mut scope_stack);
     directives
 }
 
-fn visit_import_nodes(node: Node, source: &[u8], directives: &mut Vec<ImportDirective>) {
+fn visit_import_nodes(
+    node: Node,
+    source: &[u8],
+    directives: &mut Vec<ImportDirective>,
+    scope_stack: &mut Vec<String>,
+) {
     match node.kind() {
+        "class_definition" => {
+            if let Some(name_node) = node.child_by_field_name("name") {
+                if let Ok(name) = name_node.utf8_text(source) {
+                    scope_stack.push(name.to_string());
+                    let mut cursor = node.walk();
+                    for child in node.children(&mut cursor) {
+                        visit_import_nodes(child, source, directives, scope_stack);
+                    }
+                    scope_stack.pop();
+                    return;
+                }
+            }
+        }
+        "function_definition" | "async_function_definition" => {
+            if let Some(name_node) = node.child_by_field_name("name") {
+                if let Ok(name) = name_node.utf8_text(source) {
+                    scope_stack.push(name.to_string());
+                    let mut cursor = node.walk();
+                    for child in node.children(&mut cursor) {
+                        visit_import_nodes(child, source, directives, scope_stack);
+                    }
+                    scope_stack.pop();
+                    return;
+                }
+            }
+        }
+        "decorated_definition" => {
+            let mut cursor = node.walk();
+            for child in node.children(&mut cursor) {
+                visit_import_nodes(child, source, directives, scope_stack);
+            }
+            return;
+        }
         "import_statement" => {
-            directives.extend(parse_import_statement_node(node, source));
+            directives.extend(parse_import_statement_node(node, source, scope_stack));
+            return;
         }
         "import_from_statement" => {
-            if let Some(stmt) = parse_from_statement_node(node, source) {
+            if let Some(stmt) = parse_from_statement_node(node, source, scope_stack) {
                 directives.push(stmt);
             }
+            return;
         }
         _ => {}
     }
 
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
-        visit_import_nodes(child, source, directives);
+        visit_import_nodes(child, source, directives, scope_stack);
     }
 }
 
-fn parse_import_statement_node(node: Node, source: &[u8]) -> Vec<ImportDirective> {
+fn parse_import_statement_node(
+    node: Node,
+    source: &[u8],
+    scope_stack: &[String],
+) -> Vec<ImportDirective> {
     match node.utf8_text(source) {
-        Ok(text) => parse_import_statement_text(text),
+        Ok(text) => parse_import_statement_text(text, scope_stack),
         Err(_) => Vec::new(),
     }
 }
 
-fn parse_from_statement_node(node: Node, source: &[u8]) -> Option<ImportDirective> {
+fn parse_from_statement_node(
+    node: Node,
+    source: &[u8],
+    scope_stack: &[String],
+) -> Option<ImportDirective> {
     let text = node.utf8_text(source).ok()?;
-    parse_from_statement_text(text)
+    parse_from_statement_text(text, scope_stack)
 }
 
-fn parse_import_statement_text(text: &str) -> Vec<ImportDirective> {
+fn parse_import_statement_text(text: &str, scope_stack: &[String]) -> Vec<ImportDirective> {
     let content = text.trim();
     if !content.starts_with("import") {
         return Vec::new();
@@ -295,11 +356,11 @@ fn parse_import_statement_text(text: &str) -> Vec<ImportDirective> {
     let remainder = content.trim_start_matches("import").trim();
     remainder
         .split(',')
-        .filter_map(|segment| parse_plain_import(segment.trim()))
+        .filter_map(|segment| parse_plain_import(segment.trim(), scope_stack))
         .collect()
 }
 
-fn parse_plain_import(segment: &str) -> Option<ImportDirective> {
+fn parse_plain_import(segment: &str, scope_stack: &[String]) -> Option<ImportDirective> {
     if segment.is_empty() {
         return None;
     }
@@ -317,13 +378,15 @@ fn parse_plain_import(segment: &str) -> Option<ImportDirective> {
         }
     }
 
+    let scope = scope_from_stack(scope_stack);
     Some(ImportDirective::Module {
         module: ModuleSpecifier::new(0, split_segments(module_name)),
         alias,
+        scope,
     })
 }
 
-fn parse_from_statement_text(text: &str) -> Option<ImportDirective> {
+fn parse_from_statement_text(text: &str, scope_stack: &[String]) -> Option<ImportDirective> {
     let content = text.trim();
     if !content.starts_with("from") {
         return None;
@@ -337,10 +400,20 @@ fn parse_from_statement_text(text: &str) -> Option<ImportDirective> {
         return None;
     }
 
+    let scope = scope_from_stack(scope_stack);
     Some(ImportDirective::FromModule {
         module: module_spec,
         entities,
+        scope,
     })
+}
+
+fn scope_from_stack(scope_stack: &[String]) -> Option<Vec<String>> {
+    if scope_stack.is_empty() {
+        None
+    } else {
+        Some(scope_stack.to_vec())
+    }
 }
 
 fn parse_module_spec(raw: &str) -> ModuleSpecifier {
