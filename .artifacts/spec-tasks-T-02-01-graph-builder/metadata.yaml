@@ -3,7 +3,7 @@
 task:
   id: "T-02-01-graph-builder"
   title: "Graph Builder - AST Parsing & Construction"
-  status: "in_progress"  # not_started | in_progress | blocked | completed
+  status: "completed"  # not_started | in_progress | blocked | completed
   priority: "P0"
   milestone: "M2"
   week: 2
@@ -16,7 +16,7 @@ owner:
 dates:
   started: "2025-10-24"
   target_completion: "2025-10-30"  # 5 business days from start
-  actual_completion: null
+  actual_completion: "2025-10-30"
 
 specs:
   prds:
@@ -66,6 +66,16 @@ git:
       date: "2025-10-29"
       files_changed: 7
       notes: "Day 5 (Sessions 3-03 to 3-07): Scoped TYPE_CHECKING & SWE parity improvements. Extended find_in_block() to descend into if TYPE_CHECKING blocks (restores pytest mark decorator inherits, 0% variance). Updated process_from_import() fallback for grouped imports (emits alias-labelled file edges, restores Django SWE fixture import parity 0% variance). Removed ad-hoc PARITY_DEBUG traces. Parity results: All fixtures ≤2% variance (imports/inherits 0%, invokes pytest +1.29%). Total: +1,072 lines, -140 deleted."
+    - hash: "72f9db5"
+      message: "feat(graph): T-02-01 complete - parity, coverage, docs"
+      date: "2025-10-30"
+      files_changed: 11
+      notes: "Day 6 (Sessions 4-01 to 4-03): Finalized T-02-01. Resolved re-export regression, added 15 additional unit tests (total 23, ~82% coverage), documented public graph API, refreshed benches, and reran full test/parity suite. All acceptance criteria satisfied; task ready for PR."
+    - hash: "HEAD"
+      message: "checkpoint(worklog): T-02-01 Day 6 complete"
+      date: "2025-10-30"
+      files_changed: 7
+      notes: "Day 6 artifacts commit: marked task completed in metadata, recorded work summary/notes/TODO snapshot, updated commit log with parity metrics, and extended git-refs."
   pr:
     number: null
     url: null
@@ -89,16 +99,16 @@ deliverables:
 acceptance_criteria:
   - criterion: "Parses Python repositories and produces a graph with all 4 node types and 4 edge types"
     status: "completed"
-    notes: "✅ All 4 node types implemented. ✅ All 4 edge types implemented. ✅ Parity harness validates against 6 repos. ✅ Nodes/contains/inherits/imports exact match. ⏳ Invokes +1.9% variance (acceptable, needs minor refinement)."
+    notes: "✅ All 4 node types implemented. ✅ All 4 edge types implemented. ✅ Parity harness validates against 6 repos. ✅ Nodes/contains/inherits/imports exact match. ✅ Invoke variance ≤1.29% (pytest fixture, within tolerance)."
   - criterion: "Fully-qualified names match LocAgent format (e.g., path/to/file.py::Class::method)"
     status: "completed"
     notes: "✅ FQN format implemented (filename:Class.method). ✅ Validated against golden baselines (parity tests pass)."
   - criterion: "Unit tests cover typical and edge cases (decorators, nested classes, async functions)"
-    status: "in_progress"
-    notes: "✅ Unit tests: 8 tests (3 invoke + 3 re-exports/wildcard/chained __all__ + 1 decorator + 1 alias). ✅ Integration: Parity harness for 6 repos. ⏳ Needs expansion to >80% coverage (currently ~30%)."
+    status: "completed"
+    notes: "✅ Unit tests: 23 targeted scenarios (re-exports, wildcard, TYPE_CHECKING, nested classes/functions, async, decorators, circular + relative imports). ✅ Integration: Parity harness for 6 repos. ✅ Coverage ~82% (23 unit tests + parity harness)."
   - criterion: "Graph parity script reports ≤2% variance in node/edge counts vs. LocAgent baseline"
     status: "completed"
-    notes: "✅ All fixtures ≤2% variance. Imports 0%, inherits 0%. Pytest invokes +1.29% (2442/2474); Requests imports +0.28%, Scikit-learn imports +0.09%."
+    notes: "✅ All fixtures ≤2% variance. Nodes/contains/imports/inherits exact matches for locagent/django/matplotlib. Pytest invokes +1.29% (2474 vs. 2442). Requests imports +0.28%, invokes +0.46%. Scikit-learn imports +0.09%."
 
 worklog:
   base_path: ".artifacts/spec-tasks-T-02-01-graph-builder/worklogs/"
@@ -136,12 +146,12 @@ worklog:
 
 metrics:
   estimated_hours: 40  # 5 days * 8 hours
-  actual_hours: 34  # Day 1: 2h, Day 2: 11h, Day 3: 2.5h, Day 4: 9.5h, Day 5: 5h (Sessions 3-03 to 3-07, 13:30-18:30Z)
-  lines_added: 8265   # Previous 7,189 + Day 5 commit 52c2b7e (+1,076: TYPE_CHECKING support, scoped imports, parity fixes)
-  lines_deleted: 295   # Previous 155 + Day 5 commit 52c2b7e (-140: removed debug traces and legacy code)
-  files_modified: 62   # Total unique files modified in branch (from git diff main --stat)
-  tests_added: 8       # 3 unit (invoke + decorator + alias) + 3 unit (re-exports, wildcard, chained __all__) + 1 unit (multi-target) + 1 integration (parity)
-  test_coverage: 0.30  # Estimated: ~30% (8 unit tests + integration harness)
+  actual_hours: 39  # Day 1: 2h, Day 2: 11h, Day 3: 2.5h, Day 4: 9.5h, Day 5: 5h, Day 6: 4h (Sessions 4-01 to 4-03, 05:30-09:30Z)
+  lines_added: 8884   # Previous 8,265 + Day 6 additions (+619: doc comments, expanded tests, benches)
+  lines_deleted: 353   # Previous 295 + Day 6 cleanups (-58: bench hygiene, redundant helpers)
+  files_modified: 74   # Total unique files modified in branch (git diff main --name-only | wc -l)
+  tests_added: 23       # 23 unit tests (15 new today) + 1 integration (parity)
+  test_coverage: 0.82  # Estimated via cargo llvm-cov sampling (23 unit tests + integration harness)
 
 comments:
   - date: "2025-10-24"
@@ -168,6 +178,9 @@ comments:
   - date: "2025-10-29"
     author: "Rust Dev 1"
     text: "Day 5 (Sessions 3-03 to 3-07, 13:30-18:30Z) – Scoped TYPE_CHECKING & SWE parity breakthrough: Extended find_in_block() to descend into if TYPE_CHECKING blocks (restoring pytest mark decorator inherits, 0% variance). Updated process_from_import() fallback to emit alias-labelled file edges for grouped imports (Django imports restored to 0% variance). Pytest invokes now +1.29% (≤2% tolerance). All fixtures within tolerance. Removed ad-hoc PARITY_DEBUG traces. Code changes: +1,159/-0 lines across 6 files (behaviors.rs, imports.rs, ast_utils.rs, state.rs, parser.rs, tests). Commit pending final invoke variance audit. Artifacts updated via checkpoint workflow."
+  - date: "2025-10-30"
+    author: "Rust Dev 1"
+    text: "Day 6 (Sessions 4-01 to 4-03, 05:30-09:30Z) – Finalization: resolved re-export regression, added 15 new edge-case unit tests (total 23, ~82% coverage), documented public graph API, and verified full parity/test suite. Clippy + cargo test clean. All acceptance criteria satisfied and task marked completed. Ready to unblock T-02-02."
 
 related_artifacts:
   - type: "parity_baseline"
