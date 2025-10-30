@@ -65,7 +65,13 @@
       "Bash(timeout 120 ./scripts/swe-lite baseline search:*)",
       "Bash(timeout 180 ./scripts/swe-lite:*)",
       "Bash(timeout 120 ./scripts/swe-lite:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git log:*)",
+      "Bash(git notes:*)",
+      "Bash(awk:*)",
+      "Bash(cargo test:*)",
+      "Bash(find:*)",
+      "Bash(paste:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
