@@ -1,6 +1,6 @@
 DEV-COOKING-WORKLOGS-2025-10-28-01
 DEV-COOKING-WORKLOGS: T-02-01-graph-builder
-DATE: 2025-10-28T02:00:00Z -->
+DATE: 2025-10-28T02:00:00Z --> 2025-10-28T08:45:00Z
 TASKS: @.worktrees/T-02-01-graph-builder/spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md
 FROME: .worktrees/T-02-01-graph-builder/.artifacts/spec-tasks-T-02-01-graph-builder/worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-27-01.txt
 
@@ -390,5 +390,57 @@ rename crates/cds-index/src/graph/{builder.rs => builder_backup.rs} (100%)
      aren’t present; adjust collect_callee_candidates / wildcard export handling accordingly.
   2. Once real callees show up, re-run the parity harness; goal is ≤ 2 % variance, then re-enable the SWE-bench fixtures.
   3. After parity is green, prune or gate the extra PARITY_DEBUG prints if they’re no longer needed and update the worklogs.
+
+==============================================================
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-28T08:21:48Z
+
+--CONTINUE Session 3-02 [TODO]:
+
+2025-10-28 Session 3 work checkpoints completed. --continue Session 3-02 [TODO]:
+  1. Analyse the alias-map dumps for gen_oracle_locations / eval_metric to see why symbols like load_jsonl or parse_import_nodes
+     aren’t present; adjust collect_callee_candidates / wildcard export handling accordingly.
+  2. Once real callees show up, re-run the parity harness; goal is ≤ 2 % variance, then re-enable the SWE-bench fixtures.
+  3. After parity is green, prune or gate the extra PARITY_DEBUG prints if they’re no longer needed and update the worklogs.
+
+--CONTINUE "working on..."
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-28T08:43:49Z
+
+• Reworked the builder’s symbol bookkeeping so each file keeps every matching entity instead of a single winner, which lets
+  the alias map fan out to multiple callee candidates the way LocAgent does (crates/cds-index/src/graph/builder/state.rs:193,
+  imports.rs:589, behaviors.rs:55). Added targeted debug hooks to inspect call extraction and alias resolution while we chase the
+  remaining invoke deltas, plus some one-off parity logging in the harness (crates/cds-index/tests/graph_parity_tests.rs:186).
+  No production behavior changed yet—the parity gap is down to 11 invoke edges (500 → 520 edges; target 531) but the focused test
+  still fails.
+
+  What I ran:
+
+  - PARITY_DEBUG=1 cargo test -p cds-index --test graph_parity_tests -- graph_parity_baselines --nocapture (still fails: invokes
+    +2.07 % variance, other edge/node classes at 0 %)
+
+  Next steps:
+
+  1. Use the new call/alias dumps to trace why cal_metrics_w_dataset and generate_oracle_locations_for_dataset still miss
+     load_jsonl, setup_repo, etc.; make sure those names reach connect_behavior_edges and resolve to function nodes instead of
+     falling back to module files.
+  2. Once invoke counts fall inside ±2 %, strip the PARITY_DEBUG printlns and rerun the harness across the full LocAgent +
+     SWE‑bench table before updating the artifacts/worklogs.
+
+==============================================================
+
+❯ date -u '+%Y-%m-%dT%H:%M:%SZ'
+2025-10-28T08:45:00Z
+
+--CONTINUE Session 3-03 [TODO]:
+  1. Use the new call/alias dumps to trace why cal_metrics_w_dataset and generate_oracle_locations_for_dataset still miss
+     load_jsonl, setup_repo, etc.; make sure those names reach connect_behavior_edges and resolve to function nodes instead of
+     falling back to module files.
+  2. Once invoke counts fall inside ±2 %, strip the PARITY_DEBUG printlns and rerun the harness across the full LocAgent +
+     SWE‑bench table before updating the artifacts/worklogs.
+
+--CONTINUE "working on..."
 
 ==============================================================

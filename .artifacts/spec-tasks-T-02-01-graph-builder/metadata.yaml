@@ -123,6 +123,16 @@ worklog:
       summary: "worklogs/2025-10-29-work-summary.md"
       commits: "worklogs/2025-10-29-commit-log.md"
       notes: "worklogs/2025-10-29-notes.md"
+    - date: "2025-10-30"
+      summary: "worklogs/2025-10-30-work-summary.md"
+      commits: "worklogs/2025-10-30-commit-log.md"
+      notes: "worklogs/2025-10-30-notes.md"
+      action_logs:
+        - "worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-01.txt"
+        - "worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-02.txt"
+        - "worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-03.txt"
+        - "worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-04.txt"
+        - "worklogs/raw/DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-05.txt"
 
 metrics:
   estimated_hours: 40  # 5 days * 8 hours
