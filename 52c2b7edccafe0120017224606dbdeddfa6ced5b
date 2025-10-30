@@ -1,0 +1,9 @@
+spec-tasks/T-02-01-graph-builder
+Day: 5
+Date: 2025-10-29
+Sessions: 3-03 to 3-07 (13:30-18:30 UTC)
+Duration: 5h
+Worklog: .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/2025-10-29-*
+Parity: All fixtures ≤2% (imports/inherits 0%, invokes +1.29%)
+Status: TYPE_CHECKING & scoped imports resolved
+Files: 7 code files (+1,072/-140 lines)
