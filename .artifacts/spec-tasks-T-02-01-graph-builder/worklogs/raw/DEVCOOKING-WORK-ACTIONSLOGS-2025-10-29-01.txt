@@ -251,9 +251,9 @@ TODO FROM: DEVCOOKING-WORK-ACTIONSLOGS-2025-10-28-01.txt last session's "--CONTI
 
 Statistics
 
-  - Files changed: 10 total (6 code files + 4 artifact files)
-    - Code files: behaviors.rs, imports.rs, ast_utils.rs, state.rs, parser.rs, graph_parity_tests.rs
-    - Artifact files: metadata.yaml, action logs, worklogs, docs/WORK_SESSION_CHECKPOINT_WORKFLOW.md
+  - Files changed: 10 total (7 code files + 3 artifact files)
+    - Code files: behaviors.rs, imports.rs, ast_utils.rs, state.rs, mod.rs, parser.rs, graph_parity_tests.rs
+    - Artifact files: metadata.yaml, action logs, worklogs
   - Lines added: +1,159 (code: +1,072, artifacts: +87)
   - Lines deleted: -155 (code: -140, artifacts: -15; cumulative from previous days, no deletions on Day 5)
   - Net change: +1,004 lines

@@ -1,6 +1,5 @@
 # Commit Log - 2025-10-29
 
-````text
 **Task**: T-02-01-graph-builder  
 **Author**: Rust Dev 1
 
@@ -20,7 +19,7 @@
 
 ### Commit Message
 
-```
+```text
 fix(parity): align SWE fixtures with TYPE_CHECKING import semantics
 
 Day 5 (Sessions 3-03 to 3-07): Scoped TYPE_CHECKING & SWE parity improvements
@@ -46,15 +45,18 @@ Files changed: 6 code files, +1,072/-140 lines
 
 ### Files Changed
 
-**Code Files** (6 total):
+**Code Files** (7 total):
+
 1. `crates/cds-index/src/graph/builder/behaviors.rs` - Fallback textual scanner cleanup, scoped import handling
 2. `crates/cds-index/src/graph/builder/imports.rs` - Alias-labelled file edges, scoped entity propagation
 3. `crates/cds-index/src/graph/builder/python/ast_utils.rs` - TYPE_CHECKING block traversal in find_in_block()
 4. `crates/cds-index/src/graph/builder/state.rs` - Scope stack threading for ImportDirective
-5. `crates/cds-index/src/graph/parser.rs` - ImportDirective scope updates
-6. `crates/cds-index/tests/graph_parity_tests.rs` - Enhanced diagnostics, removed debug prints
+5. `crates/cds-index/src/graph/mod.rs` - Export declarations for new graph builder submodules
+6. `crates/cds-index/src/graph/parser.rs` - ImportDirective scope updates
+7. `crates/cds-index/tests/graph_parity_tests.rs` - Enhanced diagnostics, removed debug prints
 
 **Statistics**:
+
 - **Lines added**: +1,072
 - **Lines deleted**: -140
 - **Net change**: +932 lines
@@ -80,4 +82,3 @@ cargo test -p cds-index --test graph_parity_tests -- graph_parity_baselines --no
 - **Rationale**: Changes are functionally complete and all parity tests pass, but documentation review pending
 - **Next Step**: Audit remaining invoke gaps in `_pytest/config` and `_pytest/monkeypatch` helpers before finalizing commit
 - **PR Status**: Remains in draft pending code commit
-````

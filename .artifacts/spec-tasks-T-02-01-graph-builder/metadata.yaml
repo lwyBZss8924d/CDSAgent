@@ -61,6 +61,11 @@ git:
       date: "2025-10-28"
       files_changed: 11
       notes: "Session 2: Graph builder refactoring. Split monolithic builder.rs (1769 lines) into 10 focused modules. Created: state.rs (458), imports.rs (674), behaviors.rs (195), python/ast_utils.rs (645). Fixed 3 compilation errors. Total: +2,037 lines. Zero logic changes - 100% structural refactoring."
+    - hash: "52c2b7e"
+      message: "fix(parity): align SWE fixtures with TYPE_CHECKING import semantics"
+      date: "2025-10-29"
+      files_changed: 7
+      notes: "Day 5 (Sessions 3-03 to 3-07): Scoped TYPE_CHECKING & SWE parity improvements. Extended find_in_block() to descend into if TYPE_CHECKING blocks (restores pytest mark decorator inherits, 0% variance). Updated process_from_import() fallback for grouped imports (emits alias-labelled file edges, restores Django SWE fixture import parity 0% variance). Removed ad-hoc PARITY_DEBUG traces. Parity results: All fixtures ≤2% variance (imports/inherits 0%, invokes pytest +1.29%). Total: +1,072 lines, -140 deleted."
   pr:
     number: null
     url: null
@@ -122,9 +127,9 @@ worklog:
 metrics:
   estimated_hours: 40  # 5 days * 8 hours
   actual_hours: 34  # Day 1: 2h, Day 2: 11h, Day 3: 2.5h, Day 4: 9.5h, Day 5: 5h (Sessions 3-03 to 3-07, 13:30-18:30Z)
-  lines_added: 7189   # Previous 6,030 + Day 5 changes (+1,159: TYPE_CHECKING support, scoped imports, parity fixes)
-  lines_deleted: 155   # Removed targeted diagnostics and legacy dedupe (no deletions on Day 5)
-  files_modified: 44   # Previous 36 + Day 5: 6 code files (behaviors.rs, imports.rs, ast_utils.rs, state.rs, parser.rs, tests) + 2 artifact files
+  lines_added: 8265   # Previous 7,189 + Day 5 commit 52c2b7e (+1,076: TYPE_CHECKING support, scoped imports, parity fixes)
+  lines_deleted: 295   # Previous 155 + Day 5 commit 52c2b7e (-140: removed debug traces and legacy code)
+  files_modified: 62   # Total unique files modified in branch (from git diff main --stat)
   tests_added: 8       # 3 unit (invoke + decorator + alias) + 3 unit (re-exports, wildcard, chained __all__) + 1 unit (multi-target) + 1 integration (parity)
   test_coverage: 0.30  # Estimated: ~30% (8 unit tests + integration harness)
 

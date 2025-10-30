@@ -1,6 +1,5 @@
 # Work Summary - 2025-10-29
 
-````text
 **Task**: T-02-01-graph-builder - Graph Builder - AST Parsing & Construction  
 **Date**: 2025-10-29  
 **Author**: Rust Dev 1
@@ -64,16 +63,19 @@ All commands exit code **0** with parity variances ≤2%.
 ## Statistics
 
 **Files Changed**: 10 total
-- **Code files**: 6 (behaviors.rs, imports.rs, ast_utils.rs, state.rs, parser.rs, graph_parity_tests.rs)
-- **Artifact files**: 4 (metadata.yaml, action logs, worklogs, docs)
+
+- **Code files**: 7 (behaviors.rs, imports.rs, ast_utils.rs, state.rs, mod.rs, parser.rs, graph_parity_tests.rs)
+- **Artifact files**: 3 (metadata.yaml, action logs, worklogs)
 
 **Lines Changed**:
+
 - **Added**: +1,159 lines
 - **Deleted**: -155 lines (0 deletions on Day 5; cumulative from previous days)
 - **Net change**: +1,004 lines
 
 **Code Changes Only** (excluding artifacts):
-- **Files**: 6 code files
+
+- **Files**: 7 code files
 - **Added**: +1,072 lines
 - **Deleted**: -140 lines
 - **Net**: +932 lines
@@ -93,4 +95,3 @@ All commands exit code **0** with parity variances ≤2%.
 **Checkpoint Date**: 2025-10-30T02:18:00Z  
 **Status**: ✅ Completed via Work Session Checkpoint Workflow  
 **Consistency**: All artifacts updated to match actual code changes (pending commit).
-````
