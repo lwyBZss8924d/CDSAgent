@@ -1,0 +1,193 @@
+================================================================================
+WORK SESSION 02 - THREADS 01-03 SUMMARY
+================================================================================
+
+Task: T-02-02-sparse-index - Sparse Index - Name/ID + BM25 Search
+Date: 2025-10-31
+Session: 02 (Day 1 - Phase 0: Deep Research & Re-Analysis)
+Threads: 01-03
+Start Time: 10:22 UTC
+End Time: 10:55 UTC
+Duration: 0.55 h
+Status: ✅ COMPLETE
+
+Session Overview:
+Phase 0: Deep research on sparse index deliverables; aligning specs, issues, and current code before implementation.
+
+Objectives:
+- Comprehensive review of priority PRD/Issue/Task documents relevant to T-02-02
+- Deep understanding of sparse index requirements
+- Analysis of LocAgent's BM25 implementation patterns
+- Refinement of implementation plan with technical details
+- Identification of key decision points (Tantivy vs custom BM25)
+
+Documents to Review:
+========================================
+PRDs (10 documents):
+- [ ] spacs/prd/0.1.0-MVP-PRDs-v0/01-system-architecture.md
+- [x] spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+- [ ] spacs/prd/0.1.0-MVP-PRDs-v0/03-cds-tools-cli.md
+- [ ] spacs/prd/0.1.0-MVP-PRDs-v0/04-cds-agent-integration.md
+- [ ] spacs/prd/0.1.0-MVP-PRDs-v0/05-api-specifications.md
+- [x] spacs/prd/0.1.0-MVP-PRDs-v0/06-rust-refactoring-plan.md
+- [ ] spacs/prd/0.1.0-MVP-PRDs-v0/07-deployment-operations.md
+- [ ] spacs/prd/0.1.0-MVP-PRDs-v0/08-testing-quality.md
+- [ ] spacs/prd/0.1.0-MVP-PRDs-v0/09-implementation-roadmap.md
+- [ ] spacs/prd/0.1.0-MVP-PRDs-v0/10-extensibility-future.md
+
+Issues (6 documents):
+- [ ] spacs/issues/04-0.1.0-mvp/README.md
+- [ ] spacs/issues/04-0.1.0-mvp/02-index-core/00-overview.md
+- [ ] spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md
+- [x] spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md
+- [ ] spacs/issues/04-0.1.0-mvp/02-index-core/03-service-layer.md
+- [ ] spacs/issues/04-0.1.0-mvp/02-index-core/04-serialization-fixtures.md
+
+Tasks (7 documents):
+- [x] spacs/tasks/0.1.0-mvp/TODO.yaml
+- [ ] spacs/tasks/0.1.0-mvp/README.md
+- [ ] spacs/tasks/0.1.0-mvp/02-index-core/README.md
+- [ ] spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md
+- [x] spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md
+- [ ] spacs/tasks/0.1.0-mvp/02-index-core/T-02-03-service-layer.md
+- [ ] spacs/tasks/0.1.0-mvp/02-index-core/T-02-04-serialization.md
+
+================================================================================
+THREAD 01: Deep Research & Planning Alignment
+================================================================================
+Time: 10:22-10:30 UTC
+Status: ✅ COMPLETE
+
+Objective:
+- Map sparse index scope against specs, issues, and current code so Day 1 development starts with clear deliverables.
+
+Actions:
+- Reviewed T-02-02 task spec and TODO.yaml entries to confirm deliverables, dependencies, and acceptance targets.
+- Analyzed Sub-Issue 02.02 plus PRD-02 sections on hierarchical indexing to extract latency, parity, and coverage requirements.
+- Inspected `crates/cds-index/src/index/` stubs, `search_bench.rs`, and existing tests to understand the starting implementation gap.
+- Cross-referenced LocAgent `build_bm25_index.py` and `bm25_retriever.py` to capture tokenizer, stemming, and index persistence behavior.
+- Verified graph metadata surfaces (`graph/mod.rs`) to confirm available entity IDs, names, and ranges for index ingestion.
+
+Key Findings:
+- Upper index needs fast exact/prefix lookups with entity-type filtering; build with `DashMap<String, Vec<GraphNodeIndex>>` during ingestion then compact into a sorted key vector for prefix scans under 10 ms.
+- Tantivy offers BM25 scoring but requires a custom analyzer chain (lowercase, camel/snake splitter, ASCII fold, English stemmer) to stay within the ±5% parity window from LocAgent.
+- Tokenization must mirror LocAgent behavior (case folding, delimiter split, number retention, stop-word trimming); plan a dedicated `tokenizer.rs` with golden fixtures derived from LocAgent for regression tests.
+- Benchmarks/tests are placeholders; extend `search_bench.rs` to load a seeded mini-graph and add parity plus threshold tests in a new `crates/cds-index/tests/index_tests.rs` suite.
+- Introduce an index builder that streams graph nodes into both tiers and persists Tantivy segments to a configured cache dir so 1K-file builds finish within the 5 s target.
+
+Decisions Made:
+- Prototype Tantivy first with the custom analyzer and wrap it behind a `BM25Backend` trait to allow a custom implementation if overlap@10 falls below 90%.
+- Implement `NameIndex` as a builder that deduplicates IDs per name, compacts into an `Arc<NameIndexInner>`, and keeps type-filter metadata alongside sorted keys for prefix queries.
+- Add a `SearchPipeline` entry point that enforces upper-first search, configurable fallback thresholds, result deduplication, and stable scoring (`UpperIndex` exact hits fixed at 1.0, BM25 normalized below).
+- Wire a parity harness consuming `tests/fixtures/parity/search_queries.jsonl` and LocAgent outputs; gate CI by running `cargo test --test index_parity_tests`.
+- Near-term actions: Day 1 PM implement NameIndex plus tokenizer, Day 2 AM integrate Tantivy backend, Day 2 PM add parity tests and criterion benchmark updates.
+
+================================================================================
+THREAD 02: Parity Assets & Performance Targets Deep Dive
+================================================================================
+Time: 10:30-10:43 UTC
+Status: ✅ COMPLETE
+
+Objective:
+- Catalog parity fixtures and performance requirements so search implementation can hook into existing golden datasets and benchmarks without rework.
+
+Actions:
+- Read PRD-06 (Rust Refactoring Plan) sections on sparse index expectations to capture fidelity + speedup targets and module mapping.
+- Reviewed parity fixture layout under tests/fixtures/parity to confirm available golden outputs (search_queries.jsonl), performance baselines, and curated sample repos.
+- Noted benchmark placeholders in crates/cds-index/benches/search_bench.rs and mapped how to pull performance targets from tests/fixtures/parity/golden_outputs/performance_baselines.json.
+- Identified LocAgent tokenizer guidance from PRD-06 §2.2 and parity README to drive upcoming tokenizer.rs implementation and fixture generation.
+
+Key Findings:
+- PRD-06 mandates 2-5× speedups plus parity across graph, search, and traversal; BM25 module must either mirror LocAgent’s math or achieve identical rankings by analyzer tuning.
+- Golden fixtures already provide 50 search queries with expected top-10 outputs plus performance baselines, enabling direct integration tests without regenerating data on Day 1.
+- Performance baselines data can inform criterion benchmark thresholds; need to capture both latency (p95) and memory comparatives in reporting.
+- Search parity tests should live beside existing graph_parity_tests.rs, using shared fixture-loading helpers to avoid duplicating JSON parsing logic.
+
+Decisions Made:
+- Extend test suite with tests/index_parity_tests.rs loading golden_outputs/search_queries.jsonl, computing overlap@10, and gating on ≥90% average.
+- Update search_bench.rs to load sample repo data from fixtures and emit comparisons against performance baseline targets.
+- Plan tokenizer golden tests that re-use fixture queries to ensure token splitting matches LocAgent before integrating with the Tantivy analyzer.
+
+Open Questions / Follow-ups:
+- Need to confirm available fields inside performance_baselines.json (latency vs throughput) before wiring benchmarks.
+- Determine whether to embed LocAgent stop-word list verbatim or derive it from fixtures; action item to extract next session.
+
+================================================================================
+THREAD 03: Implementation Readiness Checklist
+================================================================================
+Time: 10:43-10:55 UTC
+Status: ✅ COMPLETE
+
+Objective:
+- Convert remaining research threads into concrete execution tasks before kicking off Phase 1 coding.
+
+Actions:
+- [x] Summarized outstanding document reviews and marked lower-priority PRDs/issues for later passes.
+- [x] Drafted per-deliverable roadmap (NameIndex, tokenizer, BM25, parity tests) with sequencing and owners.
+- [x] Listed tooling/environment prep (Tantivy analyzer config, fixture loader utilities, benchmark datasets).
+
+Key Findings:
+- Critical references for Day 1/Day 2 work are covered (PRD-02, PRD-06, T-02-02 spec, TODO.yaml, issue 02); remaining PRDs/issues focus on service/CLI layers and can defer to Sessions 03+.
+- Implementation roadmap: 2025-10-31 PM — NameIndex + tokenizer (Rust Dev 2); 2025-11-01 AM — Tantivy BM25 backend + tokenizer analyzer; 2025-11-01 PM — hierarchical search wiring + parity tests; 2025-11-02 AM — benchmark tuning & documentation.
+- Tooling needs: extract LocAgent stop-word list into fixture, build `tests/support/parity_loader.rs` helper, define `TANTIVY_DATA_DIR` env var + config for on-disk segments, add Criterion group referencing performance baselines.
+
+Decisions Made:
+- Defer deep review of remaining PRDs/issues (03-10, service-layer specs) until Phase 3 tasks unlock; track in Session 03 agenda.
+- Treat `tests/fixtures/parity` as canonical dataset; create reusable loader module for both unit tests and benchmarks during Phase 1.5.
+- Capture stop-word extraction via Python script in tmp/LocAgent (commit artifact) before implementing tokenizer normalization.
+
+Open Items:
+- [ ] Write helper script to export LocAgent stop words → `tests/fixtures/parity/tokenizer/stop_words.txt` (due 2025-10-31 EOD).
+- [ ] Confirm subset of sample repos for Criterion bench and document in `crates/cds-index/benches/README.md` (due 2025-11-01).
+- [ ] Draft skeleton for `tests/index_parity_tests.rs` including fixture loader signature before coding (due 2025-11-01 AM).
+
+================================================================================
+SESSION NOTES
+================================================================================
+
+Key Technical Questions (working answers):
+1. Tantivy integration vs custom BM25 - start with Tantivy plus custom analyzer; retain a pluggable backend so we can swap to custom BM25 if overlap@10 <90%.
+2. Tokenization strategy - port LocAgent camel/snake splitting and stop-word trimming into tokenizer.rs, backed by fixtures to guarantee fidelity.
+3. Upper index design - ingest with DashMap for concurrency, compact to sorted immutable structures for prefix scans and entity-type filters.
+4. Search hierarchy - default to threshold 5 before BM25 fallback, expose config knobs for CLI/service to tune depth, dedupe on entity ID.
+5. Parity validation - reuse tests/fixtures/parity/search_queries.jsonl, compare against LocAgent outputs, and fail test if average overlap <90%.
+
+Critical Dependencies from T-02-01:
+- Graph API: crates/cds-index/src/graph/mod.rs (verified entity metadata and node IDs available for indexing).
+- Entity types: Directory, File, Class, Function.
+- Edge types: Contains, Imports, Defines, Invokes.
+- Parity variance: <2% achieved (baseline confirms graph parity inputs are reliable for search work).
+
+Implementation Phases (from metadata.yaml):
+- Phase 0: Planning & Analysis ✅ Session 01 complete, Session 02 research captured here.
+- Phase 1: Upper Index - implement builder + unit tests (target 2025-10-31 PM).
+- Phase 2: Custom Tokenizer - port LocAgent rules + fixtures (target 2025-10-31 PM).
+- Phase 3: BM25 Lower Index - integrate Tantivy backend with analyzer + evaluation harness (target 2025-11-01 AM).
+- Phase 4: Hierarchical Search Strategy - assemble pipeline + config plumbing (target 2025-11-01 PM).
+- Phase 5: Parity & Benchmarking - run 50-query overlap test and criterion bench (target 2025-11-02 AM).
+
+Session Summary:
+- Phase 0 re-analysis complete; deliverable roadmap and parity strategy locked for Phase 1 kickoff.
+- Critical documents reviewed (PRD-02, PRD-06, T-02-02 spec, TODO.yaml, issue 02) with remaining PRDs/issues deferred intentionally and tracked in follow-ups.
+- Identified tooling/tasks queued for next session: stop-word export, fixture loader scaffolding, benchmark dataset confirmation.
+
+Acceptance Criteria Checklist:
+- [ ] Upper index (name/ID HashMap) with prefix matching
+- [ ] Lower index (BM25 k1=1.5, b=0.75)
+- [ ] Search latency <500ms p95
+- [ ] Index build <5s for 1K files
+- [ ] Search overlap@10 ≥90% on 50 queries
+- [ ] Unit test coverage >95%
+
+================================================================================
+END OF SESSION SUMMARY
+================================================================================
+
+NOTE: This file will be completed at the end of Session 02 with:
+- Actual thread breakdown and timings
+- Key findings from document review
+- Updated implementation plan details
+- Specific technical decisions documented
+- Total session duration and status
+
+Last Updated: 2025-10-31 11:00 UTC (Session 02 complete)
