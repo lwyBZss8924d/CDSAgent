@@ -23,10 +23,10 @@
 
 ### Correct Understanding
 
-```
+```text
 Task (T-02-02-sparse-index)
 └── Implementation Phase (technical stage, used as Checkpoint boundary)
-    └── Day (按日期记录，YYYY-MM-DD)
+    └── Day (recorded by date, YYYY-MM-DD)
         └── Session (work period, 1-8h, corresponds to ONE RAW log file)
             └── Thread (continuous work unit, 30min-2h, numbered sequentially WITHIN session)
 ```
@@ -44,13 +44,15 @@ Task (T-02-02-sparse-index)
 ### CRITICAL: Thread Numbering
 
 **❌ WRONG**: Thread numbers span multiple sessions
-```
+
+```text
 Session 01: Threads 01-03
 Session 02: Threads 04-06  # ❌ WRONG! Don't continue numbering!
 ```
 
 **✅ CORRECT**: Thread numbers reset for each session
-```
+
+```text
 Session 01: Threads 01-03
 Session 02: Threads 01-03  # ✅ CORRECT! Reset to 01!
 ```
@@ -64,6 +66,7 @@ Session 02: Threads 01-03  # ✅ CORRECT! Reset to 01!
 **When**: Beginning of focused work period
 
 **Actions**:
+
 1. Start working (coding, researching, planning)
 2. Make commits as you work
 3. **DO NOT** create RAW log yet (will create when session completes)
@@ -77,11 +80,13 @@ Session 02: Threads 01-03  # ✅ CORRECT! Reset to 01!
 **When**: Active work in progress
 
 **Actions**:
+
 1. Continue working through multiple threads
 2. Make commits with conventional commit messages
 3. Mentally track which thread you're in (based on context switches)
 
 **Thread Transitions**:
+
 - New thread when: switching tasks, taking break, changing focus
 - Thread duration: 30min - 2h typically
 
@@ -94,12 +99,14 @@ Session 02: Threads 01-03  # ✅ CORRECT! Reset to 01!
 **When**: End of work period (EOD, before break, phase complete)
 
 **Actions**:
+
 1. Review all commits made during session
 2. Identify thread boundaries (by time and context)
 3. **CREATE RAW log file** with all thread summaries
 4. Run Checkpoint Workflow (Phase 4 git operations)
 
 **Artifacts Created**:
+
 - `WORK-SESSIONS-{NN}-THREADS-{START}-{END}-SUMMARY-{YYYY-MM-DD}.txt`
 - Updated `metadata.yaml`
 - Updated `YYYY-MM-DD-work-summary.md`
@@ -118,6 +125,7 @@ Session 02: Threads 01-03  # ✅ CORRECT! Reset to 01!
 **Example**: `WORK-SESSIONS-01-THREADS-01-03-SUMMARY-2025-10-31.txt`
 
 Where:
+
 - `{NN}`: Session number (01, 02, 03, ...)
 - `{START}`: First thread number in this session
 - `{END}`: Last thread number in this session
@@ -128,6 +136,7 @@ Where:
 **✅ Create RAW log**: AFTER session completes (not before!)
 
 **Timing**:
+
 1. Finish all work for the session
 2. Commit all code changes
 3. Review git history
@@ -135,6 +144,7 @@ Where:
 5. Run checkpoint workflow
 
 **❌ DO NOT**:
+
 - Create RAW log before session starts (no work done yet!)
 - Create RAW log during active work (incomplete information)
 - Create separate RAW logs for each thread (ONE per session!)
@@ -171,17 +181,35 @@ Actions Completed:
 ✅ Action 2
 ✅ Action 3
 
+Work Completed: (if applicable)
+1. Section 1 (+N lines):
+   - Detail 1
+   - Detail 2
+
+2. Section 2 (+N lines):
+   - Detail 1
+   - Detail 2
+
 Key Decisions:
 - Decision 1 with rationale
 - Decision 2 with rationale
 
-Expected Commits:
-- hash1: commit message
-- hash2: commit message
+Files Modified: (if applicable)
+Total: N files, +NNN insertions, -NN deletions
 
-Expected Files:
-- file1.rs
-- file2.md
+Git Operations:
+- Commit hash1: commit message
+- Commit hash2: commit message
+- Git notes added to commits
+- Pushed to remote with notes
+
+Checkpoint Workflow: (if checkpoint performed)
+✅ Phase 4.1: Code commit created
+✅ Phase 4.2: Git notes added
+✅ Phase 4.3: metadata.yaml updated
+✅ Phase 4.4: Artifacts staged
+✅ Phase 4.5: Checkpoint commit created
+✅ Phase 4.6: Pushed commits + notes
 
 --------------------------------------------------------------------------------
 
@@ -240,6 +268,7 @@ task:
 ```
 
 **Calculation**: Sum of all completed sessions
+
 - Session 01: 1.2h → `actual_hours: 1.2`
 - Session 02: 2.5h → `actual_hours: 3.7` (1.2 + 2.5)
 - Session 03: 1.0h → `actual_hours: 4.7` (3.7 + 1.0)
@@ -257,6 +286,7 @@ git:
 ```
 
 **When to Add**:
+
 - Add commit entry for each code commit (not checkpoint commits)
 - Include git notes content
 - Track files changed
@@ -273,24 +303,31 @@ notes: |
   Work Sessions (by day):
   - Day 1 Session 01: [Phase 0] Planning & Analysis (Threads 01-03, 1.2h) ✅ COMPLETE
     * Thread 01: Worktree initialization (0.05h)
-    * Thread 02: Documentation updates (0.15h)
-    * Thread 03: Comprehensive planning (0.75h, 986 lines)
+    * Thread 02: Documentation updates for M2 milestone (0.15h)
+    * Thread 03: Comprehensive tasks initial analysis, planning & implementation roadmap (0.75h, 986 lines)
     * RAW: WORK-SESSIONS-01-THREADS-01-03-SUMMARY-2025-10-31.txt
     * Commits: 4f834f6, 8abc915, d281dcc, d36ea10, 37cf911, 628724b
     * Duration: 07:17-08:30 UTC (1.2h total)
     * Status: ✅ COMPLETE - All planning and setup finished
 
-  - Day 1 Session 02: [Phase 1] Upper Index Implementation (Threads 01-XX)
+  - Day 1 Session 02: [Phase 0] re-analysis & planning for development
+    * Phase 0: Reading and re-Analysis & re-Planning DEEPRESEARCH PRDs and Issues and Tasks for development
+    * Thread ...
+    * RAW: WORK-SESSIONS-02-THREADS-01-XX-SUMMARY-2025-10-31.txt (will be created when Thread 01 begins)
+    * Status: NOT STARTED
+
+  - Day 1 Session 03: [Phase 1] Upper Index Implementation (Threads 01-XX)
     * Phase--Session: Executing Phase 1 (Upper Index) implementation
     * Thread 01: NameIndex design & exact match
     * Thread 02: Prefix match & type filtering
     * Thread 03: Graph integration & benchmarks
     * Expected: ~4-6 hours, name_index.rs + tests
-    * RAW: WORK-SESSIONS-02-THREADS-01-XX-SUMMARY-2025-10-31.txt (will be created when Thread 01 begins)
+    * RAW: WORK-SESSIONS-03-THREADS-01-XX-SUMMARY-2025-10-31.txt (will be created when Thread 01 begins)
     * Status: NOT STARTED
 ```
 
 **Structure**:
+
 - List sessions chronologically
 - Mark completed sessions with ✅ COMPLETE
 - Include thread breakdown
@@ -305,11 +342,13 @@ notes: |
 ### When to Run
 
 **Required**:
+
 - ✅ End of each session (after RAW log created)
 - ✅ Before major push to remote
 - ✅ After significant milestone (phase complete)
 
 **Optional**:
+
 - Mid-session for long sessions (>4h)
 - Before long break
 
@@ -318,17 +357,20 @@ notes: |
 Based on `docs/WORK_SESSION_CHECKPOINT_WORKFLOW.md`:
 
 #### Phase 1: Review & Data Collection
+
 1. Review raw action logs (git log, git diff)
 2. Collect session metrics (commits, files, lines)
 3. Identify all threads in session
 
 #### Phase 2: Consistency Verification
+
 1. Create consistency matrix (git vs. documented)
 2. Verify commit hashes match
 3. Check files changed match
 4. Validate git notes exist
 
 #### Phase 3: Update Artifacts
+
 1. Update `metadata.yaml` (hours, commits, sessions)
 2. Update `YYYY-MM-DD-work-summary.md`
 3. Update `YYYY-MM-DD-commit-log.md`
@@ -336,6 +378,7 @@ Based on `docs/WORK_SESSION_CHECKPOINT_WORKFLOW.md`:
 5. Create RAW log file
 
 #### Phase 4: Git Operations
+
 1. Stage artifact files
 2. Create checkpoint commit
 3. Add git notes to checkpoint commit
@@ -343,6 +386,7 @@ Based on `docs/WORK_SESSION_CHECKPOINT_WORKFLOW.md`:
 5. **Push git notes** to remote (`git push origin refs/notes/commits`)
 
 #### Phase 5: Final Verification
+
 1. Run `./scripts/git-notes-check.sh`
 2. Run `./scripts/checkpoint-helper.sh`
 3. Verify 100% consistency
@@ -354,12 +398,14 @@ Based on `docs/WORK_SESSION_CHECKPOINT_WORKFLOW.md`:
 ### Mistake 1: Thread Numbering Across Sessions
 
 **❌ WRONG**:
+
 ```yaml
 Session 01: Threads 01-03
 Session 02: Threads 04-06  # ❌ Continues numbering
 ```
 
 **✅ CORRECT**:
+
 ```yaml
 Session 01: Threads 01-03
 Session 02: Threads 01-03  # ✅ Resets to 01
@@ -372,6 +418,7 @@ Session 02: Threads 01-03  # ✅ Resets to 01
 ### Mistake 2: Creating RAW Log Before Session Starts
 
 **❌ WRONG**:
+
 ```bash
 # Before starting work
 touch WORK-SESSIONS-02-THREADS-01-XX-SUMMARY-2025-10-31.txt  # ❌ Too early!
@@ -379,6 +426,7 @@ touch WORK-SESSIONS-02-THREADS-01-XX-SUMMARY-2025-10-31.txt  # ❌ Too early!
 ```
 
 **✅ CORRECT**:
+
 ```bash
 # Do all the work first
 # Make commits
@@ -396,14 +444,16 @@ EOF
 ### Mistake 3: Separate RAW Logs Per Thread
 
 **❌ WRONG**:
-```
+
+```text
 WORK-SESSIONS-02-THREAD-01-SUMMARY-2025-10-31.txt  # ❌ One per thread
 WORK-SESSIONS-02-THREAD-02-SUMMARY-2025-10-31.txt
 WORK-SESSIONS-02-THREAD-03-SUMMARY-2025-10-31.txt
 ```
 
 **✅ CORRECT**:
-```
+
+```text
 WORK-SESSIONS-02-THREADS-01-03-SUMMARY-2025-10-31.txt  # ✅ One per session
 ```
 
@@ -414,12 +464,14 @@ WORK-SESSIONS-02-THREADS-01-03-SUMMARY-2025-10-31.txt  # ✅ One per session
 ### Mistake 4: Forgetting to Update actual_hours
 
 **❌ WRONG**:
+
 ```yaml
 # After Session 01 (1.2h) and Session 02 (2.5h)
 actual_hours: 1.2  # ❌ Forgot to add Session 02!
 ```
 
 **✅ CORRECT**:
+
 ```yaml
 # After Session 01 (1.2h) and Session 02 (2.5h)
 actual_hours: 3.7  # ✅ 1.2 + 2.5 = 3.7
@@ -432,13 +484,15 @@ actual_hours: 3.7  # ✅ 1.2 + 2.5 = 3.7
 ### Mistake 5: Missing Git Notes
 
 **❌ WRONG**:
-```bash
+
+```shell
 git commit -m "feat(index): implement NameIndex"
 git push  # ❌ No git notes added!
 ```
 
 **✅ CORRECT**:
-```bash
+
+```shell
 git commit -m "feat(index): implement NameIndex"
 git notes add <hash> -m "..."  # ✅ Add git notes
 git push origin <branch>
@@ -452,12 +506,14 @@ git push origin refs/notes/commits  # ✅ Push notes too!
 ### Mistake 6: Splitting One Session Into Multiple
 
 **❌ WRONG** (User's original understanding):
+
 ```yaml
 Session 01: Threads 01-02 (init + docs)  # ❌ Split incorrectly
 Session 02: Thread 01 (planning)         # ❌ Should be Session 01 Thread 03
 ```
 
 **✅ CORRECT**:
+
 ```yaml
 Session 01: Threads 01-03 (init + docs + planning)  # ✅ All in one session
   * Thread 01: init (0.05h)
@@ -486,7 +542,7 @@ Session 01: Threads 01-03 (init + docs + planning)  # ✅ All in one session
 
 ### RAW Log Naming Template
 
-```
+```text
 WORK-SESSIONS-{NN}-THREADS-{START}-{END}-SUMMARY-{YYYY-MM-DD}.txt
 
 Examples:
@@ -511,7 +567,7 @@ WORK-SESSIONS-03-THREADS-01-02-SUMMARY-2025-11-01.txt (next day)
 
 ### Git Notes Template
 
-```
+```text
 spec-tasks/T-02-02-sparse-index
 Day: 1
 Date: 2025-10-31
@@ -526,22 +582,27 @@ Files: N files (±NNN lines)
 
 ## Files Relationships
 
-```
-.artifacts/spec-tasks-T-02-02-sparse-index/
-├── metadata.yaml                          # Central task metadata
-├── git-refs.txt                            # Git workflow reference
-├── WORKLOG-HANDBOOK.md                     # This file
-└── worklogs/
-    ├── YYYY-MM-DD-work-summary.md          # Daily summary (for PR review)
-    ├── YYYY-MM-DD-commit-log.md            # Commit details (for PR review)
-    ├── YYYY-MM-DD-notes.md                 # Technical notes (for PR review)
-    └── raw/
-        ├── WORK-SESSIONS-01-THREADS-01-03-SUMMARY-2025-10-31.txt  # Session 01 RAW
-        ├── WORK-SESSIONS-02-THREADS-01-XX-SUMMARY-2025-10-31.txt  # Session 02 RAW
-        └── WORK-SESSIONS-03-THREADS-01-XX-SUMMARY-2025-11-01.txt  # Session 03 RAW
+```tree
+.artifacts/
+├── WORKLOG-HANDBOOK.md                     # This handbook (shared across all tasks)
+└── spec-tasks-T-02-02-sparse-index/
+    ├── CLAUDE.md                           # AI assistant quick reference for this task
+    ├── metadata.yaml                       # Central task metadata
+    ├── git-refs.txt                        # Git workflow reference
+    └── worklogs/
+        ├── YYYY-MM-DD-work-summary.md      # Daily summary (for PR review)
+        ├── YYYY-MM-DD-commit-log.md        # Commit details (for PR review)
+        ├── YYYY-MM-DD-notes.md             # Technical notes (for PR review)
+        └── raw/
+            ├── WORK-SESSIONS-01-THREADS-01-03-SUMMARY-2025-10-31.txt  # Session 01 RAW
+            ├── WORK-SESSIONS-02-THREADS-01-XX-SUMMARY-2025-10-31.txt  # Session 02 RAW
+            └── WORK-SESSIONS-03-THREADS-01-XX-SUMMARY-2025-11-01.txt  # Session 03 RAW
 ```
 
 **Purpose of Each**:
+
+- `WORKLOG-HANDBOOK.md`: Shared workflow guide for all tasks (read first!)
+- `CLAUDE.md`: Task-specific quick reference for AI assistants
 - `metadata.yaml`: Source of truth for task progress
 - `YYYY-MM-DD-*.md`: PR documentation (daily view for reviewers)
 - `raw/*.txt`: Session context for AI handoff (detailed view for continuity)
