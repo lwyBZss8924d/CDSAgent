@@ -6,7 +6,7 @@ Task: T-02-02-sparse-index - Sparse Index - Name/ID + BM25 Search
 Date: 2025-10-31
 Session: 03 (Day 1 PM - Phase 1: Upper Index Implementation)
 Threads: 01-XX (to be numbered during work)
-Start Time: 11:33 UTC
+Start Time: 12:02 UTC
 End Time: TBD
 Duration: TBD (~4-6h target)
 Status: 🚧 IN PROGRESS
@@ -23,90 +23,140 @@ Objectives:
 - Create unit tests in tests/index_tests.rs
 - Set up basic benchmarks in benches/search_bench.rs
 
+...
+
 Key Design from Session 02 Research:
 ========================================
 
-NameIndex Architecture:
-```rust
-// Builder pattern for concurrent ingestion
-struct NameIndexBuilder {
-    names: DashMap<String, Vec<GraphNodeIndex>>,
-    type_filters: DashMap<EntityType, HashSet<GraphNodeIndex>>,
-}
-
-// Compact immutable structure for queries
-struct NameIndexInner {
-    sorted_keys: Vec<String>,
-    entity_map: HashMap<String, Vec<EntityMetadata>>,
-    type_index: HashMap<EntityType, Vec<EntityMetadata>>,
-}
-
-pub struct NameIndex(Arc<NameIndexInner>);
-```
-
-Performance Targets:
-- Exact lookup: O(log n) via binary search
-- Prefix query: <10ms for typical prefixes
-- Memory: ~100 bytes per entity (10K entities = ~1MB)
-
-Technical Decisions Locked (Session 02):
-- Use builder pattern: DashMap → Arc<NameIndexInner>
-- Sorted keys for binary search + prefix scanning
-- Type-based filtering support built-in
-- Entity metadata includes: name, type, file path, AST range
+@.artifacts/spec-tasks-T-02-02-sparse-index/worklogs/raw/WORK-SESSIONS-02-THREADS-01-03-SUMMARY-2025-10-31.txt
 
 ================================================================================
-THREAD 01: [TBD - To be filled during work]
+THREAD 01: Phase 1 Kickoff & Implementation Planning
 ================================================================================
-Time: TBD
-Status: 🚧 IN PROGRESS
+Time: 12:02-12:13 UTC
+Status: ✅ COMPLETE
 
 Objective:
-[Implementation objective for Thread 01]
+- Confirm prior checkpoints are closed and establish concrete execution plan for Phase 1 deliverables.
 
 Actions:
-[To be documented as work progresses]
+- Reviewed updated task metadata and Session 02 raw log to validate checkpoint completion and outstanding todos.
+- Inspected `crates/cds-index/src/index/name_index.rs` scaffold to inventory gaps versus specification.
+- Revisited `docs/WORK_SESSION_CHECKPOINT_WORKFLOW.md` for logging expectations before implementation.
+- Drafted execution plan covering NameIndex builder, integration updates, tests, and benchmarks.
+- Replaced placeholder NameIndex module with concurrent builder + immutable lookup backing (`Arc<[NameEntry]>`) and optional kind filtering.
+- Added integration/unit test coverage plus Criterion bench scaffolding to exercise exact/prefix queries and build path.
+- Ran cargo formatting and targeted test suite to validate new functionality.
 
 Key Decisions:
-[Document any technical decisions made]
+- Prioritize solidifying NameIndex APIs and data structures before wiring BM25 scaffolding.
+- Use the new session log to capture incremental progress per thread as coding advances.
+- Normalize keys with trim + lowercase for now; defer richer tokenization to dedicated Phase 2 work.
 
 Code Changes:
-[Track files modified/created]
+- `crates/cds-index/src/index/name_index.rs`
+- `crates/cds-index/src/index/mod.rs`
+- `crates/cds-index/tests/index_tests.rs`
+- `crates/cds-index/benches/search_bench.rs`
+- `.artifacts/.../WORK-SESSIONS-03-THREADS-01-XX-SUMMARY-2025-10-31.txt`
 
 Testing:
-[Unit tests added/run]
+- `cargo test -p cds-index name_index -- --nocapture`
 
 ================================================================================
-THREAD 02: [TBD - To be filled if needed]
+THREAD 02: Upper Index Implementation & Validation
 ================================================================================
-Time: TBD
-Status: ⏳ PENDING
+Time: 12:13-14:48 UTC
+Status: ✅ COMPLETE
 
-[Reserved for additional threads as work continues]
+Objective:
+- Implement the upper NameIndex tier, cover it with focused tests, and seed criterion benchmarks for performance tracking.
+
+Actions:
+- Replaced placeholder NameIndex with DashMap-backed builder and immutable lookup map; added `from_graph` ingestion helper.
+- Implemented exact/prefix search APIs with kind filtering and deduplication of node IDs.
+- Added new unit test suite (`tests/index_tests.rs`) validating exact matches, prefix filters, and graph ingestion behavior.
+- Expanded criterion bench harness to generate synthetic data sets and benchmark exact/prefix lookups and index build.
+- Ran `cargo fmt` to keep workspace style consistent and executed targeted `cargo test -p cds-index name_index -- --nocapture`.
+
+Key Decisions:
+- Store normalized key slices alongside the lookup map to keep prefix scans O(k) on sorted keys.
+- Deduplicate entries by node_id during compaction to avoid duplicates from concurrent inserts.
+- Bench scaffolding uses synthetic data; will swap in recorded fixtures once parity assets are wired in Phase 5.
+
+Code Changes:
+- `crates/cds-index/src/index/name_index.rs`
+- `crates/cds-index/src/index/mod.rs`
+- `crates/cds-index/tests/index_tests.rs`
+- `crates/cds-index/benches/search_bench.rs`
+
+Testing:
+- `cargo test -p cds-index name_index -- --nocapture`
 
 ================================================================================
-THREAD 03: [TBD - To be filled if needed]
+THREAD 03: Validation & Benchmarking
 ================================================================================
-Time: TBD
-Status: ⏳ PENDING
+Time: 14:49-15:05 UTC
+Status: ✅ COMPLETE
 
-[Reserved for additional threads as work continues]
+Objective:
+- Generate coverage and latency/build metrics for the new NameIndex implementation.
+
+Actions:
+- Installed `cargo-llvm-cov` and fetched the `llvm-tools` component for the stable toolchain.
+- Ran `cargo llvm-cov --package cds-index --tests --summary-only --no-clean` to capture coverage (lines 91.65%, functions 80.00% for `index/name_index.rs`).
+- Executed `cargo bench --bench search_bench -- --sample-size=20 --warm-up-time=1` to gather baseline latency/build medians.
+- Recorded benchmark medians: exact match 68.42 ns, prefix match 699.40 ns, index build (1,024 entities) 2.287 ms.
+
+Key Decisions:
+- Accept current coverage shortfall (<95%) and schedule targeted tests in a follow-up thread.
+- Use synthetic datasets as interim benchmark fixtures pending parity integration in Phase 5.
+
+Code Changes:
+- None (tooling + measurements only).
+
+Testing:
+- `cargo llvm-cov --package cds-index --tests --summary-only --no-clean`
+- `cargo bench --bench search_bench -- --sample-size=20 --warm-up-time=1`
+
+================================================================================
+THREAD 04: Coverage Hardening
+================================================================================
+Time: 15:14-15:17 UTC
+Status: ✅ COMPLETE
+
+Objective:
+- Increase `index/name_index.rs` unit coverage above the ≥95% target via additional edge-case tests.
+
+Actions:
+- Added new unit tests (`new_index_is_empty`, `entries_for_exposes_underlying_entries`, `zero_limit_short_circuits_queries`) in `name_index.rs` to exercise untouched API surfaces.
+- Re-ran `cargo fmt` to keep formatting consistent.
+- Executed `cargo llvm-cov --package cds-index --tests --summary-only --no-clean` to confirm updated coverage (lines 97.20%, functions 95.35%).
+
+Key Decisions:
+- Keep coverage tooling in the loop for future sessions; leave LLVM artifacts in place to avoid rebuild overhead.
+
+Code Changes:
+- `crates/cds-index/src/index/name_index.rs`
+
+Testing:
+- `cargo llvm-cov --package cds-index --tests --summary-only --no-clean`
 
 ================================================================================
 SESSION NOTES
 ================================================================================
 
 Implementation Checklist (from Session 02 roadmap):
-- [ ] Create crates/cds-index/src/index/name_index.rs module
-- [ ] Implement NameIndexBuilder struct with DashMap
-- [ ] Implement build() method to compact into NameIndexInner
-- [ ] Implement exact_match() query method
-- [ ] Implement prefix_match() query method
-- [ ] Add entity type filtering support
-- [ ] Wire integration with CodeGraph from graph/mod.rs
-- [ ] Create tests/index_tests.rs with unit tests
-- [ ] Add benchmarks to benches/search_bench.rs
-- [ ] Document public API with rustdoc comments
+- [x] Create crates/cds-index/src/index/name_index.rs module
+- [x] Implement NameIndexBuilder struct with DashMap
+- [x] Implement build() method to compact into NameIndexInner
+- [x] Implement exact_match() query method
+- [x] Implement prefix_match() query method
+- [x] Add entity type filtering support
+- [x] Wire integration with CodeGraph from graph/mod.rs
+- [x] Create tests/index_tests.rs with unit tests
+- [x] Add benchmarks to benches/search_bench.rs
+- [x] Document public API with rustdoc comments
 
 Graph Integration (Dependencies):
 - Graph API: crates/cds-index/src/graph/mod.rs (from T-02-01)
@@ -129,9 +179,9 @@ Benchmark Setup:
 - Use criterion.rs for statistical analysis
 
 Acceptance Criteria Progress (for Phase 1):
-- [ ] Upper index (name/ID HashMap) with prefix matching
-- [ ] Unit test coverage >95% for name_index.rs
-- [ ] Benchmarks show <10ms prefix query latency
+- [x] Upper index (name/ID HashMap) with prefix matching
+- [x] Unit test coverage >95% for name_index.rs (current: 97.20% lines, 95.35% functions)
+- [x] Benchmarks show <10ms prefix query latency (current medians: exact 68 ns, prefix 699 ns)
 
 Follow-up from Session 02:
 - [ ] Extract LocAgent stop-word list (deferred to Phase 2)
@@ -162,4 +212,4 @@ NOTE: This file will be completed at the end of Session 03 with:
 - Challenges encountered and solutions
 - Total session duration and completion status
 
-Last Updated: 2025-10-31 11:33 UTC (Session Start)
+Last Updated: 2025-10-31 15:17 UTC (Threads 01-04 logged)
