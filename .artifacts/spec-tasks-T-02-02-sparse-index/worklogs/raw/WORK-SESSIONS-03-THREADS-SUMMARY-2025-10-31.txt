@@ -1,0 +1,986 @@
+================================================================================
+WORK SESSIONS 03 - IMPLEMENTATION PLANNING & RE-ANALYSIS
+================================================================================
+
+Task: T-02-02-sparse-index - Sparse Index - Name/ID + BM25 Search
+Date: 2025-10-31
+Phase: Day 1 - Session 2
+Thread: 03 (Priority 0 - Planning & Analysis)
+Duration: TBD (planning phase)
+Status: 🔄 IN PROGRESS - Analysis & Design
+
+================================================================================
+PRIORITY 0: COMPREHENSIVE CODEBASE & REQUIREMENTS RE-ANALYSIS
+================================================================================
+
+Objective:
+Create detailed implementation plan based on complete analysis of:
+- Task specifications and acceptance criteria
+- Existing codebase structure (graph builder API)
+- LocAgent reference implementation
+- Parity requirements and test infrastructure
+- Performance targets and benchmarking strategy
+
+Sources Analyzed:
+✅ .artifacts/spec-tasks-T-02-02-sparse-index/metadata.yaml
+✅ .tmp-kanban/20251031/backlog/nextsteps-tasks-analysis-result.txt
+✅ spacs/tasks/0.1.0-mvp/TODO.yaml
+✅ spacs/tasks/0.1.0-mvp/README.md
+✅ spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md
+✅ spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md
+✅ spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+✅ crates/cds-index/src/graph/mod.rs (Graph API)
+✅ crates/cds-index/src/index/mod.rs (placeholder structure)
+
+================================================================================
+SECTION 1: REQUIREMENTS ANALYSIS
+================================================================================
+
+### 1.1 Core Requirements (PRD-02 FR-HI-1, FR-HI-2, FR-HI-3)
+
+**Upper Index (Name/ID Lookup)**:
+- Fast exact match: O(1) average case
+- Prefix matching: return all entities starting with prefix
+- Type filtering: filter results by NodeKind (Class, Function, etc.)
+- Case handling: support case-insensitive search
+- Data structure: HashMap<String, Vec<EntityID>>
+
+**Lower Index (BM25 Content Search)**:
+- BM25 parameters: k1=1.5, b=0.75 (standard Okapi BM25)
+- Inverted index: term → (entity_id, tf, positions)
+- Tokenization: camelCase/snake_case splitting, stop word removal
+- Indexed content: function/method bodies, class definitions, docstrings
+- Search API: query → Vec<ScoredEntity> ranked by BM25 score
+
+**Hierarchical Search Strategy**:
+1. Query arrives: "sanitize user input"
+2. Check upper index (exact + prefix match)
+3. If upper results < threshold (default: 5):
+   → Fall back to BM25 lower index
+4. Merge and deduplicate results
+5. Return top K entities (K=10 default)
+
+### 1.2 Acceptance Criteria (from T-02-02-sparse-index.md)
+
+- [ ] Exact match, prefix match, case-insensitive lookup supported
+- [ ] BM25 fallback triggered when upper index < threshold (default 5 results)
+- [ ] Tokenization and scoring parity within ±5% of LocAgent outputs
+- [ ] Benchmarks recorded in crates/cds-index/benches/README.md
+- [ ] Search overlap@10 ≥90% on 50 queries (tests/fixtures/parity/golden_outputs/search_queries.jsonl)
+- [ ] Unit test coverage >95%
+
+### 1.3 Performance Targets (PRD-02 FR-P)
+
+- Search latency: <500ms p95 on 10K file repositories
+- Index build time: <5s for 1K files
+- Memory usage: <2GB for 10K files
+- Query throughput: TBD (establish baseline)
+
+### 1.4 Deliverables
+
+Code Modules:
+✅ crates/cds-index/src/index/mod.rs (module definition) - stub exists
+⏳ crates/cds-index/src/index/name_index.rs (upper index) - stub exists
+⏳ crates/cds-index/src/index/bm25.rs (lower index) - stub exists
+⏳ crates/cds-index/src/index/tokenizer.rs (NEW - tokenization utilities)
+⏳ crates/cds-index/src/index/search.rs (NEW - hierarchical query pipeline)
+
+Test Infrastructure:
+⏳ crates/cds-index/tests/index_tests.rs (unit tests)
+⏳ crates/cds-index/tests/search_parity_tests.rs (parity validation)
+
+Benchmarks:
+⏳ crates/cds-index/benches/search_bench.rs (performance benchmarks)
+⏳ crates/cds-index/benches/README.md (benchmark documentation)
+
+================================================================================
+SECTION 2: GRAPH BUILDER API ANALYSIS (T-02-01 OUTPUT)
+================================================================================
+
+### 2.1 Available Graph API (crates/cds-index/src/graph/mod.rs)
+
+**Public Types** (ready for indexing):
+
+```rust
+// Node representation
+pub struct GraphNode {
+    pub kind: NodeKind,           // Directory, File, Class, Function
+    pub fqn: String,              // Fully-qualified name (e.g., "module.Class.method")
+    pub file_path: PathBuf,       // Source file path
+    pub range: SourceRange,       // Line range (start_line, end_line)
+    // ... other fields
+}
+
+// Node kinds (4 types)
+pub enum NodeKind {
+    Directory,
+    File,
+    Class,
+    Function,
+}
+
+// Edge kinds (4 types)
+pub enum EdgeKind {
+    Contain,    // Parent-child structure
+    Import,     // Import dependencies
+    Invoke,     // Function calls
+    Inherit,    // Class inheritance
+}
+
+// Main graph structure
+pub struct Graph {
+    storage: StableDiGraph<GraphNode, GraphEdge>,
+    root: NodeIndex,
+    fqn_map: HashMap<String, NodeIndex>,
+    // ... other fields
+}
+```
+
+**Public Methods** (for index building):
+
+```rust
+// Access all nodes
+graph.nodes() -> impl Iterator<Item = (NodeIndex, &GraphNode)>
+
+// Lookup by FQN
+graph.get_node_by_fqn(&str) -> Option<&GraphNode>
+
+// Access node by index
+graph.get_node(NodeIndex) -> Option<&GraphNode>
+
+// Get edges
+graph.edges_directed(NodeIndex, Direction) -> impl Iterator<Item = EdgeIndex>
+```
+
+**Integration Strategy**:
+- Iterate over graph.nodes() to extract entities for indexing
+- Filter by NodeKind: index Class and Function nodes (skip Directory, File)
+- Use node.fqn for name index keys
+- Use file content at node.range for BM25 document bodies
+- Node.kind for entity type filtering
+
+### 2.2 Parity Baselines Available (T-02-01 + T-06-01 Output)
+
+**Graph Baselines** (T-02-01):
+- tests/fixtures/parity/golden_outputs/graph_*.json (6 repos)
+- All fixtures have ≤2% variance from LocAgent
+- Node counts: 658 to 6,876 nodes per repository
+
+**Search Baselines** (T-06-01):
+- tests/fixtures/parity/golden_outputs/search_queries.jsonl (50 queries)
+- Format: {"query": "...", "repo": "...", "expected_results": [...]}
+- Target: ≥90% overlap@10 with LocAgent results
+- Note: Only LocAgent repo has complete baselines (llama-index limitation)
+
+**Traverse Baselines** (T-06-01):
+- tests/fixtures/parity/golden_outputs/traverse_samples.jsonl (60 scenarios)
+- Can be used for integration testing after search is implemented
+
+================================================================================
+SECTION 3: LOCAGENT REFERENCE ANALYSIS
+================================================================================
+
+### 3.1 LocAgent Search Architecture (tmp/LocAgent/)
+
+**Upper Index** (dependency_graph/traverse_graph.py:61-101):
+```python
+# RepoEntitySearcher builds name dictionaries
+self.entity_dict = {}  # exact name → entity
+self.lower_entity_dict = {}  # lowercase name → entity
+# Skips test files, __init__.py, etc.
+```
+
+**Search Flow** (plugins/location_tools/repo_ops/repo_ops.py:287-343):
+```python
+def search_entity(query: str, entity_type: str = None):
+    # 1. Exact match in graph
+    if entity in graph.nodes:
+        return [entity]
+
+    # 2. Name dictionary scan (with wildcard/prefix)
+    matches = name_dict_scan(query)
+    if matches:
+        return matches
+
+    # 3. BM25 fallback
+    return bm25_module_retrieve(query, top_k=10)
+```
+
+**BM25 Implementation** (plugins/location_tools/retriever/bm25_retriever.py:35-113):
+```python
+# Uses llama-index with Tantivy backend
+# Tokenizer: camelCase/snake_case splitting
+# Stemming: Porter stemmer
+# Document chunking: EpicSplitter (max_chunk_size=512)
+# BM25 parameters: k1=1.5, b=0.75
+```
+
+**Key Insights for Rust Implementation**:
+1. Upper index checked first (exact + lowercase)
+2. Name matching supports wildcards (*) and prefix
+3. BM25 fallback only if upper results insufficient
+4. Short queries (<3 chars) may skip BM25
+5. Results are reranked and deduplicated
+
+### 3.2 Tokenization Strategy
+
+LocAgent Tokenizer (repo_index/utils/tokenization.py):
+- Splits on: camelCase, snake_case, dots, underscores
+- Removes: stop words (common terms like "the", "a", "is")
+- Stemming: Porter stemmer (optional)
+- Example: "getUserProfile" → ["get", "user", "profile"]
+
+**Rust Implementation Options**:
+1. Custom tokenizer (full control, exact parity)
+2. Tantivy default analyzer (fast, may diverge)
+3. Hybrid: custom tokenizer + Tantivy indexing
+
+**Recommendation**: Start with custom tokenizer (Phase 2, Day 3)
+
+### 3.3 Parity Validation Strategy
+
+**Test Harness**:
+- Load search_queries.jsonl (50 queries)
+- For each query:
+  - Run Rust implementation
+  - Compare top-10 results with LocAgent baseline
+  - Calculate overlap@10 (Jaccard similarity)
+- Target: ≥90% average overlap
+
+**Potential Divergences**:
+- Tokenization differences (camelCase splitting)
+- BM25 scoring precision (floating point differences)
+- Tie-breaking in ranking (deterministic sort needed)
+
+================================================================================
+SECTION 4: IMPLEMENTATION PLAN (6-DAY ROADMAP)
+================================================================================
+
+### Phase 1: Upper Index - Name/ID HashMap (Days 1-2)
+
+**Day 1 Objectives**:
+- [ ] Design NameIndex struct with public API
+- [ ] Implement exact match (HashMap lookup)
+- [ ] Implement prefix match (scan keys)
+- [ ] Add entity type filtering
+- [ ] Write unit tests for basic operations
+
+**Day 1 Deliverables**:
+- crates/cds-index/src/index/name_index.rs (200-300 lines)
+- crates/cds-index/tests/index_tests.rs (50-100 lines)
+
+**Day 2 Objectives**:
+- [ ] Add case-insensitive search
+- [ ] Optimize prefix matching (consider trie structure)
+- [ ] Add benchmark tests for upper index
+- [ ] Integration with Graph API (load from graph.nodes())
+- [ ] Edge case handling (empty queries, special chars)
+
+**Day 2 Deliverables**:
+- Enhanced name_index.rs with optimizations
+- crates/cds-index/benches/search_bench.rs (basic framework)
+- Unit test coverage >80%
+
+**API Design** (name_index.rs):
+```rust
+pub struct NameIndex {
+    exact_map: HashMap<String, Vec<EntityId>>,
+    lower_map: HashMap<String, Vec<EntityId>>,  // Case-insensitive
+    // Future: prefix_trie for faster prefix matching
+}
+
+pub struct EntityId {
+    node_id: NodeIndex,
+    fqn: String,
+    kind: NodeKind,
+}
+
+impl NameIndex {
+    pub fn new() -> Self;
+    pub fn insert(&mut self, fqn: String, id: EntityId);
+    pub fn search_exact(&self, query: &str) -> Vec<EntityId>;
+    pub fn search_prefix(&self, prefix: &str) -> Vec<EntityId>;
+    pub fn search_case_insensitive(&self, query: &str) -> Vec<EntityId>;
+    pub fn filter_by_kind(&self, results: Vec<EntityId>, kind: NodeKind) -> Vec<EntityId>;
+}
+```
+
+### Phase 2: Tokenizer (Day 3)
+
+**Day 3 Objectives**:
+- [ ] Implement custom tokenizer (camelCase/snake_case splitting)
+- [ ] Add stop word filtering
+- [ ] Match LocAgent tokenization behavior
+- [ ] Unit tests for tokenization edge cases
+- [ ] Benchmark tokenizer performance
+
+**Day 3 Deliverables**:
+- crates/cds-index/src/index/tokenizer.rs (150-200 lines)
+- Unit tests for tokenizer (30-50 lines)
+
+**API Design** (tokenizer.rs):
+```rust
+pub struct Tokenizer {
+    stop_words: HashSet<String>,
+}
+
+impl Tokenizer {
+    pub fn new() -> Self;
+    pub fn tokenize(&self, text: &str) -> Vec<String>;
+
+    // Utilities
+    fn split_camel_case(s: &str) -> Vec<String>;
+    fn split_snake_case(s: &str) -> Vec<String>;
+    fn is_stop_word(&self, word: &str) -> bool;
+}
+
+// Example usage
+let tokenizer = Tokenizer::new();
+let tokens = tokenizer.tokenize("getUserProfile");
+// → ["get", "user", "profile"]
+```
+
+### Phase 3: BM25 Lower Index (Days 3-5)
+
+**Decision Point**: Tantivy vs Custom BM25
+
+**Option A: Tantivy** (recommended for MVP):
+- Pros: Production-ready, optimized, Rust-native
+- Cons: May have tokenization divergence (need custom analyzer)
+- Effort: 1-2 days integration
+
+**Option B: Custom BM25**:
+- Pros: Full control, exact parity with LocAgent
+- Cons: More implementation work, need to optimize
+- Effort: 2-3 days implementation
+
+**Recommendation**: Prototype both, start with Tantivy
+
+**Day 3 (cont.) - Day 4 Objectives**:
+- [ ] Evaluate Tantivy integration vs custom BM25
+- [ ] Implement BM25Index struct with chosen approach
+- [ ] Index entity content (function bodies, class defs)
+- [ ] Implement BM25 search with k1=1.5, b=0.75
+- [ ] Unit tests for BM25 scoring
+
+**Day 5 Objectives**:
+- [ ] Optimize BM25 query performance
+- [ ] Add query result highlighting (matched terms)
+- [ ] Memory profiling and optimization
+- [ ] Benchmark BM25 search latency
+- [ ] Edge case handling (empty corpus, short queries)
+
+**Day 5 Deliverables**:
+- crates/cds-index/src/index/bm25.rs (300-500 lines)
+- Unit tests for BM25 (50-100 lines)
+- Benchmark tests for BM25
+
+**API Design** (bm25.rs):
+```rust
+pub struct BM25Index {
+    // Tantivy schema + index
+    // OR custom inverted index
+    k1: f32,  // 1.5
+    b: f32,   // 0.75
+}
+
+pub struct ScoredEntity {
+    entity_id: EntityId,
+    score: f32,
+    matched_terms: Vec<String>,
+}
+
+impl BM25Index {
+    pub fn new(k1: f32, b: f32) -> Self;
+    pub fn add_document(&mut self, id: EntityId, content: &str);
+    pub fn search(&self, query: &str, limit: usize) -> Vec<ScoredEntity>;
+    pub fn build_from_graph(&mut self, graph: &Graph);
+}
+```
+
+### Phase 4: Hierarchical Search Strategy (Day 6)
+
+**Day 6 Objectives**:
+- [ ] Implement search pipeline (upper → BM25 fallback)
+- [ ] Result merging and deduplication
+- [ ] Ranking and top-K selection
+- [ ] Query optimization (caching, short-circuit)
+- [ ] Integration tests with real graph data
+
+**Day 6 Deliverables**:
+- crates/cds-index/src/index/search.rs (200-300 lines)
+- Integration tests (50-100 lines)
+
+**API Design** (search.rs):
+```rust
+pub struct HierarchicalSearcher {
+    name_index: NameIndex,
+    bm25_index: BM25Index,
+    upper_threshold: usize,  // Default: 5
+}
+
+pub struct SearchQuery {
+    query: String,
+    entity_type: Option<NodeKind>,
+    limit: usize,  // Default: 10
+}
+
+pub struct SearchResult {
+    entity_id: EntityId,
+    score: f32,
+    source: SearchSource,  // Upper or BM25
+}
+
+pub enum SearchSource {
+    UpperIndex,
+    BM25Fallback,
+}
+
+impl HierarchicalSearcher {
+    pub fn new(name_index: NameIndex, bm25_index: BM25Index) -> Self;
+    pub fn search(&self, query: SearchQuery) -> Vec<SearchResult>;
+
+    // Internal pipeline
+    fn search_upper(&self, query: &str) -> Vec<EntityId>;
+    fn search_bm25(&self, query: &str) -> Vec<ScoredEntity>;
+    fn merge_results(&self, upper: Vec<EntityId>, bm25: Vec<ScoredEntity>) -> Vec<SearchResult>;
+}
+```
+
+### Phase 5: Parity & Benchmarking (Days 7-8)
+
+**Day 7 Objectives**:
+- [ ] Implement parity test harness
+- [ ] Run 50 queries from search_queries.jsonl
+- [ ] Measure overlap@10 with LocAgent
+- [ ] Identify and fix parity gaps
+- [ ] Tune BM25 parameters if needed
+
+**Day 7 Deliverables**:
+- crates/cds-index/tests/search_parity_tests.rs (100-150 lines)
+- Parity report: overlap@10 scores per query
+- Target: ≥90% average overlap
+
+**Day 8 Objectives**:
+- [ ] Run comprehensive benchmarks
+- [ ] Measure search latency (p50, p95, p99)
+- [ ] Measure index build time
+- [ ] Memory profiling
+- [ ] Generate benchmark report
+- [ ] Document results in benches/README.md
+
+**Day 8 Deliverables**:
+- Complete benchmark suite
+- crates/cds-index/benches/README.md (documentation)
+- Performance report (meet <500ms p95 target)
+
+**Benchmark Structure**:
+```rust
+// crates/cds-index/benches/search_bench.rs
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+
+fn bench_upper_index_exact(c: &mut Criterion) {
+    // Benchmark exact match
+}
+
+fn bench_upper_index_prefix(c: &mut Criterion) {
+    // Benchmark prefix search
+}
+
+fn bench_bm25_search(c: &mut Criterion) {
+    // Benchmark BM25 query
+}
+
+fn bench_hierarchical_search(c: &mut Criterion) {
+    // Benchmark full pipeline
+}
+
+criterion_group!(benches,
+    bench_upper_index_exact,
+    bench_upper_index_prefix,
+    bench_bm25_search,
+    bench_hierarchical_search
+);
+criterion_main!(benches);
+```
+
+================================================================================
+SECTION 5: TECHNICAL ARCHITECTURE & DESIGN DECISIONS
+================================================================================
+
+### 5.1 Module Structure
+
+```
+crates/cds-index/src/index/
+├── mod.rs              # Public API, module exports
+├── name_index.rs       # Upper index (HashMap-based)
+├── bm25.rs             # Lower index (BM25 implementation)
+├── tokenizer.rs        # Tokenization utilities
+└── search.rs           # Hierarchical search pipeline
+```
+
+### 5.2 Data Flow
+
+```
+1. Index Building (one-time, from Graph):
+   Graph → extract entities → name_index + bm25_index
+
+2. Query Execution (runtime):
+   Query → name_index.search() → results < threshold?
+       ↓ yes                           ↓ no
+   bm25_index.search()            return upper results
+       ↓
+   merge & deduplicate
+       ↓
+   return top-K
+```
+
+### 5.3 Key Design Decisions
+
+**Decision 1: Upper Index Data Structure**
+- Choice: HashMap<String, Vec<EntityId>> + HashMap<String, Vec<EntityId>> (lowercase)
+- Rationale: O(1) exact match, simple prefix scan
+- Future optimization: Trie for faster prefix matching (v0.2.0)
+
+**Decision 2: BM25 Implementation**
+- Phase 3 prototype: Tantivy vs custom
+- Criteria: Tokenization parity, performance, maintainability
+- Fallback: Custom if Tantivy diverges >5%
+
+**Decision 3: Tokenization Strategy**
+- Choice: Custom tokenizer (camelCase/snake_case splitting)
+- Rationale: Must match LocAgent behavior for parity
+- Integration: Feed custom tokens to Tantivy (if used)
+
+**Decision 4: Result Merging**
+- Choice: Deduplicate by EntityId, prefer upper index scores
+- Rationale: Upper index is more precise (name-based)
+- Tie-breaking: Deterministic sort by FQN
+
+**Decision 5: Thread Safety**
+- Requirement: Index must be thread-safe (service layer needs concurrent access)
+- Choice: Use Arc<RwLock<NameIndex>> and Arc<RwLock<BM25Index>>
+- Alternative: Consider DashMap for lockless concurrent HashMap
+
+### 5.4 Performance Optimization Strategies
+
+**Memory**:
+- Lazy loading: Load index from disk on demand (mmap)
+- Compression: Store compressed BM25 index
+- Pooling: Reuse tokenization buffers
+
+**Latency**:
+- Caching: LRU cache for frequent queries
+- Parallelization: Use rayon for prefix matching
+- Query optimization: Short-circuit if upper results sufficient
+
+**Index Build**:
+- Parallel indexing: Multi-threaded document processing
+- Incremental updates: Support partial rebuilds (v0.2.0)
+
+================================================================================
+SECTION 6: TEST STRATEGY & COVERAGE PLAN
+================================================================================
+
+### 6.1 Unit Tests (crates/cds-index/tests/index_tests.rs)
+
+**NameIndex Tests**:
+- [ ] Exact match (single result)
+- [ ] Exact match (multiple results)
+- [ ] Prefix match (empty prefix → all)
+- [ ] Prefix match (partial prefix)
+- [ ] Case-insensitive search
+- [ ] Entity type filtering
+- [ ] Empty query handling
+- [ ] Special character handling
+- [ ] Unicode support
+
+**Tokenizer Tests**:
+- [ ] camelCase splitting
+- [ ] snake_case splitting
+- [ ] Mixed case handling
+- [ ] Stop word removal
+- [ ] Empty string
+- [ ] Special characters
+- [ ] Unicode text
+
+**BM25Index Tests**:
+- [ ] BM25 scoring correctness
+- [ ] Parameter sensitivity (k1, b)
+- [ ] Empty corpus
+- [ ] Single document
+- [ ] Large corpus (1000+ documents)
+- [ ] Query with no matches
+- [ ] Query with all documents matching
+
+**HierarchicalSearcher Tests**:
+- [ ] Upper index hits (no BM25)
+- [ ] BM25 fallback triggered
+- [ ] Result merging
+- [ ] Deduplication
+- [ ] Ranking correctness
+- [ ] Entity type filtering in pipeline
+
+**Target**: >95% unit test coverage
+
+### 6.2 Parity Tests (crates/cds-index/tests/search_parity_tests.rs)
+
+**Test Structure**:
+```rust
+#[test]
+fn test_search_parity_50_queries() {
+    let queries = load_search_queries("tests/fixtures/parity/golden_outputs/search_queries.jsonl");
+    let graph = load_test_graph("locagent");
+    let searcher = build_searcher(&graph);
+
+    let mut overlaps = Vec::new();
+    for query in queries {
+        let rust_results = searcher.search(query.query, 10);
+        let locagent_results = query.expected_results;
+        let overlap = calculate_overlap_at_10(&rust_results, &locagent_results);
+        overlaps.push(overlap);
+    }
+
+    let avg_overlap = overlaps.iter().sum::<f32>() / overlaps.len() as f32;
+    assert!(avg_overlap >= 0.90, "Overlap@10 {} < 90%", avg_overlap);
+}
+```
+
+**Metrics**:
+- Overlap@10: Jaccard similarity of top-10 results
+- Per-query breakdown: Identify failing queries
+- Divergence analysis: Tokenization vs scoring vs ranking
+
+### 6.3 Benchmark Tests (crates/cds-index/benches/search_bench.rs)
+
+**Benchmark Suite**:
+- Upper index exact match: 1K, 10K, 100K entities
+- Upper index prefix match: various prefix lengths
+- BM25 search: short queries (2-3 words), long queries (5+ words)
+- Hierarchical search: end-to-end pipeline
+- Index build: 100, 1K, 10K files
+
+**Metrics**:
+- Latency: p50, p95, p99, p999
+- Throughput: queries per second
+- Memory: peak RSS, allocated bytes
+- Index size: disk usage
+
+**Criterion.rs Configuration**:
+- Warm-up: 3 iterations
+- Measurement: 100 iterations
+- Sample size: 100
+- Confidence level: 0.95
+
+### 6.4 Integration Tests
+
+**Graph Integration**:
+- [ ] Load graph from T-02-01 test fixtures
+- [ ] Build index from graph
+- [ ] Query index with realistic queries
+- [ ] Verify results match expected entities
+
+**End-to-End**:
+- [ ] Index 6 parity repositories
+- [ ] Run search queries
+- [ ] Measure latency and accuracy
+- [ ] Compare with LocAgent baselines
+
+================================================================================
+SECTION 7: RISK ANALYSIS & MITIGATION
+================================================================================
+
+### 7.1 Technical Risks
+
+**Risk 1: Tokenization Mismatch**
+- Impact: Parity tests fail (<90% overlap)
+- Probability: High (custom tokenizer is tricky)
+- Mitigation:
+  - Prototype tokenizer early (Day 3)
+  - Compare token outputs with LocAgent on sample text
+  - Add tokenizer-specific parity tests
+
+**Risk 2: BM25 Scoring Divergence**
+- Impact: Ranking differs from LocAgent
+- Probability: Medium (floating point precision, implementation details)
+- Mitigation:
+  - Use exact BM25 parameters (k1=1.5, b=0.75)
+  - Round scores to reasonable precision
+  - Document known divergences
+
+**Risk 3: Performance Targets Not Met**
+- Impact: <500ms p95 latency goal missed
+- Probability: Low (BM25 is well-understood)
+- Mitigation:
+  - Benchmark early and often
+  - Profile hot paths with flamegraph
+  - Optimize incrementally (parallelization, caching)
+
+**Risk 4: Graph Builder API Changes**
+- Impact: Index code breaks if T-02-01 PR #6 has breaking changes
+- Probability: Low (PR under review, likely stable)
+- Mitigation:
+  - Monitor T-02-01 PR #6 for updates
+  - Use public API only (avoid internal details)
+  - Write adapter layer if API changes
+
+**Risk 5: Test Infrastructure Gaps**
+- Impact: Can't validate parity or performance
+- Probability: Low (baselines exist from T-06-01)
+- Mitigation:
+  - Verify search_queries.jsonl exists and is usable
+  - Create synthetic test data if needed
+  - Document baseline limitations
+
+### 7.2 Schedule Risks
+
+**Risk: Underestimated Complexity**
+- Current estimate: 6-8 days (4 days × 8 hours = 32 hours)
+- Contingency: Phase 3 BM25 may take longer if custom implementation needed
+- Mitigation:
+  - Front-load research and prototyping
+  - Have daily checkpoint meetings
+  - Adjust plan after Phase 2 based on progress
+
+**Risk: Blocked by Dependencies**
+- Dependencies: T-02-01 complete ✅
+- Potential: T-02-01 PR changes during T-02-02 development
+- Mitigation:
+  - Coordinate with T-02-01 reviewer
+  - Use stable main branch as baseline
+
+### 7.3 Quality Risks
+
+**Risk: Test Coverage <95%**
+- Impact: Acceptance criteria not met
+- Mitigation:
+  - Write tests alongside implementation (TDD)
+  - Use cargo-tarpaulin for coverage tracking
+  - Review coverage after each phase
+
+**Risk: Parity <90%**
+- Impact: Blocks T-02-03 and T-03-01
+- Mitigation:
+  - Validate tokenizer early
+  - Debug failing queries iteratively
+  - Document known divergences if unavoidable
+
+================================================================================
+SECTION 8: DEVELOPMENT ENVIRONMENT & TOOLS
+================================================================================
+
+### 8.1 Required Dependencies
+
+**Existing** (in Cargo.toml):
+- petgraph: Graph data structures
+- serde/serde_json: Serialization
+- tokio: Async runtime
+- dashmap: Concurrent HashMap
+
+**New** (to add):
+- tantivy: BM25 search engine (if chosen)
+- criterion: Benchmarking framework
+- unicode-segmentation: Unicode text handling
+- rayon: Parallelization
+
+**Dev Dependencies**:
+- cargo-tarpaulin: Code coverage
+- flamegraph: Performance profiling
+- valgrind/heaptrack: Memory profiling
+
+### 8.2 Development Workflow
+
+**Daily Workflow**:
+1. Start of day: Update daily worklog objectives
+2. Implementation: Write code + tests
+3. Verification: cargo test, cargo clippy
+4. Checkpoint: Update worklogs, commit, push with git notes
+5. End of day: Create raw summary for next session
+
+**Quality Gates**:
+- All tests pass: cargo test --all
+- No warnings: cargo clippy --all-targets
+- Formatted: cargo fmt --all
+- Coverage tracked: cargo tarpaulin
+
+### 8.3 Testing Commands
+
+```bash
+# Unit tests
+cargo test --lib
+
+# Integration tests
+cargo test --test index_tests
+cargo test --test search_parity_tests
+
+# Benchmarks
+cargo bench --bench search_bench
+
+# Coverage
+cargo tarpaulin --out Html
+
+# Performance profiling
+cargo flamegraph --bench search_bench
+
+# Memory profiling
+valgrind --tool=massif target/release/index_bench
+```
+
+================================================================================
+SECTION 9: NEXT IMMEDIATE ACTIONS (THREAD 04)
+================================================================================
+
+### Thread 04 Priority: Upper Index Design & Implementation (Day 1)
+
+**Before Starting Code**:
+1. [ ] Review LocAgent name dictionary implementation
+   - File: tmp/LocAgent/dependency_graph/traverse_graph.py:61-101
+   - Understand: entity_dict structure, filtering logic
+
+2. [ ] Study Graph API documentation
+   - File: crates/cds-index/src/graph/mod.rs
+   - Understand: GraphNode, NodeKind, iteration methods
+
+3. [ ] Set up test fixtures
+   - Copy graph test data from T-02-01
+   - Verify search_queries.jsonl is accessible
+
+**Implementation Tasks** (Day 1, 4-6 hours):
+
+1. **Design NameIndex struct** (1 hour):
+   - Define public API (search_exact, search_prefix, etc.)
+   - Design internal data structures (HashMap layout)
+   - Write API documentation
+
+2. **Implement exact match** (1 hour):
+   - HashMap<String, Vec<EntityId>> storage
+   - Insert method
+   - search_exact method
+   - Unit tests (5-10 tests)
+
+3. **Implement prefix match** (1.5 hours):
+   - Scan HashMap keys for prefix
+   - Optimize with prefix grouping
+   - Unit tests (5-10 tests)
+
+4. **Add entity type filtering** (0.5 hours):
+   - Filter results by NodeKind
+   - Unit tests (3-5 tests)
+
+5. **Integration with Graph** (1 hour):
+   - Load entities from Graph
+   - Build index from graph.nodes()
+   - Integration test with real graph
+
+**Expected Output** (End of Day 1):
+- crates/cds-index/src/index/name_index.rs (~200 lines)
+- crates/cds-index/tests/index_tests.rs (~50 lines)
+- Unit test coverage ~70%
+- All tests passing
+
+**Checkpoint** (End of Day 1):
+- Commit code with conventional commit message
+- Add git notes with session metadata
+- Update daily worklog
+- Create raw summary for Day 2 planning
+
+================================================================================
+SECTION 10: SUCCESS CRITERIA & EXIT CONDITIONS
+================================================================================
+
+### 10.1 Phase Completion Criteria
+
+**Phase 1 Complete** (Upper Index):
+✅ NameIndex struct with full API implemented
+✅ Unit tests passing (>80% coverage)
+✅ Integration test loading from Graph
+✅ Basic benchmarks recorded
+
+**Phase 2 Complete** (Tokenizer):
+✅ Custom tokenizer matching LocAgent behavior
+✅ camelCase/snake_case splitting working
+✅ Stop word filtering implemented
+✅ Unit tests passing (>90% coverage)
+
+**Phase 3 Complete** (BM25):
+✅ BM25Index struct implemented (Tantivy or custom)
+✅ k1=1.5, b=0.75 parameters configured
+✅ Search returns ranked results
+✅ Unit tests passing (>80% coverage)
+
+**Phase 4 Complete** (Hierarchical Search):
+✅ HierarchicalSearcher combining upper + BM25
+✅ Fallback threshold working (default: 5)
+✅ Result merging and deduplication
+✅ Integration tests passing
+
+**Phase 5 Complete** (Parity & Benchmarks):
+✅ Parity tests: ≥90% overlap@10 on 50 queries
+✅ Benchmarks: <500ms p95 search latency
+✅ All acceptance criteria met
+✅ Documentation complete
+
+### 10.2 Task Completion Criteria (T-02-02)
+
+From metadata.yaml acceptance_criteria:
+
+- [ ] Upper index (name/ID HashMap) with prefix matching
+- [ ] Lower index (BM25 k1=1.5, b=0.75)
+- [ ] Search latency <500ms p95
+- [ ] Index build <5s for 1K files
+- [ ] Search overlap@10 ≥90% on 50 queries
+- [ ] Unit test coverage >95%
+
+### 10.3 Ready to Unblock (T-02-03, T-03-01)
+
+**When T-02-02 is complete**:
+- Service layer (T-02-03) can start implementing search endpoint
+- CLI tools (T-03-01) can start implementing search command
+- M2 milestone can be marked complete
+
+================================================================================
+END OF WORK SESSIONS 03 - IMPLEMENTATION PLANNING
+================================================================================
+
+Generated: 2025-10-31T16:30:00Z
+Thread Owner: Claude Code Agent + Rust Dev 2
+Status: ✅ ANALYSIS COMPLETE - Ready for Thread 04 (Implementation)
+Next Session: Day 1 Session 3 - Upper Index Implementation (Thread 04)
+
+================================================================================
+APPENDIX: QUICK REFERENCE
+================================================================================
+
+**Key Files**:
+- Task spec: spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md
+- Detailed issue: spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md
+- PRD requirements: spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+- Graph API: crates/cds-index/src/graph/mod.rs
+- LocAgent reference: tmp/LocAgent/plugins/location_tools/retriever/bm25_retriever.py
+
+**Quick Commands**:
+```bash
+# Build
+cargo build --release
+
+# Test
+cargo test --all
+cargo test --test index_tests
+
+# Benchmark
+cargo bench --bench search_bench
+
+# Coverage
+cargo tarpaulin --out Html
+
+# Format & Lint
+cargo fmt --all
+cargo clippy --all-targets
+```
+
+**Daily Workflow**:
+1. Create daily worklog: ./scripts/create-daily-worklog.sh T-02-02-sparse-index
+2. Implement + test
+3. Checkpoint: commit code, add git notes, update worklogs
+4. Create raw summary for next session
+5. Push: git push origin feat/task/T-02-02-sparse-index && git push origin refs/notes/commits
