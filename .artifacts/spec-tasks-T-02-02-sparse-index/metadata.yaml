@@ -67,16 +67,33 @@ metrics:
   test_coverage: 0.0
 
 notes: |
-  Implementation roadmap (6-8 days):
-  - Phase 0 (Day 1): Priority 0 - Planning & Analysis
-  - Phase 1 (Day 1): Upper Index - Name/ID HashMap
-  - Phase 2 (Day 1): Custom Tokenizer
-  - Phase 3 (Day 1): BM25 Lower Index (Tantivy or custom)
-  - Phase 4 (Days 2): Hierarchical Search Strategy
-  - Phase 5 (Days 2): Parity & Benchmarking
-  - Phase 6 (Day 1): Testing & Validation & pre-PR)
+  Implementation Phases (technical stages, 6-8 days total):
+  - Phase 1: Upper Index - Name/ID HashMap (Day 1)
+  - Phase 2: Custom Tokenizer (Day 1)
+  - Phase 3: BM25 Lower Index - Tantivy or custom (Days 1-2)
+  - Phase 4: Hierarchical Search Strategy (Day 1)
+  - Phase 5: Parity & Benchmarking (Day 3)
+
+  Work Sessions (by day):
+  - Day 1 Session 01: Planning & Analysis (Threads 01-03, 1.2h) ✅ COMPLETE
+    * Thread 01: Worktree initialization (0.05h)
+    * Thread 02: Documentation updates (0.15h)
+    * Thread 03: Comprehensive planning (0.75h)
+    * RAW: WORK-SESSIONS-01-THREADS-01-03-SUMMARY-2025-10-31.txt
+    * Commits: 4f834f6, 8abc915, d281dcc, d36ea10, 37cf911
+
+  - Day 1 Session 02: Phase 1 Implementation - Upper Index (Threads 04+, TBD)
+    * Thread 04: NameIndex design & exact match
+    * Thread 05: Prefix match & type filtering
+    * Thread 06: Graph integration & benchmarks
+    * Expected: ~4-6 hours, name_index.rs + tests
 
   Technical risks:
   - Tokenization mismatch with LocAgent
   - BM25 parameter tuning for 90% overlap
   - Memory usage for large repos
+
+  Session/Thread/Phase definitions:
+  - Session: Work period (1-8 hours), one RAW log file
+  - Thread: Continuous work unit (30min-2h), numbered sequentially
+  - Phase: Implementation stage (Upper Index, Tokenizer, BM25, etc.)
