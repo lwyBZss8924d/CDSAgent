@@ -84,8 +84,7 @@ impl AstModuleData {
     }
 }
 
-#[derive(Debug, Clone)]
-#[derive(Default)]
+#[derive(Debug, Clone, Default)]
 pub struct GraphBuilderConfig {
     pub follow_symlinks: bool,
     pub max_python_files: Option<usize>,
@@ -447,10 +446,7 @@ impl BuilderState {
 
         let file_id = normalized_path(rel_path);
         let mut local_lookup: HashMap<String, GraphNodeIndex> = HashMap::new();
-        let symbol_table = self
-            .file_symbols
-            .entry(rel_path.to_path_buf())
-            .or_default();
+        let symbol_table = self.file_symbols.entry(rel_path.to_path_buf()).or_default();
         symbol_table.clear();
         let entity_list = self
             .file_entities
@@ -489,9 +485,7 @@ impl BuilderState {
             self.stats.entities += 1;
 
             if let Some(identifier) = entity.identifier() {
-                let entry = symbol_table
-                    .entry(identifier.to_string())
-                    .or_default();
+                let entry = symbol_table.entry(identifier.to_string()).or_default();
                 if !entry.contains(&node_idx) {
                     entry.push(node_idx);
                 }

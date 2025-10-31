@@ -133,10 +133,7 @@ fn process_from_import(
         );
 
         if let Some(path) = resolve_module_spec(state, source_path, &extended_spec) {
-            let alias_value = entity
-                .alias
-                .as_deref()
-                .unwrap_or(entity.name.as_str());
+            let alias_value = entity.alias.as_deref().unwrap_or(entity.name.as_str());
             for &idx in scoped_indices {
                 add_file_import_edge(state, idx, &path, Some(alias_value));
             }
@@ -169,10 +166,7 @@ fn process_from_import(
                     entity.alias.as_deref(),
                 );
             }
-            let alias_value = entity
-                .alias
-                .as_deref()
-                .unwrap_or(entity.name.as_str());
+            let alias_value = entity.alias.as_deref().unwrap_or(entity.name.as_str());
             add_file_import_edge(state, file_idx, module_path, Some(alias_value));
             for &idx in scoped_indices {
                 if idx != file_idx {

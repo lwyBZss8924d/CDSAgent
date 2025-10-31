@@ -7,6 +7,4 @@
 pub mod bm25;
 pub mod name_index;
 
-// Placeholder types
-pub struct NameIndex;
-pub struct BM25Index;
+pub use name_index::{NameEntry, NameIndex, NameIndexBuilder, NameIndexStats};

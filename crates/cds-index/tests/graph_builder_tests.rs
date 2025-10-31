@@ -502,11 +502,14 @@ class Outer:
     )];
 
     let (_dir, graph) = build_graph_with_files(&files);
-    let outer_idx = find_node(&graph, |node| node.id.ends_with("pkg.py::Outer")).expect("Outer class");
-    let inner_idx = find_node(&graph, |node| node.id.ends_with("pkg.py::Outer::Inner"))
-        .expect("Inner class");
-    let deep_idx = find_node(&graph, |node| node.id.ends_with("pkg.py::Outer::Inner::Deep"))
-        .expect("Deep class");
+    let outer_idx =
+        find_node(&graph, |node| node.id.ends_with("pkg.py::Outer")).expect("Outer class");
+    let inner_idx =
+        find_node(&graph, |node| node.id.ends_with("pkg.py::Outer::Inner")).expect("Inner class");
+    let deep_idx = find_node(&graph, |node| {
+        node.id.ends_with("pkg.py::Outer::Inner::Deep")
+    })
+    .expect("Deep class");
 
     assert!(
         has_edge(&graph, outer_idx, inner_idx, EdgeKind::Contain),
@@ -533,11 +536,14 @@ def outer():
     )];
 
     let (_dir, graph) = build_graph_with_files(&files);
-    let outer_idx = find_node(&graph, |node| node.id.ends_with("module.py::outer")).expect("outer()");
+    let outer_idx =
+        find_node(&graph, |node| node.id.ends_with("module.py::outer")).expect("outer()");
     let inner_idx =
         find_node(&graph, |node| node.id.ends_with("module.py::outer::inner")).expect("inner()");
-    let deep_idx = find_node(&graph, |node| node.id.ends_with("module.py::outer::inner::deep"))
-        .expect("deep()");
+    let deep_idx = find_node(&graph, |node| {
+        node.id.ends_with("module.py::outer::inner::deep")
+    })
+    .expect("deep()");
 
     assert!(
         has_edge(&graph, outer_idx, inner_idx, EdgeKind::Contain),
@@ -593,10 +599,12 @@ def factory(svc: "Service") -> "Service":
     ];
 
     let (_dir, graph) = build_graph_with_files(&files);
-    let main_idx = find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "main.py")
-        .expect("main.py node");
-    let service_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service"))
-        .expect("Service class");
+    let main_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::File && node.display_name == "main.py"
+    })
+    .expect("main.py node");
+    let service_idx =
+        find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service")).expect("Service class");
 
     assert!(
         has_edge(&graph, main_idx, service_idx, EdgeKind::Import),
@@ -627,11 +635,12 @@ def build():
     ];
 
     let (_dir, graph) = build_graph_with_files(&files);
-    let util_idx =
-        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "util.py")
-            .expect("util.py");
-    let helper_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Helper"))
-        .expect("Helper class");
+    let util_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::File && node.display_name == "util.py"
+    })
+    .expect("util.py");
+    let helper_idx =
+        find_node(&graph, |node| node.id.ends_with("pkg/core.py::Helper")).expect("Helper class");
 
     assert!(
         has_edge(&graph, util_idx, helper_idx, EdgeKind::Import),
@@ -667,8 +676,8 @@ def make():
         node.kind == NodeKind::File && node.display_name == "module.py"
     })
     .expect("module.py");
-    let service_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service"))
-        .expect("Service class");
+    let service_idx =
+        find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service")).expect("Service class");
 
     assert!(
         has_edge(&graph, module_idx, service_idx, EdgeKind::Import),
@@ -700,12 +709,14 @@ def worker():
     ];
 
     let (_dir, graph) = build_graph_with_files(&files);
-    let alpha_idx =
-        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "alpha.py")
-            .expect("alpha.py");
-    let beta_idx =
-        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "beta.py")
-            .expect("beta.py");
+    let alpha_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::File && node.display_name == "alpha.py"
+    })
+    .expect("alpha.py");
+    let beta_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::File && node.display_name == "beta.py"
+    })
+    .expect("beta.py");
     let worker_idx =
         find_node(&graph, |node| node.id.ends_with("beta.py::worker")).expect("worker()");
     let make_idx = find_node(&graph, |node| node.id.ends_with("alpha.py::make")).expect("make()");
@@ -737,8 +748,7 @@ class Child(BaseA, BaseB):
     )];
 
     let (_dir, graph) = build_graph_with_files(&files);
-    let child_idx =
-        find_node(&graph, |node| node.id.ends_with("models.py::Child")).expect("Child");
+    let child_idx = find_node(&graph, |node| node.id.ends_with("models.py::Child")).expect("Child");
     let base_a_idx =
         find_node(&graph, |node| node.id.ends_with("models.py::BaseA")).expect("BaseA");
     let base_b_idx =
@@ -783,11 +793,12 @@ def make():
     ];
 
     let (_dir, graph) = build_graph_with_files(&files);
-    let main_idx =
-        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "main.py")
-            .expect("main.py");
-    let service_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service"))
-        .expect("Service class");
+    let main_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::File && node.display_name == "main.py"
+    })
+    .expect("main.py");
+    let service_idx =
+        find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service")).expect("Service class");
 
     assert!(
         has_edge(&graph, main_idx, service_idx, EdgeKind::Import),
@@ -823,11 +834,12 @@ Service
     ];
 
     let (_dir, graph) = build_graph_with_files(&files);
-    let main_idx =
-        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "main.py")
-            .expect("main.py");
-    let service_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service"))
-        .expect("Service class");
+    let main_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::File && node.display_name == "main.py"
+    })
+    .expect("main.py");
+    let service_idx =
+        find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service")).expect("Service class");
 
     assert!(
         has_edge(&graph, main_idx, service_idx, EdgeKind::Import),
@@ -867,11 +879,12 @@ Helper
     ];
 
     let (_dir, graph) = build_graph_with_files(&files);
-    let main_idx =
-        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "main.py")
-            .expect("main.py");
-    let helper_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Helper"))
-        .expect("Helper class");
+    let main_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::File && node.display_name == "main.py"
+    })
+    .expect("main.py");
+    let helper_idx =
+        find_node(&graph, |node| node.id.ends_with("pkg/core.py::Helper")).expect("Helper class");
 
     assert!(
         has_edge(&graph, main_idx, helper_idx, EdgeKind::Import),
@@ -909,11 +922,12 @@ Service
     ];
 
     let (_dir, graph) = build_graph_with_files(&files);
-    let main_idx =
-        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "main.py")
-            .expect("main.py");
-    let service_idx = find_node(&graph, |node| node.id.ends_with("pkg/base.py::Service"))
-        .expect("Service class");
+    let main_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::File && node.display_name == "main.py"
+    })
+    .expect("main.py");
+    let service_idx =
+        find_node(&graph, |node| node.id.ends_with("pkg/base.py::Service")).expect("Service class");
 
     assert!(
         has_edge(&graph, main_idx, service_idx, EdgeKind::Import),
@@ -955,11 +969,12 @@ Service
     ];
 
     let (_dir, graph) = build_graph_with_files(&files);
-    let main_idx =
-        find_node(&graph, |node| node.kind == NodeKind::File && node.display_name == "main.py")
-            .expect("main.py");
-    let service_idx = find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service"))
-        .expect("Service class");
+    let main_idx = find_node(&graph, |node| {
+        node.kind == NodeKind::File && node.display_name == "main.py"
+    })
+    .expect("main.py");
+    let service_idx =
+        find_node(&graph, |node| node.id.ends_with("pkg/core.py::Service")).expect("Service class");
 
     assert!(
         has_edge(&graph, main_idx, service_idx, EdgeKind::Import),

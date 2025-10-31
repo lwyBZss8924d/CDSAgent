@@ -441,10 +441,7 @@ fn parse_import_entities(raw: &str) -> Vec<ImportEntity> {
         .trim()
         .trim_matches(|c| c == '(' || c == ')')
         .to_string();
-    cleaned
-        .split(',')
-        .filter_map(parse_import_entity)
-        .collect()
+    cleaned.split(',').filter_map(parse_import_entity).collect()
 }
 
 fn parse_import_entity(entry: &str) -> Option<ImportEntity> {
