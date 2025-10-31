@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude when working with code in this "CDSAgent" repository.
+This file provides guidance to Codex when working with code in this "CDSAgent" repository.
 
 - @docs/RFC-DEV-TOOLS.md <📌> ["Development Tools Architecture & Quick Reference"](docs/RFC-DEV-TOOLS.md) </📌>
 - @docs/WORKTREE_WORKFLOW.md <📌> ["CDSAgent" codebase Spec-Tasks DEV-COOKING Workflow SOP](docs/WORKTREE_WORKFLOW.md) </📌>
@@ -11,11 +11,19 @@ This file provides guidance to Claude when working with code in this "CDSAgent" 
 
 ---
 
+## Status Snapshot — 2025-10-31
+
+- **Current milestone**: M2 – Core Indexing Prototype (Week 2-3) is active in this worktree. T-02-02 "Sparse Index" kicked off on 2025-10-31 after clearing T-02-01.
+- **Completed 2025-10-30**: T-02-01 "Graph Builder" merged with ≤2% parity variance across 6 SWE-bench Lite fixtures, 23 Rust unit tests (>80% coverage), and parity baselines under `tests/fixtures/parity/golden_outputs/`.
+- **In progress**: T-02-02 is implementing the hierarchical sparse index (name/ID map + BM25) in `crates/cds-index/src/index/`, with benchmarks in `crates/cds-index/benches/search_bench.rs` and parity/latency tests slated for `crates/cds-index/tests/`.
+- **Next unlocks**: T-02-03 (service layer) and T-03-01 (CLI core commands) stay blocked until T-02-02 reaches acceptance (search overlap@10 ≥90%, p95 latency <500 ms).
+- **Task tracker hygiene**: Mirror status updates in `spacs/tasks/0.1.0-mvp/TODO.yaml` and associated metadata files inside `.artifacts/spec-tasks-*` after each work session checkpoint.
+
 ## Repository Overview
 
 CDSAgent is a graph-based code retrieval system built with Rust (core indexing) and TypeScript (LLM orchestration). The repository contains:
 
-- **Rust**: `crates/cds-index/` — Core indexing service with graph builder and sparse search
+- **Rust**: `crates/cds-index/` — Core indexing service (graph builder completed 2025-10-30; sparse index in development)
 - **Rust**: `crates/cds-tools/` — CLI tools for search, traverse, and retrieve operations
 - **TypeScript/Bun**: `cds-agent/` — Claude Agent SDK integration with hooks and prompts
 - **Documentation**: `spacs/` — PRDs, issues, tasks, and planning documents
@@ -35,8 +43,14 @@ CDSAgent/
 ├── crates/
 │   ├── cds-index/          # Rust: Index Service
 │   │   ├── src/
-│   │   │   ├── graph/      # AST parsing & graph building
-│   │   │   ├── index/      # Name index + BM25 search
+│   │   │   ├── graph/      # AST parsing & graph building (T-02-01 completed)
+│   │   │   │   ├── builder/   # Modular builders: aliases, imports, language, python/
+│   │   │   │   ├── parser.rs  # Tree-sitter helpers
+│   │   │   │   └── traversal.rs
+│   │   │   ├── index/      # Name index + BM25 search (T-02-02 in progress)
+│   │   │   │   ├── bm25.rs     # Ranking backend scaffold
+│   │   │   │   ├── name_index.rs
+│   │   │   │   └── mod.rs
 │   │   │   ├── service/    # JSON-RPC server
 │   │   │   └── bin/        # cds-index-service binary
 │   │   └── tests/          # Integration tests

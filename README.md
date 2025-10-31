@@ -6,10 +6,20 @@ CDSAgent is a graph-guided code localization agent designed to serve as a sub-ag
 
 ---
 
+## Status (2025-10-31)
+
+- **Milestones**: M0 "Foundation Setup" (completed 2025-10-19) and M1 "API Contracts & Parity" (completed 2025-10-25) are signed off. M2 "Core Indexing Prototype" is underway in worktree `.worktrees/T-02-02-sparse-index`.
+- **Latest delivery**: T-02-01 "Graph Builder" merged on 2025-10-30 (PR #6) with ≤2% variance against 6 SWE-bench Lite fixtures, 23 Rust unit tests (~82% coverage), and golden graphs in `tests/fixtures/parity/golden_outputs/`.
+- **Active development**: T-02-02 "Sparse Index" started 2025-10-31 to implement the hierarchical name/ID + BM25 search stack (`crates/cds-index/src/index/`, `crates/cds-index/benches/search_bench.rs`).
+- **Next unlocks**: Service (`T-02-03`) and CLI (`T-03-01`) tracks remain blocked until sparse index acceptance criteria are met (search overlap@10 ≥90%, p95 latency <500 ms, index build <5 s on 1K files).
+- **Keep in sync**: Update `spacs/tasks/0.1.0-mvp/TODO.yaml` and `.artifacts/spec-tasks-*` metadata as checkpoints complete.
+
+---
+
 ## Features
 
-- **Graph-Based Code Indexing**: Directed heterogeneous graph with 4 node types (directory, file, class, function) and 4 edge types (contain, import, invoke, inherit)
-- **Hierarchical Sparse Search**: Two-tier index (name/ID HashMap + BM25 content search) for fast, accurate retrieval
+- **Graph-Based Code Indexing**: Directed heterogeneous graph with 4 node types (directory, file, class, function) and 4 edge types (contain, import, invoke, inherit); parity-aligned with LocAgent across 6 fixtures as of 2025-10-30.
+- **Hierarchical Sparse Search**: Two-tier index (name/ID HashMap + BM25 content search) for fast, accurate retrieval — implementation in progress during T-02-02 (expected overlap@10 ≥90%).
 - **LLM Orchestration**: Claude Agent SDK integration with chain-of-thought reasoning
 - **Multi-Language AST Parsing**: Tree-sitter-based parsing (v0.1.0: Python; v0.2.0+: TypeScript/JavaScript, Rust, Go)
 - **JSON-RPC Service**: High-performance index service exposing graph and search endpoints
@@ -130,8 +140,11 @@ CDSAgent/
 ├── crates/
 │   ├── cds-index/          # Index Service (Rust)
 │   │   ├── src/
-│   │   │   ├── graph/      # AST parsing & graph building
-│   │   │   ├── index/      # Name index + BM25 search
+│   │   │   ├── graph/      # AST parsing & graph building (T-02-01 complete)
+│   │   │   │   ├── builder/   # Modular builders (aliases, behaviors, imports, language, python/)
+│   │   │   │   ├── parser.rs  # Tree-sitter helpers
+│   │   │   │   └── traversal.rs
+│   │   │   ├── index/      # Name index + BM25 search (T-02-02 in flight)
 │   │   │   ├── service/    # JSON-RPC server
 │   │   │   └── bin/        # cds-index-service binary
 │   │   └── tests/          # Integration tests
@@ -313,8 +326,8 @@ docker-compose up -d
 - [x] Rust workspace setup
 - [x] TypeScript/Bun agent project
 - [x] Development environment scaffolding
-- [ ] Graph builder with tree-sitter (Python)
-- [ ] Hierarchical sparse index (name + BM25)
+- [x] Graph builder with tree-sitter (Python) — completed 2025-10-30 (PR #6, ≤2% parity variance)
+- [ ] Hierarchical sparse index (name + BM25) — in progress via T-02-02 (kickoff 2025-10-31)
 - [ ] JSON-RPC service layer
 - [ ] CLI tools (search, traverse, retrieve)
 - [ ] Claude Agent SDK integration

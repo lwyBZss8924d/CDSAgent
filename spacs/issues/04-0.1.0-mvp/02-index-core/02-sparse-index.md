@@ -43,6 +43,7 @@ Implement two-tier hierarchical sparse indexing that combines fast name/ID looku
 **T-02-01-graph-builder is now complete!** This task is **READY TO START**.
 
 **Available Resources**:
+
 - ✅ Graph data structures ready (`crates/cds-index/src/graph/`)
 - ✅ Parser utilities available (`crates/cds-index/src/graph/parser.rs`)
 - ✅ 6 test repositories with parity baselines
@@ -50,6 +51,7 @@ Implement two-tier hierarchical sparse indexing that combines fast name/ID looku
 - ✅ Comprehensive unit tests demonstrating graph API usage
 
 **Integration Points**:
+
 ```rust
 // Access graph nodes for indexing
 use cds_index::graph::{Graph, Node, NodeType};
@@ -67,15 +69,18 @@ for node in graph.nodes() {
 ```
 
 **Parity Baselines** (for search validation):
+
 - `tests/fixtures/parity/golden_outputs/search_queries.jsonl` (50 queries)
 - Target: ≥90% overlap@10 with LocAgent results
 
 **PR for Review**: [#6](https://github.com/lwyBZss8924d/CDSAgent/pull/6)
+
 - 23 unit tests, ~82% coverage
 - All 6 parity fixtures ≤2% variance
 - Modular architecture (10 modules, 5,214 lines)
 
 **Recommended Next Steps**:
+
 1. Review T-02-01 PR #6 for context on graph structure
 2. Study `crates/cds-index/src/graph/mod.rs` API documentation
 3. Review parity baselines: `tests/fixtures/parity/golden_outputs/search_queries.jsonl`
