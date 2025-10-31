@@ -1,0 +1,73 @@
+• Task Selection
+
+  - ✅ T-02-02-sparse-index is the designated next task; dependency on T-02-01 is cleared and it is marked “next up” for M2 as of
+    2025-10-31. spacs/tasks/0.1.0-mvp/TODO.yaml:429,450,946
+  - T-02-01-graph-builder is recorded as completed on 2025-10-30 with PR link #6 for review context. spacs/tasks/0.1.0-mvp/
+    TODO.yaml:367,379
+  - PR #6 https://github.com/lwyBZss8924d/CDSAgent/pull/6 T-02-01-graph-builder 's PR6 is Mermaged and closed
+  - Milestone M2 (“Core Indexing Prototype”) is still not_started, so executing T-02-02 is required to move the milestone forward
+    before the 2025-11-09 target. spacs/tasks/0.1.0-mvp/TODO.yaml:49-58
+
+  Implementation Scope & Requirements
+
+  - Deliverables span new Rust modules/tests: name_index.rs, bm25.rs, tokenizer utilities, benches, and unit tests. spacs/
+    tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md:17-23
+  - Implementation steps mandate DashMap-based upper index, tokenizer parity, Tantivy-backed BM25, hierarchical query fusion, and
+    latency benchmarking. spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md:27-31
+  - Acceptance criteria include exact/prefix/case-insensitive lookup, BM25 fallback thresholds, ±5 % scoring parity, recorded
+    benchmarks, ≥90 % overlap@10, and >95 % test coverage. spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md:35-38;
+    spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md:562-574
+  - Upper index design requires hash-based lookups with entity metadata and type filtering mirroring LocAgent. spacs/prd/0.1.0-
+    MVP-PRDs-v0/02-cds-index-service.md:122-155
+  - Lower index must expose BM25 with k1=1.5, b=0.75, inverted index storage, matched-term reporting, and Tantivy (or custom)
+    engine compatibility. spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md:157-195
+  - Performance targets remain strict: <500 ms p95 search, <5 s build for 1K files, and <2 GB memory for 10K files. spacs/
+    prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md:290-296
+
+  LocAgent Reference
+
+  - LocAgent’s RepoEntitySearcher builds exact/lowercase name dictionaries while skipping tests; this guides our upper-index key
+    set and casing strategy. tmp/LocAgent/dependency_graph/traverse_graph.py:61-101
+  - search_entity executes exact graph lookup, then name-dict scans (with wildcard/prefix handling), and finally BM25 fallback—
+    this flow should be mirrored in Rust. tmp/LocAgent/plugins/location_tools/repo_ops/repo_ops.py:287-343
+  - bm25_module_retrieve reranks Tantivy results, filters by file, and tolerates short-query failures; replicate filtering and
+    score gating. tmp/LocAgent/plugins/location_tools/repo_ops/repo_ops.py:713-742
+  - build_code_retriever_from_repo composes document ingestion, chunking (EpicSplitter), stemming, and persistence; adapt
+    these tokenizer and persistence choices when integrating Tantivy. tmp/LocAgent/plugins/location_tools/retriever/
+    bm25_retriever.py:35-113
+
+  Recommended Approach
+
+  - Follow the issue’s week-by-week plan: upper index first, prototype Tantivy versus custom BM25, run query overlap experiments,
+    then wire hierarchical fusion and parity tests. spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md:662-666
+  - Flesh out the stub modules (name_index.rs, bm25.rs, index/mod.rs) with real types and APIs, ensuring public structs expose
+    thread-safe builders for the service layer. crates/cds-index/src/index/name_index.rs:1-4; crates/cds-index/src/index/
+    bm25.rs:1-4; crates/cds-index/src/index/mod.rs:10-12
+  - Build indexing off the stable DependencyGraph surface—use node IDs, kinds, and file paths already exposed for integration.
+    crates/cds-index/src/graph/mod.rs:1-188
+  - Capture tokenizer parity and benchmark outputs into artifacts (search_bench.rs, benches/README.md) and archive LocAgent
+    comparison data in tests/fixtures/parity. spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md:21-38; spacs/issues/04-
+    0.1.0-mvp/02-index-core/02-sparse-index.md:528-567
+
+  Environment & Prep
+
+  - Worktree .worktrees/T-02-02-sparse-index with branch feat/task/T-02-02-sparse-index exists and matches main, so development
+    can proceed locally without divergence. spacs/tasks/0.1.0-mvp/TODO.yaml:437-438
+  - Task artifacts folder for T-02-02 is not yet created; initialize .artifacts/spec-tasks-T-02-02-sparse-index/ to capture
+    worklogs before coding.
+  - Graph builder outputs, parser utilities, and traversal APIs are ready for consumption to enumerate entities for indexing.
+    spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md:45-87
+  - Workspace dependencies already include Tantivy, DashMap, and supporting crates (Tokio, Tree-sitter), so no Cargo setup
+    blockers are expected. Cargo.toml:15-45
+
+  Risks & Complexity
+
+  - Pending review on PR #6 means any fixes on graph builder could shift interfaces; stay in sync with reviewer feedback before
+    landing sparse index changes. spacs/tasks/0.1.0-mvp/TODO.yaml:934
+  - Tantivy’s default analyzer may diverge from LocAgent’s tokenizer; the issue explicitly instructs prototyping both Tantivy and
+    custom BM25 to mitigate parity gaps. spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md:629-635
+  - Meeting latency and memory targets requires disciplined benchmarking and possibly index-tuning (segment merges, cached
+    readers). spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md:290-296
+  - Complexity: medium-high (roughly 4 focused days) because the task spans new data structures, dual retrieval paths, parity
+    validation on 50 queries, and new benchmark/test infrastructure. spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-
+    index.md:27-38; spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md:562-567

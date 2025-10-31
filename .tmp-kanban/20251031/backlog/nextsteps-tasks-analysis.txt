@@ -1,0 +1,623 @@
+Today is UTC `date -u '+%Y-%m-%dT%H:%M:%SZ` 2025-10-31
+
+> Yesterday(2025-10-30 UTC) DEV-Team 完成了 "DSCAgent"项目 v 0.1.0 mvp 目标的 M2 milestone -  
+"T-02-01-graph-builder" 的 DEV-COOKING Tasks:
+@.artifacts/spec-tasks-T-02-01-graph-builder/metadata.yaml
+@spacs/tasks/0.1.0-mvp/TODO.yaml 
+  # ==================== Phase 2: Core Indexing (Week 2-3) ====================
+
+  T-02-01-graph-builder:
+    title: "Graph Builder - AST Parsing & Construction"
+    milestone: M2
+    week: 2
+    priority: P0
+    status: completed
+    owner: Rust Dev 1
+    duration_days: 6  # Completed in 6 days (2025-10-24 to 2025-10-30)
+    worktree: .worktrees/T-02-01-graph-builder
+    branch: feat/task/T-02-01-graph-builder
+    symlink: ~/dev-space/CDSAgent-T-02-01-graph-builder
+    completed_date: "2025-10-30"
+    pr: "https://github.com/lwyBZss8924d/CDSAgent/pull/6"
+
+    specs:
+      prds:
+        - spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+        - spacs/prd/0.1.0-MVP-PRDs-v0/06-rust-refactoring-plan.md
+      issues:
+        - spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md
+      tasks:
+        - spacs/tasks/0.1.0-mvp/02-index-core/T-02-01-graph-builder.md
+
+    dependencies:
+      requires:
+        - T-06-01-parity-methodology
+      blocks:
+        - T-02-02-sparse-index
+        - T-03-01-core-commands
+
+    deliverables:
+      - crates/cds-index/src/graph/parser.rs
+      - crates/cds-index/src/graph/builder/ (10 modules, 2,037 lines)
+      - crates/cds-index/src/graph/traversal.rs
+      - crates/cds-index/tests/graph_builder_tests.rs (23 unit tests)
+      - crates/cds-index/tests/graph_parity_tests.rs (6 fixtures validation)
+      - API documentation (crates/cds-index/src/graph/mod.rs)
+
+    acceptance_criteria:
+      - "✅ Parses Python repos with 4 node types + 4 edge types"
+      - "✅ Fully-qualified names match LocAgent format"
+      - "✅ Unit tests cover edge cases (23 tests, ~82% coverage)"
+      - "✅ Graph parity ≤2% variance (all 6 fixtures pass)"
+
+    worklog_path: .artifacts/spec-tasks-T-02-01-graph-builder/worklogs/
+
+    git_commits:
+      - cd863be: "checkpoint(worklog): T-02-01 Day 6 - initialize 2025-10-30 session worklogs"
+      - 72f9db5: "feat(graph): T-02-01 complete - parity, coverage, docs"
+      - c0b8f2c: "checkpoint(worklog): T-02-01 Day 6 complete"
+      - af5a537: "chore(config): update Claude auto-approval settings for checkpoint workflow"
+
+    metrics:
+      estimated_hours: 40
+      actual_hours: 39
+      lines_added: 8884
+      lines_deleted: 353
+      files_modified: 74
+      tests_added: 23
+      test_coverage: 0.82
+      parity_variance_max: 0.0129  # +1.29% on pytest invokes
+
+  T-02-02-sparse-index:
+    title: "Sparse Index - Name/ID + BM25 Search"
+    milestone: M2
+    week: 2
+    priority: P0
+    status: not_started
+    owner: Rust Dev 2
+    duration_days: 4
+    worktree: .worktrees/T-02-02-sparse-index
+    branch: feat/task/T-02-02-sparse-index
+    symlink: ~/dev-space/CDSAgent-T-02-02-sparse-index
+
+    specs:
+      prds:
+        - spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+      issues:
+        - spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md
+      tasks:
+        - spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md
+
+    dependencies:
+      requires:
+        - T-02-01-graph-builder
+      blocks:
+        - T-02-03-service-layer
+        - T-03-01-core-commands
+
+    deliverables:
+      - crates/cds-index/src/index/name_index.rs
+      - crates/cds-index/src/index/bm25.rs
+      - Performance benchmarks (<500ms p95 search latency)
+
+    acceptance_criteria:
+      - Upper index (name/ID HashMap) with prefix matching
+      - Lower index (BM25 k1=1.5, b=0.75)
+      - Search latency <500ms p95
+      - Index build <5s for 1K files
+
+    worklog_path: .artifacts/spec-tasks-T-02-02/worklogs/
+
+  T-02-04-serialization:
+    title: "Graph & Index Serialization"
+    milestone: M2
+    week: 3
+    priority: P1
+    status: not_started
+    owner: Rust Dev 2
+    duration_days: 2
+    worktree: .worktrees/T-02-02-sparse-index  # Same worktree
+    branch: feat/task/T-02-02-sparse-index
+
+    specs:
+      issues:
+        - spacs/issues/04-0.1.0-mvp/02-index-core/04-serialization-fixtures.md
+      tasks:
+        - spacs/tasks/0.1.0-mvp/02-index-core/T-02-04-serialization.md
+
+    dependencies:
+      requires:
+        - T-02-01-graph-builder
+        - T-02-02-sparse-index
+      blocks:
+        - T-03-03-integration-tests
+        - T-07-02-env-config
+
+    deliverables:
+      - crates/cds-index/src/persistence/
+      - Test fixtures under tests/fixtures/
+---
+- (.artifacts/spec-tasks-T-02-01-graph-builder/metadata.yaml)
+- (spacs/tasks/0.1.0-mvp/TODO.yaml)
+- (spacs/tasks/0.1.0-mvp/README.md)
+- (spacs/issues/04-0.1.0-mvp/README.md)
+- (spacs/issues/04-0.1.0-mvp/02-index-core/00-overview.md)
+- (spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md)
+- (spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md)
+- (spacs/issues/04-0.1.0-mvp/02-index-core/03-service-layer.md)
+- (spacs/issues/04-0.1.0-mvp/02-index-core/04-serialization-fixtures.md)
+- (spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md)
+
+```shell
+CDSAgent main*​ ≡
+❯ cd crates/                            
+
+CDSAgent/crates main*​ ≡
+❯ tree                                     
+.
+├── cds-index
+│   ├── Cargo.toml
+│   ├── benches
+│   │   ├── graph_bench.rs
+│   │   └── search_bench.rs
+│   ├── src
+│   │   ├── bin
+│   │   │   └── cds-index-service.rs
+│   │   ├── config.rs
+│   │   ├── graph
+│   │   │   ├── GraphBuilder-Refactoring-Plan.txt
+│   │   │   ├── builder
+│   │   │   │   ├── aliases.rs
+│   │   │   │   ├── behaviors.rs
+│   │   │   │   ├── imports.rs
+│   │   │   │   ├── language.rs
+│   │   │   │   ├── mod.rs
+│   │   │   │   ├── python
+│   │   │   │   │   ├── ast_utils.rs
+│   │   │   │   │   ├── call_extractor.rs
+│   │   │   │   │   ├── import_resolver.rs
+│   │   │   │   │   └── mod.rs
+│   │   │   │   └── state.rs
+│   │   │   ├── builder_backup.rs
+│   │   │   ├── mod.rs
+│   │   │   ├── parser.rs
+│   │   │   └── traversal.rs
+│   │   ├── index
+│   │   │   ├── bm25.rs
+│   │   │   ├── mod.rs
+│   │   │   └── name_index.rs
+│   │   ├── lib.rs
+│   │   ├── persistence
+│   │   │   └── mod.rs
+│   │   └── service
+│   │       ├── handlers.rs
+│   │       ├── mod.rs
+│   │       └── server.rs
+│   └── tests
+│       ├── graph_builder_tests.rs
+│       ├── graph_parity_tests.rs
+│       ├── integration_test.rs
+│       └── service_contract_tests.rs
+└── cds-tools
+    ├── Cargo.toml
+    └── src
+        ├── client
+        │   └── mod.rs
+        ├── commands
+        │   ├── mod.rs
+        │   ├── retrieve.rs
+        │   ├── search.rs
+        │   └── traverse.rs
+        ├── formatters
+        │   ├── json.rs
+        │   ├── mod.rs
+        │   ├── text.rs
+        │   └── tree.rs
+        └── main.rs
+
+17 directories, 43 files
+```
+
+```shell
+CDSAgent main*​ ≡
+❯ cd .artifacts/spec-tasks-T-02-01-graph-builder/
+
+CDSAgent/.artifacts/spec-tasks-T-02-01-graph-builder main*​ ≡
+❯ tree
+.
+├── git-refs.txt
+├── metadata.yaml
+└── worklogs
+    ├── 2025-10-24-commit-log.md
+    ├── 2025-10-24-notes.md
+    ├── 2025-10-24-work-summary.md
+    ├── 2025-10-25-commit-log.md
+    ├── 2025-10-25-notes.md
+    ├── 2025-10-25-work-summary.md
+    ├── 2025-10-27-commit-log.md
+    ├── 2025-10-27-notes.md
+    ├── 2025-10-27-work-summary.md
+    ├── 2025-10-28-commit-log.md
+    ├── 2025-10-28-notes.md
+    ├── 2025-10-28-work-summary.md
+    ├── 2025-10-29-commit-log.md
+    ├── 2025-10-29-notes.md
+    ├── 2025-10-29-work-summary.md
+    ├── 2025-10-30-TODOs-Plan.txt
+    ├── 2025-10-30-commit-log.md
+    ├── 2025-10-30-notes.md
+    ├── 2025-10-30-work-summary.md
+    └── raw
+        ├── DEVCOOKING-WORK-ACTIONSLOGS-2025-10-25-01.txt
+        ├── DEVCOOKING-WORK-ACTIONSLOGS-2025-10-27-01.txt
+        ├── DEVCOOKING-WORK-ACTIONSLOGS-2025-10-28-01.txt
+        ├── DEVCOOKING-WORK-ACTIONSLOGS-2025-10-29-01.txt
+        ├── DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-01.txt
+        ├── DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-02.txt
+        ├── DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-03.txt
+        ├── DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-04.txt
+        ├── DEVCOOKING-WORK-ACTIONSLOGS-2025-10-30-05.txt
+        ├── DEVCOOKING-WORK-START-2025-10-24-04.txt
+        └── DEVCOOKING-WORK-START-PLAN-2025-10-30.txt
+
+3 directories, 32 files
+
+```
+
+---
+@docs/NEXT_TASK_CHECKLIST.md
+
+⏺ 我初步分析了当前 Codebase - PRDs / Issues / Tasks , Next DEV-COOKING Phase 应该执行的 Tasks & 依赖 ：
+
+  T-02-02-sparse-index 依赖初步分析
+
+  ✅ 依赖状态检查
+
+  T-02-02 的依赖要求:
+  - requires: T-02-01-graph-builder
+
+  T-02-01 状态验证:
+  - ✅ status: completed
+  - ✅ PR #6: MERGED (2025-10-30T08:21:47Z)
+  - ✅ 所有 worktrees: 已同步到最新 main (commit 2a2ad34)
+
+  📊 M2 里程碑任务状态
+
+  M2 关键路径 (critical_path):
+  1. ✅ T-02-01-graph-builder - 已完成并合并
+  2. ⏳ T-02-02-sparse-index - 依赖已满足，可以开始
+
+  M2 其他任务:
+  - T-02-04-serialization: 需要等待 T-02-02 完成（requires T-02-01 + T-02-02）
+
+  🎯 下一步任务初步分析
+
+  根据 NEXT_TASK_CHECKLIST.md 的决策流程初步分析：
+
+  1. Check Milestone Status ✅
+  - 当前里程碑: M2 (Core Indexing Prototype)
+  - 目标日期: 2025-11-09
+  - 状态: not_started → 应更新为 in_progress
+
+  2. List Candidate Tasks ✅
+  - M2 中未开始的任务: T-02-02, T-02-04
+
+  3. Verify Dependencies ✅
+  - T-02-02: 所有依赖已满足 (T-02-01 ✅ MERGED)
+  - T-02-04: 依赖未满足 (需要 T-02-02)
+
+  4. Apply Priority Filter ✅
+  - T-02-02: P0 (Critical), 在 critical_path 上
+  - T-02-04: P1 (Important)
+
+  5. Final Verification ✅
+  - Task specification exists:
+  spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md
+  - All dependencies MERGED: T-02-01 PR #6 已合并
+  - Main branch synced: 所有 worktrees 已同步到 2a2ad34
+  - Time until deadline: 10 天 (至 2025-11-09)
+  - Resources available: Graph API 可用, parity baselines 可用
+
+  ---
+  ✅ 初步分析判断：下一个任务是 T-02-02-sparse-index
+
+  初步理由
+
+  1. 依赖已清除: T-02-01 已完成并合并 (PR #6)
+  2. 关键路径任务: M2 milestone 的第二个 critical_path 任务
+  3. 优先级最高: P0 + 阻塞其他任务 (T-02-03, T-03-01, T-02-04)
+  4. 开发环境就绪: Worktree 已同步，Graph API 可用
+  5. 资源齐全:
+    - Graph builder 实现可参考 (crates/cds-index/src/graph/)
+    - 6 个 parity baselines 可用于测试
+    - LocAgent 参考实现可用 (tmp/LocAgent/)
+
+  任务关键信息
+
+  T-02-02-sparse-index:
+  - 估计时间: 4 天
+  - 优先级: P0 (Critical)
+  - Worktree: ~/dev-space/CDSAgent-T-02-02-sparse-index (已同步到 2a2ad34)
+  - 交付物:
+    - Upper index: Name/ID HashMap with prefix matching
+    - Lower index: BM25 (k1=1.5, b=0.75)
+    - Performance benchmarks
+  - 验收标准:
+    - Search latency <500ms p95
+    - Index build <5s for 1K files
+  - 阻塞任务: T-02-03 (service layer), T-03-01 (CLI commands), T-02-04
+  (serialization)
+
+  Next Steps
+
+  按照 NEXT_TASK_CHECKLIST.md Phase 3 流程：
+
+  # 1. 确认 worktree 已同步 (- [] TODO 如果尚未与 main 同步最新开发环境)
+  cd ~/dev-space/CDSAgent-T-02-02-sparse-index
+  git log -1 --oneline
+
+  # 2. 切换 Tasks 开发环境至 worktree 对应 tree & branch
+
+  # 3. 检查 worktree 开发环境 & 初始化任务 artifacts (- [] TODO 如果尚未初始化)
+  - docs/WORKTREE_WORKFLOW.md
+  - docs/WORK_SESSION_CHECKPOINT_WORKFLOW.md
+  - worktree: .artifacts/spec-tasks-T-xx-xx-xxxx/ (metadata.yaml) (../worklogs/ YYYY-MM-DD-work-summary.md , YYYY-MM-DD-notes.md YYYY-MM-DD-commit-log.md ), (../worklogs/raw/ DEVCOOKING-WORK-START init txt and sessions threads summary worklog init txt )
+  /Users/arthur/dev-space/CDSAgent/scripts/create-task-worklog.sh \
+    T-02-02-sparse-index \
+    "Sparse Index - Name/ID + BM25 Search" \
+    "Rust Dev 2"
+
+  # 4. Planing Tasks Sessions Phase TODOs and Init 创建今日(UTC) worklog
+  - `❯ date -u '+%Y-%m-%dT%H:%M:%SZ'`
+  - worktree: .artifacts/spec-tasks-T-xx-xx-xxxx/ (metadata.yaml) (../worklogs/ YYYY-MM-DD-work-summary.md , YYYY-MM-DD-notes.md YYYY-MM-DD-commit-log.md ), (../worklogs/raw/ DEVCOOKING-WORK-START init txt and sessions threads summary worklog init txt )
+  /Users/arthur/dev-space/CDSAgent/scripts/create-daily-worklog.sh
+  T-02-02-sparse-index
+
+  # 5. 阅读 PRDs / Issues / Tasks任务规范
+
+  # 6. 分析当前 Codebase 代码实现状态, 根据 PRDs / Issues / Tasks 研究开发编码实施计划
+
+  # 7. Let's DEV COOKING!
+
+⏺ Plan:
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ T-02-02-sparse-index Implementation Plan
+
+ ✅ TASK SELECTION VALIDATED
+
+ Status: READY TO START (All dependencies cleared)
+
+ Dependency Verification
+
+ - ✅ T-02-01-graph-builder: COMPLETED and MERGED
+   - PR #6 merged: 2025-10-30T08:21:47Z
+   - Latest commit: 2a2ad34
+   - All parity tests passing (≤2% variance)
+   - Graph API fully documented and stable
+ - ✅ Worktree Environment: EXISTS and SYNCED
+   - Worktree: .worktrees/T-02-02-sparse-index @ 2a2ad34
+   - Branch: feat/task/T-02-02-sparse-index
+   - Symlink: ~/dev-space/CDSAgent-T-02-02-sparse-index ✅
+   - Needs: Artifacts initialization (metadata.yaml not found)
+ - ✅ Resources Available:
+   - 6 parity baselines in tests/fixtures/parity/golden_outputs/
+   - 50 search queries in search_queries.jsonl
+   - Graph API: crates/cds-index/src/graph/mod.rs
+   - LocAgent reference: tmp/LocAgent/plugins/location_tools/retriever/bm25_retriever.py
+
+ ---
+ IMPLEMENTATION APPROACH
+
+ Phase 1: Environment Setup (30 min)
+
+ 1. Navigate to T-02-02 worktree: cd ~/dev-space/CDSAgent-T-02-02-sparse-index
+ 2. Initialize task artifacts: ../scripts/create-task-worklog.sh T-02-02-sparse-index "Sparse Index 
+ - Name/ID + BM25 Search" "Rust Dev 2"
+ 3. Create today's worklog: ../scripts/create-daily-worklog.sh T-02-02-sparse-index
+ 4. Read task specifications:
+   - spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md
+   - spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md
+   - spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md (§2.2)
+
+ Phase 2: Upper Index - Name/ID Lookup (Days 1-2)
+
+ Deliverable: crates/cds-index/src/index/name_index.rs
+
+ Design (from Issue 02-sparse-index.md):
+ pub struct NameIndex {
+     exact_map: HashMap<String, Vec<NodeID>>,  // name → entity IDs
+     sorted_keys: Vec<String>,                  // for prefix search
+ }
+
+ Key Features:
+ - ✅ Exact match: O(1) average case
+ - ✅ Prefix match: sorted keys binary search
+ - ✅ Entity type filtering (Directory/File/Class/Function)
+ - ✅ Case-insensitive option
+
+ Integration:
+ // Use Graph API from T-02-01
+ use cds_index::graph::{DependencyGraph, GraphNode, NodeKind};
+
+ // Build index from graph
+ for (idx, node) in graph.nodes() {
+     if matches!(node.kind, NodeKind::Class | NodeKind::Function) {
+         index.insert(node.display_name.clone(), idx);
+     }
+ }
+
+ Testing:
+ - Unit tests for exact/prefix matching
+ - Type filtering validation
+ - Case sensitivity tests
+
+ ---
+ Phase 3: BM25 Lower Index (Days 3-5)
+
+ Deliverables:
+
+ - crates/cds-index/src/index/bm25.rs
+ - crates/cds-index/src/index/tokenizer.rs
+
+ Decision Point: Tantivy vs Custom BM25
+
+ Option A: Tantivy (Recommended - start here)
+ // Use tantivy crate (production-ready BM25)
+ use tantivy::{Index, IndexWriter, schema::*, collector::TopDocs};
+
+ pub struct BM25Index {
+     index: tantivy::Index,
+     schema: Schema,
+ }
+
+ Pros:
+ - ✅ Battle-tested BM25 implementation
+ - ✅ k1=1.5, b=0.75 parameters built-in
+ - ✅ Fast indexing and search
+ - ✅ On-disk persistence
+
+ Cons:
+ - ⚠️ Tokenization may differ from LocAgent
+ - ⚠️ Need to verify parity (50 queries, ≥90% overlap@10)
+
+ Option B: Custom BM25 (Fallback if Tantivy parity <85%)
+ pub struct CustomBM25 {
+     inverted_index: HashMap<String, Vec<Posting>>,
+     k1: f32,  // 1.5
+     b: f32,   // 0.75
+ }
+
+ Implementation Strategy:
+ 1. Day 3: Prototype both Tantivy and Custom BM25
+ 2. Day 4: Run parity tests on 50 queries (from search_queries.jsonl)
+ 3. Decision: Use Tantivy if overlap ≥90%, else Custom BM25
+
+ Tokenizer Requirements (from LocAgent):
+ // Match LocAgent tokenization:
+ // - camelCase splitting: "AuthService" → ["Auth", "Service"]
+ // - snake_case splitting: "auth_service" → ["auth", "service"]
+ // - English stemming (Stemmer.Stemmer("english"))
+ // - Stop words removal
+
+ LocAgent Reference:
+ - tmp/LocAgent/plugins/location_tools/retriever/bm25_retriever.py (line 105-113)
+   - Uses llama_index.retrievers.bm25.BM25Retriever
+   - Stemmer: Stemmer.Stemmer("english")
+   - Parameters: similarity_top_k=10
+
+ ---
+ Phase 4: Hierarchical Search Strategy (Day 6)
+
+ Deliverable: crates/cds-index/src/index/mod.rs
+
+ Search Flow (from PRD-02 FR-HI-3):
+ 1. Query arrives: "sanitize user input"
+ 2. Try Upper Index (name/ID): exact/prefix match
+    → Found ≥5 results? Return upper results
+ 3. If upper < 5: Fallback to BM25
+    → Search content with BM25
+ 4. Merge & deduplicate
+ 5. Return top-K (K=10 default)
+
+ Implementation:
+ pub struct HierarchicalSearcher<'a> {
+     name_index: NameIndex,
+     bm25_index: BM25Index,
+     graph: &'a DependencyGraph,
+ }
+
+ pub struct SearchOptions {
+     limit: usize,              // Default: 10
+     entity_type: Option<NodeKind>,
+     upper_threshold: usize,    // Default: 5
+ }
+
+ Key Logic:
+ - Upper index = score 1.0 (exact match highest priority)
+ - BM25 = score 0.0-1.0 (ranked by BM25 score)
+ - Sort by score descending
+ - Deduplicate entities
+
+ ---
+ Phase 5: Benchmarking & Parity (Days 7-8)
+
+ Deliverables:
+
+ - crates/cds-index/benches/search_bench.rs
+ - crates/cds-index/tests/index_tests.rs
+ - crates/cds-index/tests/search_parity_tests.rs
+
+ Performance Targets (from PRD-02):
+ - ✅ Upper index lookup: <10ms
+ - ✅ BM25 search: <500ms p95 (10K files)
+ - ✅ Memory: <500MB for 10K files
+ - ✅ Index build: <5s for 1K files
+
+ Parity Validation (from Issue 02-sparse-index.md):
+ // Load 50 benchmark queries
+ let queries = load_queries("tests/fixtures/parity/golden_outputs/search_queries.jsonl");
+
+ // For each query:
+ // 1. CDS results (our implementation)
+ // 2. LocAgent baseline (from jsonl)
+ // 3. Calculate overlap@10
+ // 4. Assert avg_overlap ≥ 90%
+
+ Acceptance Criteria:
+ - ✅ Hierarchical search: Top-10 overlap ≥90% with LocAgent
+ - ✅ Unit test coverage >95%
+ - ✅ All benchmarks pass
+ - ✅ cargo clippy zero warnings
+
+ ---
+ TECHNICAL RISKS & MITIGATION
+
+ Risk 1: Tokenization Mismatch
+
+ Problem: Tantivy's default tokenization differs from LocAgent
+ Mitigation:
+ - Implement custom tokenizer matching LocAgent's camelCase/snake_case splitting
+ - Use Tantivy's TextAnalyzer with custom Tokenizer
+
+ Risk 2: BM25 Parameter Tuning
+
+ Problem: k1=1.5, b=0.75 may not achieve 90% overlap
+ Mitigation:
+ - Test different parameter combinations
+ - Document parity results in spacs/issues/04-0.1.0-mvp/06-refactor-parity.md
+
+ Risk 3: Memory Usage for Large Repos
+
+ Problem: In-memory BM25 may exceed 500MB for 10K files
+ Mitigation:
+ - Use Tantivy's on-disk storage (mmap)
+ - Benchmark with largest parity fixture (Django: 6,876 nodes)
+
+ ---
+ NEXT STEPS (Execution Order)
+
+ 1. Verify worktree sync: cd ~/dev-space/CDSAgent-T-02-02-sparse-index && git log -1
+ 2. Initialize artifacts: ../scripts/create-task-worklog.sh T-02-02-sparse-index "Sparse Index - 
+ Name/ID + BM25 Search" "Rust Dev 2"
+ 3. Create daily worklog: ../scripts/create-daily-worklog.sh T-02-02-sparse-index
+ 4. Read specifications: Review task spec, issue, and PRD sections
+ 5. Day 1-2: Implement Upper Index (name_index.rs)
+ 6. Day 3: Prototype Tantivy + Custom BM25
+ 7. Day 4: Run 50-query parity test, choose implementation
+ 8. Day 5: Complete BM25 implementation
+ 9. Day 6: Implement hierarchical search
+ 10. Day 7-8: Benchmarking, parity validation, testing
+ 11. Create PR: Document parity results, request review
+
+ ---
+ ESTIMATED COMPLETION
+
+ - Original estimate: 4 days
+ - Realistic estimate: 6-8 days (includes parity validation)
+ - Complexity: 7/10 (BM25 implementation + parity requirement)
+ - Key challenge: Achieving ≥90% search overlap with LocAgent
+
+ ---
+ RECOMMENDATION: START IMMEDIATELY - This is the critical path blocker for T-02-03 (Service Layer)
+ and T-03-01 (CLI Commands).
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌  
