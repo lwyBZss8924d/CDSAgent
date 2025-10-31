@@ -1,0 +1,282 @@
+================================================================================
+WORK SESSIONS 02 - THREADS SUMMARY
+================================================================================
+
+Task: T-02-02-sparse-index - Sparse Index - Name/ID + BM25 Search
+Date: 2025-10-31
+Phase: Day 1 - Session 1
+Threads: 01 (Init) + 02 (Documentation)
+Duration: 07:17-07:29 UTC (0.2h total)
+Status: ✅ CHECKPOINT COMPLETE
+
+================================================================================
+THREAD 01: WORKTREE & TASK INITIALIZATION
+================================================================================
+
+Objective:
+- Initialize T-02-02 worktree and task artifacts
+- Verify dependencies cleared (T-02-01 merged)
+- Set up worklog structure
+
+Actions Completed:
+✅ Worktree created: .worktrees/T-02-02-sparse-index
+✅ Branch: feat/task/T-02-02-sparse-index
+✅ Base commit: 2a2ad34 (T-02-01 merged PR #6)
+✅ Symlink: ~/dev-space/CDSAgent-T-02-02-sparse-index
+✅ Artifacts initialized: .artifacts/spec-tasks-T-02-02-sparse-index/
+✅ Daily worklogs created: 2025-10-31-*.md
+
+Dependency Verification:
+- T-02-01-graph-builder: ✅ COMPLETED & MERGED (PR #6, 2025-10-30)
+- Graph builder provides: 4 node types, 4 edge types, <2% parity variance
+- Ready for: Upper index (name/ID HashMap) + BM25 implementation
+
+Context References:
+- Task spec: spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md
+- Issue: spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md
+- PRD: spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+- Parity baseline: tests/fixtures/parity/golden_outputs/search_queries.jsonl
+
+================================================================================
+THREAD 02: DOCUMENTATION UPDATES FOR M2 MILESTONE TRANSITION
+================================================================================
+
+Objective:
+- Update project documentation to reflect M2 milestone progress
+- Document T-02-01 completion and T-02-02 kickoff
+- Sync AGENTS.md, CLAUDE.md, README.md with current status
+
+Work Completed:
+
+1. AGENTS.md Updates (+20 lines):
+   - Added 2025-10-31 status snapshot section
+   - Documented T-02-01 completion (≤2% parity, 23 tests, 82% coverage)
+   - Marked T-02-02 as in progress (hierarchical sparse index)
+   - Expanded repository structure showing modular graph builder
+   - Listed downstream blockers: T-02-03, T-03-01
+
+2. CLAUDE.md Updates (+22 lines):
+   - Mirrored AGENTS.md status snapshot for AI assistant context
+   - Updated repository overview with completion dates
+   - Expanded project structure tree with graph builder modules
+   - Added sparse index work-in-progress notes
+
+3. README.md Updates (+25 lines):
+   - Added comprehensive status section for external contributors
+   - Documented M0/M1 completion, M2 active
+   - Updated features with parity results (≤2% variance)
+   - Refreshed project tree with completed graph builder
+   - Marked roadmap: T-02-01 complete ✅, T-02-02 in progress
+
+4. Issue Files Updates (+8 lines):
+   - spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md:
+     * Added completion note (2025-10-30, PR #6)
+   - spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md:
+     * Marked in-progress status (2025-10-31 kickoff)
+
+Key Decisions:
+- Document milestone transition BEFORE code implementation
+- Rationale: Ensures all team members and AI assistants have current context
+- Trade-off: Small upfront time investment for better clarity
+
+Files Modified:
+Total: 5 files, +62 insertions, -13 deletions
+
+================================================================================
+GIT OPERATIONS
+================================================================================
+
+Commit 1: 4f834f6 (Code Commit - Documentation)
+Message: docs(milestone): update documentation for M2 T-02-02 sparse index kickoff
+Files: 5 documentation files
+Changes: +62/-13 lines
+Git Notes: ✅ Added
+  Day: 1
+  Date: 2025-10-31
+  Sessions: 1-01 to 1-01 (07:17-07:29 UTC)
+  Duration: 0.2h
+  Status: Documentation updates for M2 milestone transition
+
+Commit 2: 8abc915 (Checkpoint Commit - Artifacts)
+Message: checkpoint(worklog): T-02-02 Day 1 Session 1 complete
+Files: 5 artifact files
+Changes: +453 lines
+Git Notes: ✅ Added
+  Day: 1
+  Date: 2025-10-31
+  Sessions: 1-01 to 1-01 (07:17-07:29 UTC)
+  Duration: 0.2h
+  Status: Checkpoint commit - artifact updates for code commit 4f834f6
+
+Push Status:
+✅ Commits pushed: feat/task/T-02-02-sparse-index
+✅ Git notes pushed: refs/notes/commits
+✅ Remote synchronized
+
+Git Notes Verification:
+✅ All commits have valid git notes (verified with git-notes-check.sh)
+
+================================================================================
+ARTIFACTS UPDATED
+================================================================================
+
+1. metadata.yaml:
+   - Added commit 4f834f6 to git_commits section
+   - Updated actual_hours: 0.2h
+   - Updated metrics: lines_added: 62, lines_deleted: 13, files_modified: 5
+   - Status: in_progress
+
+2. git-refs.txt:
+   - Created with branch and base commit information
+   - Added git notes workflow reference
+
+3. worklogs/2025-10-31-work-summary.md:
+   - Documented objectives: initialization + documentation updates
+   - Listed completed work: AGENTS.md, CLAUDE.md, README.md, issue files
+   - Added key decisions and rationale
+   - Acceptance criteria progress: all "not started" (Day 1)
+   - Time spent: 0.2h
+
+4. worklogs/2025-10-31-commit-log.md:
+   - Documented commit 4f834f6 with full message
+   - Listed git commands executed
+   - Updated branch status
+   - Added references to specs
+
+5. worklogs/2025-10-31-notes.md:
+   - Architecture decisions: hierarchical two-tier index design
+   - Implementation details: planned NameIndex structure
+   - Dependencies: internal (graph) and external (TBD: Tantivy vs custom)
+   - Research questions: BM25 parameters, tokenization, 90% overlap target
+   - Test strategy: unit tests, parity tests, benchmark tests
+   - Performance targets: <500ms p95, <5s build, memory TBD
+   - TODO: Review LocAgent BM25/tokenizer implementation
+
+================================================================================
+CHECKPOINT WORKFLOW VERIFICATION
+================================================================================
+
+Pre-Checkpoint Checks (checkpoint-helper.sh):
+✅ Git status validated (only artifact changes after code commit)
+✅ Git notes verification passed
+✅ Daily worklogs exist
+✅ Metadata consistency verified
+✅ Artifact completeness confirmed
+
+Phase 4 - Git Operations:
+✅ Step 4.1: Code commit created (4f834f6)
+✅ Step 4.2: Git notes added to code commit
+✅ Step 4.3: metadata.yaml updated with commit hash
+✅ Step 4.4: Artifact files staged
+✅ Step 4.5: Checkpoint commit created (8abc915)
+✅ Step 4.6a: Commits pushed to remote
+✅ Step 4.6b: Git notes pushed to remote
+
+Final State:
+✅ Working tree clean (except .claude/settings.local.json, .tmp-kanban/)
+✅ All commits have git notes
+✅ Remote synchronized
+✅ Ready for next work session
+
+================================================================================
+NEXT STEPS - THREAD 03 (IMPLEMENTATION)
+================================================================================
+
+Priority 1 - Upper Index Design & Implementation (Days 1-2):
+- [ ] Review LocAgent BM25 implementation (tmp/LocAgent/plugins/location_tools/retriever/bm25_retriever.py)
+- [ ] Review LocAgent tokenizer (tmp/LocAgent/repo_index/utils/tokenization.py)
+- [ ] Design Upper Index API (search by name, search by prefix)
+- [ ] Implement NameIndex struct with HashMap + prefix trie
+- [ ] Add unit tests for exact/prefix/case-insensitive matching
+
+Priority 2 - Benchmark Framework Setup (Day 1):
+- [ ] Set up benchmark framework (criterion.rs)
+- [ ] Create search_bench.rs in crates/cds-index/benches/
+- [ ] Define latency metrics (p50, p95, p99)
+
+Priority 3 - Test Infrastructure (Day 1):
+- [ ] Create test fixtures for index tests
+- [ ] Set up parity test framework using T-06-01 baselines
+
+Technical Context:
+- Graph builder output: 4 node types (directory, file, class, function)
+- Graph builder edges: 4 types (contain, import, invoke, inherit)
+- Parity target: ≥90% search overlap@10 on 50 queries
+- Performance target: <500ms p95 search, <5s index build for 1K files
+- Test coverage target: >95%
+
+Dependencies Available:
+✅ Graph builder (T-02-01) provides entity metadata
+✅ Parity baselines (T-06-01) provide 50 search queries
+✅ Tantivy/DashMap already in workspace dependencies
+
+Blocked Until:
+- None (all dependencies cleared, ready to start implementation)
+
+================================================================================
+CONTEXT FOR HANDOFF
+================================================================================
+
+Current State Summary:
+- Worktree: .worktrees/T-02-02-sparse-index (feat/task/T-02-02-sparse-index)
+- Base: 2a2ad34 (T-02-01 merged)
+- Commits: 4f834f6 (docs), 8abc915 (checkpoint)
+- Artifacts: Fully initialized and synchronized
+- Remote: Up to date
+- Status: Ready for implementation Phase 1
+
+Key Files to Review Before Coding:
+1. spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md (task spec)
+2. spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md (detailed issue)
+3. spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md (requirements)
+4. tmp/LocAgent/plugins/location_tools/retriever/bm25_retriever.py (reference impl)
+5. crates/cds-index/src/graph/mod.rs (graph builder API)
+
+Implementation Roadmap (6-8 days):
+- Phase 1 (Days 1-2): Upper Index - Name/ID HashMap ← START HERE
+- Phase 2 (Day 3): Custom Tokenizer
+- Phase 3 (Days 3-5): BM25 Lower Index (Tantivy or custom)
+- Phase 4 (Day 6): Hierarchical Search Strategy
+- Phase 5 (Days 7-8): Parity & Benchmarking
+
+Risk Mitigation:
+- Tokenization mismatch: Prototype both Tantivy and custom BM25
+- BM25 parameter tuning: Use LocAgent defaults (k1=1.5, b=0.75)
+- Memory usage: Set reasonable upper bounds and benchmark early
+
+Team Coordination:
+- T-02-03 (service layer) blocked until T-02-02 acceptance
+- T-03-01 (CLI commands) blocked until T-02-02 acceptance
+- Coordinate with T-02-01 PR #6 reviewer for any interface changes
+
+================================================================================
+METRICS SNAPSHOT
+================================================================================
+
+Task Progress:
+- Estimated hours: 32 (4 days × 8 hours)
+- Actual hours: 0.2 (12 minutes - Day 1 Session 1)
+- Commits: 2 (1 code, 1 checkpoint)
+- Lines added: 62 (documentation)
+- Lines deleted: 13 (documentation)
+- Files modified: 5 (documentation)
+- Tests added: 0
+- Test coverage: 0.0%
+
+Acceptance Criteria Status:
+- [ ] Upper index (name/ID HashMap) with prefix matching
+- [ ] Lower index (BM25 k1=1.5, b=0.75)
+- [ ] Search latency <500ms p95
+- [ ] Index build <5s for 1K files
+- [ ] Search overlap@10 ≥90% on 50 queries
+- [ ] Unit test coverage >95%
+
+All 6 criteria: NOT STARTED (Day 1 documentation only)
+
+================================================================================
+END OF WORK SESSIONS 02 THREADS SUMMARY
+================================================================================
+
+Generated: 2025-10-31T07:45:00Z
+Thread Owner: Claude Code Agent + Rust Dev 2
+Next Session: Day 1 Session 2 (Implementation Phase 1 - Upper Index)
