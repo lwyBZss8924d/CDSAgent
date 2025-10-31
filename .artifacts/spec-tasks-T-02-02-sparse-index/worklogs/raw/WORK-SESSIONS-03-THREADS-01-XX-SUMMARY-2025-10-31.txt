@@ -1,0 +1,165 @@
+================================================================================
+WORK SESSION 03 - THREADS 01-XX SUMMARY
+================================================================================
+
+Task: T-02-02-sparse-index - Sparse Index - Name/ID + BM25 Search
+Date: 2025-10-31
+Session: 03 (Day 1 PM - Phase 1: Upper Index Implementation)
+Threads: 01-XX (to be numbered during work)
+Start Time: 11:33 UTC
+End Time: TBD
+Duration: TBD (~4-6h target)
+Status: 🚧 IN PROGRESS
+
+Session Overview:
+Phase 1: Implementing Upper Index - Name/ID HashMap with prefix matching
+
+Objectives:
+- Implement NameIndex builder with DashMap for concurrent ingestion
+- Compact builder into Arc<NameIndexInner> immutable structure
+- Add exact match functionality (O(log n) binary search)
+- Add prefix match functionality (<10ms target)
+- Wire graph integration to consume CodeGraph entities
+- Create unit tests in tests/index_tests.rs
+- Set up basic benchmarks in benches/search_bench.rs
+
+Key Design from Session 02 Research:
+========================================
+
+NameIndex Architecture:
+```rust
+// Builder pattern for concurrent ingestion
+struct NameIndexBuilder {
+    names: DashMap<String, Vec<GraphNodeIndex>>,
+    type_filters: DashMap<EntityType, HashSet<GraphNodeIndex>>,
+}
+
+// Compact immutable structure for queries
+struct NameIndexInner {
+    sorted_keys: Vec<String>,
+    entity_map: HashMap<String, Vec<EntityMetadata>>,
+    type_index: HashMap<EntityType, Vec<EntityMetadata>>,
+}
+
+pub struct NameIndex(Arc<NameIndexInner>);
+```
+
+Performance Targets:
+- Exact lookup: O(log n) via binary search
+- Prefix query: <10ms for typical prefixes
+- Memory: ~100 bytes per entity (10K entities = ~1MB)
+
+Technical Decisions Locked (Session 02):
+- Use builder pattern: DashMap → Arc<NameIndexInner>
+- Sorted keys for binary search + prefix scanning
+- Type-based filtering support built-in
+- Entity metadata includes: name, type, file path, AST range
+
+================================================================================
+THREAD 01: [TBD - To be filled during work]
+================================================================================
+Time: TBD
+Status: 🚧 IN PROGRESS
+
+Objective:
+[Implementation objective for Thread 01]
+
+Actions:
+[To be documented as work progresses]
+
+Key Decisions:
+[Document any technical decisions made]
+
+Code Changes:
+[Track files modified/created]
+
+Testing:
+[Unit tests added/run]
+
+================================================================================
+THREAD 02: [TBD - To be filled if needed]
+================================================================================
+Time: TBD
+Status: ⏳ PENDING
+
+[Reserved for additional threads as work continues]
+
+================================================================================
+THREAD 03: [TBD - To be filled if needed]
+================================================================================
+Time: TBD
+Status: ⏳ PENDING
+
+[Reserved for additional threads as work continues]
+
+================================================================================
+SESSION NOTES
+================================================================================
+
+Implementation Checklist (from Session 02 roadmap):
+- [ ] Create crates/cds-index/src/index/name_index.rs module
+- [ ] Implement NameIndexBuilder struct with DashMap
+- [ ] Implement build() method to compact into NameIndexInner
+- [ ] Implement exact_match() query method
+- [ ] Implement prefix_match() query method
+- [ ] Add entity type filtering support
+- [ ] Wire integration with CodeGraph from graph/mod.rs
+- [ ] Create tests/index_tests.rs with unit tests
+- [ ] Add benchmarks to benches/search_bench.rs
+- [ ] Document public API with rustdoc comments
+
+Graph Integration (Dependencies):
+- Graph API: crates/cds-index/src/graph/mod.rs (from T-02-01)
+- Entity types available: Directory, File, Class, Function
+- Entity metadata: name, type, file_path, ast_range
+- Need to iterate over graph nodes to populate NameIndex
+
+Testing Strategy:
+- Unit tests for exact match (case sensitive, case insensitive)
+- Unit tests for prefix match (empty prefix, single char, full prefix)
+- Unit tests for type filtering (filter by Directory, File, Class, Function)
+- Unit tests for edge cases (empty index, duplicate names, special chars)
+- Target: >95% test coverage for name_index.rs
+
+Benchmark Setup:
+- Create mini-graph with N entities (100, 1K, 10K)
+- Measure exact lookup latency (p50, p95, p99)
+- Measure prefix scan latency for various prefix lengths
+- Measure index build time
+- Use criterion.rs for statistical analysis
+
+Acceptance Criteria Progress (for Phase 1):
+- [ ] Upper index (name/ID HashMap) with prefix matching
+- [ ] Unit test coverage >95% for name_index.rs
+- [ ] Benchmarks show <10ms prefix query latency
+
+Follow-up from Session 02:
+- [ ] Extract LocAgent stop-word list (deferred to Phase 2)
+- [ ] Create tests/support/parity_loader.rs (deferred to Phase 2)
+- [ ] Define TANTIVY_DATA_DIR env var (deferred to Phase 3)
+
+Phase 1 Deliverables:
+1. crates/cds-index/src/index/name_index.rs (core implementation)
+2. crates/cds-index/tests/index_tests.rs (unit tests)
+3. crates/cds-index/benches/search_bench.rs (benchmarks)
+4. Documentation (inline rustdoc + module README)
+
+Next Phase (Phase 2 - Custom Tokenizer):
+- Will be Session 04 or part of Day 2
+- Implement tokenizer.rs with LocAgent-compatible rules
+- Port camel/snake splitting, stop-word trimming
+- Create tokenizer golden fixtures
+
+================================================================================
+END OF SESSION SUMMARY
+================================================================================
+
+NOTE: This file will be completed at the end of Session 03 with:
+- Actual thread breakdown and timings
+- Implementation details and code changes
+- Test results and benchmark numbers
+- Decisions made during implementation
+- Challenges encountered and solutions
+- Total session duration and completion status
+
+Last Updated: 2025-10-31 11:33 UTC (Session Start)
