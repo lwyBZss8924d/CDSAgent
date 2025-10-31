@@ -1,0 +1,17 @@
+Task: T-02-02-sparse-index
+Branch: feat/task/T-02-02-sparse-index
+Base Commit: 2a2ad34 (feat(graph): T-02-01 - Graph Builder AST Parsing & Construction (#6))
+Started: 2025-10-31
+Owner: Rust Dev 2
+
+Git Notes Workflow:
+  - Code commits MUST have git notes added before checkpoint
+  - Format: spec-tasks/T-02-02-sparse-index
+            Day: X
+            Date: YYYY-MM-DD
+            Sessions: X-XX to X-XX (HH:MM-HH:MM UTC)
+            Duration: Xh
+            Worklog: .artifacts/spec-tasks-T-02-02-sparse-index/worklogs/YYYY-MM-DD-*
+            Status: [summary]
+            Files: X code files (+XXX/-XXX lines)
+  - Push notes: git push origin refs/notes/commits

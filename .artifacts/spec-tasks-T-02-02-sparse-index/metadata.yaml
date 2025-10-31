@@ -1,0 +1,80 @@
+# Task Metadata for T-02-02-sparse-index
+# Auto-generated on 2025-10-31
+
+task:
+  id: T-02-02-sparse-index
+  title: "Sparse Index - Name/ID + BM25 Search"
+  owner: "Claude Code Agent + Rust Dev 2"
+  status: in_progress
+  start_date: "2025-10-31"
+  estimated_hours: 32  # 4 days × 8 hours
+  actual_hours: 0.2  # Day 1 Session 1: 12 minutes documentation updates
+
+specs:
+  prds:
+    - spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+  issues:
+    - spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md
+  tasks:
+    - spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md
+
+git:
+  worktree: .worktrees/T-02-02-sparse-index
+  branch: feat/task/T-02-02-sparse-index
+  base_commit: 2a2ad34
+  commits:
+    - hash: "4f834f6"
+      message: "docs(milestone): update documentation for M2 T-02-02 sparse index kickoff"
+      date: "2025-10-31"
+      files_changed: 5
+      notes: "Day 1 (Session 1-01: 07:17-07:29 UTC): Documentation updates for M2 milestone transition. Added status snapshots to AGENTS.md, CLAUDE.md, README.md. Updated issue files to mark T-02-01 complete and T-02-02 in progress. 5 files, +62/-13 lines."
+
+deliverables:
+  - crates/cds-index/src/index/name_index.rs
+  - crates/cds-index/src/index/bm25.rs
+  - crates/cds-index/src/index/tokenizer.rs
+  - crates/cds-index/benches/search_bench.rs
+  - crates/cds-index/tests/index_tests.rs
+  - crates/cds-index/tests/search_parity_tests.rs
+
+acceptance_criteria:
+  - criterion: "Upper index (name/ID HashMap) with prefix matching"
+    status: not_started
+  - criterion: "Lower index (BM25 k1=1.5, b=0.75)"
+    status: not_started
+  - criterion: "Search latency <500ms p95"
+    status: not_started
+  - criterion: "Index build <5s for 1K files"
+    status: not_started
+  - criterion: "Search overlap@10 ≥90% on 50 queries"
+    status: not_started
+  - criterion: "Unit test coverage >95%"
+    status: not_started
+
+dependencies:
+  requires:
+    - T-02-01-graph-builder  # ✅ COMPLETED & MERGED (PR #6)
+  blocks:
+    - T-02-03-service-layer
+    - T-03-01-cli-commands
+    - T-02-04-serialization
+
+metrics:
+  lines_added: 62
+  lines_deleted: 13
+  files_modified: 5
+  tests_added: 0
+  test_coverage: 0.0
+
+notes: |
+  Implementation roadmap (6-8 days):
+  - Phase 1 (Days 1-2): Upper Index - Name/ID HashMap
+  - Phase 2 (Day 3): Custom Tokenizer
+  - Phase 3 (Days 3-5): BM25 Lower Index (Tantivy or custom)
+  - Phase 4 (Day 6): Hierarchical Search Strategy
+  - Phase 5 (Days 7-8): Parity & Benchmarking
+
+  Technical risks:
+  - Tokenization mismatch with LocAgent
+  - BM25 parameter tuning for 90% overlap
+  - Memory usage for large repos
