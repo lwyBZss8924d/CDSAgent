@@ -1,0 +1,8 @@
+spec-tasks/T-02-02-sparse-index
+Day: 1
+Date: 2025-10-31
+Sessions: 01 (Threads 01-03)
+Duration: 1.2h
+Worklog: .artifacts/spec-tasks-T-02-02-sparse-index/worklogs/2025-10-31-*
+Status: Documentation - Moved WORKLOG-HANDBOOK.md to .artifacts/ root for cross-task reusability. Created CLAUDE.md and AGENTS.md task guides. Established complete workflow patterns to prevent future mistakes with Session/Thread/Phase hierarchy.
+Files: 3 files (WORKLOG-HANDBOOK.md moved+updated 85% similarity, CLAUDE.md created 278 lines, AGENTS.md created 37 lines)
