@@ -1,0 +1,368 @@
+================================================================================
+WORK SESSION 01 - THREADS 01-03 SUMMARY
+================================================================================
+
+Task: T-02-02-sparse-index - Sparse Index - Name/ID + BM25 Search
+Date: 2025-10-31
+Session: 01 (Day 1 - Complete work session)
+Threads: 01 (Init) + 02 (Documentation) + 03 (Planning)
+Duration: 07:17-08:30 UTC (1.2h total)
+Status: ✅ SESSION COMPLETE
+
+Session Overview:
+- Thread 01: Worktree & task initialization
+- Thread 02: Documentation updates for M2 milestone
+- Thread 03: Comprehensive implementation planning & analysis
+
+================================================================================
+THREAD 01: WORKTREE & TASK INITIALIZATION
+================================================================================
+Time: 07:17-07:20 UTC (0.05h)
+
+Objective:
+- Initialize T-02-02 worktree and task artifacts
+- Verify dependencies cleared (T-02-01 merged)
+- Set up worklog structure
+
+Actions Completed:
+✅ Worktree created: .worktrees/T-02-02-sparse-index
+✅ Branch: feat/task/T-02-02-sparse-index
+✅ Base commit: 2a2ad34 (T-02-01 merged PR #6)
+✅ Symlink: ~/dev-space/CDSAgent-T-02-02-sparse-index
+✅ Artifacts initialized: .artifacts/spec-tasks-T-02-02-sparse-index/
+✅ Daily worklogs created: 2025-10-31-*.md
+
+Dependency Verification:
+- T-02-01-graph-builder: ✅ COMPLETED & MERGED (PR #6, 2025-10-30)
+- Graph builder provides: 4 node types, 4 edge types, <2% parity variance
+- Ready for: Upper index (name/ID HashMap) + BM25 implementation
+
+Context References:
+- Task spec: spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md
+- Issue: spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md
+- PRD: spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+- Parity baseline: tests/fixtures/parity/golden_outputs/search_queries.jsonl
+
+================================================================================
+THREAD 02: DOCUMENTATION UPDATES FOR M2 MILESTONE TRANSITION
+================================================================================
+Time: 07:20-07:29 UTC (0.15h)
+
+Objective:
+- Update project documentation to reflect M2 milestone progress
+- Document T-02-01 completion and T-02-02 kickoff
+- Sync AGENTS.md, CLAUDE.md, README.md with current status
+
+Work Completed:
+
+1. AGENTS.md Updates (+20 lines):
+   - Added 2025-10-31 status snapshot section
+   - Documented T-02-01 completion (≤2% parity, 23 tests, 82% coverage)
+   - Marked T-02-02 as in progress (hierarchical sparse index)
+   - Expanded repository structure showing modular graph builder
+   - Listed downstream blockers: T-02-03, T-03-01
+
+2. CLAUDE.md Updates (+22 lines):
+   - Mirrored AGENTS.md status snapshot for AI assistant context
+   - Updated repository overview with completion dates
+   - Expanded project structure tree with graph builder modules
+   - Added sparse index work-in-progress notes
+
+3. README.md Updates (+25 lines):
+   - Added comprehensive status section for external contributors
+   - Documented M0/M1 completion, M2 active
+   - Updated features with parity results (≤2% variance)
+   - Refreshed project tree with completed graph builder
+   - Marked roadmap: T-02-01 complete ✅, T-02-02 in progress
+
+4. Issue Files Updates (+8 lines):
+   - spacs/issues/04-0.1.0-mvp/02-index-core/01-graph-build.md:
+     * Added completion note (2025-10-30, PR #6)
+   - spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md:
+     * Marked in-progress status (2025-10-31 kickoff)
+
+Key Decisions:
+- Document milestone transition BEFORE code implementation
+- Rationale: Ensures all team members and AI assistants have current context
+- Trade-off: Small upfront time investment for better clarity
+
+Files Modified:
+Total: 5 files, +62 insertions, -13 deletions
+
+Git Operations:
+- Commit 4f834f6: docs(milestone): update documentation for M2 T-02-02 kickoff
+- Commit 8abc915: checkpoint(worklog): artifacts updated
+- Git notes added to both commits
+- Pushed to remote with notes
+
+Checkpoint Workflow:
+✅ Phase 4.1: Code commit created
+✅ Phase 4.2: Git notes added
+✅ Phase 4.3: metadata.yaml updated
+✅ Phase 4.4: Artifacts staged
+✅ Phase 4.5: Checkpoint commit created
+✅ Phase 4.6: Pushed commits + notes
+
+================================================================================
+THREAD 03: COMPREHENSIVE IMPLEMENTATION PLANNING & ANALYSIS
+================================================================================
+Time: 07:45-08:30 UTC (0.75h)
+
+Objective:
+Create detailed implementation plan based on complete analysis of:
+- Task specifications and acceptance criteria
+- Existing codebase structure (graph builder API)
+- LocAgent reference implementation
+- Parity requirements and test infrastructure
+- Performance targets and benchmarking strategy
+
+Sources Analyzed:
+✅ .artifacts/spec-tasks-T-02-02-sparse-index/metadata.yaml
+✅ .tmp-kanban/20251031/backlog/nextsteps-tasks-analysis-result.txt
+✅ spacs/tasks/0.1.0-mvp/TODO.yaml
+✅ spacs/tasks/0.1.0-mvp/README.md
+✅ spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md
+✅ spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md
+✅ spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
+✅ crates/cds-index/src/graph/mod.rs (Graph API)
+✅ crates/cds-index/src/index/mod.rs (placeholder structure)
+
+Planning Document Created:
+- 986 lines of comprehensive analysis
+- 10 sections covering all aspects
+- Detailed 6-day implementation roadmap
+- Risk analysis and mitigation strategies
+- Complete test and benchmark strategy
+
+Key Sections:
+
+1. Requirements Analysis
+   - Upper Index: HashMap with O(1) exact match
+   - Lower Index: BM25 with k1=1.5, b=0.75
+   - Hierarchical strategy: upper → BM25 fallback
+   - Acceptance criteria: 6 items, all documented
+   - Performance targets: <500ms p95, <5s build
+
+2. Graph Builder API Analysis
+   - Available types: GraphNode, NodeKind, EdgeKind
+   - Integration points: graph.nodes() iterator
+   - Filtering strategy: Class and Function nodes only
+   - FQN usage for index keys
+
+3. LocAgent Reference Analysis
+   - Upper index: entity_dict + lower_entity_dict
+   - Search flow: exact → name scan → BM25 fallback
+   - Tokenizer: camelCase/snake_case splitting
+   - BM25 parameters: k1=1.5, b=0.75 confirmed
+
+4. Implementation Plan (6 Days):
+
+   Phase 1 (Days 1-2): Upper Index - Name/ID HashMap
+   - Day 1: Design + exact match + prefix match + unit tests
+   - Day 2: Case-insensitive + optimization + benchmarks
+   - Deliverable: name_index.rs (~200-300 lines, >80% coverage)
+
+   Phase 2 (Day 3): Custom Tokenizer
+   - camelCase/snake_case splitting
+   - Stop word filtering
+   - Match LocAgent tokenization
+   - Deliverable: tokenizer.rs (~150-200 lines)
+
+   Phase 3 (Days 3-5): BM25 Lower Index
+   - Decision point: Tantivy vs custom
+   - BM25 implementation with correct parameters
+   - Query optimization
+   - Deliverable: bm25.rs (~300-500 lines)
+
+   Phase 4 (Day 6): Hierarchical Search Strategy
+   - Implement search pipeline
+   - Result merging and deduplication
+   - Integration tests
+   - Deliverable: search.rs (~200-300 lines)
+
+   Phase 5 (Days 7-8): Parity & Benchmarking
+   - Run 50 queries from search_queries.jsonl
+   - Measure overlap@10 (target: ≥90%)
+   - Comprehensive benchmarks
+   - Performance optimization
+
+5. Technical Architecture
+   - Module structure: 5 new files
+   - Data flow: Graph → index → query → results
+   - Thread safety: Arc<RwLock> or DashMap
+   - API design for each module
+
+6. Test Strategy
+   - Unit tests: >95% coverage target
+   - Parity tests: search_queries.jsonl (50 queries)
+   - Benchmarks: criterion.rs (p95 <500ms)
+   - Integration tests: Graph API integration
+
+7. Risk Analysis
+   - Risk 1: Tokenization mismatch (High probability)
+   - Risk 2: BM25 scoring divergence (Medium)
+   - Risk 3: Performance targets not met (Low)
+   - Risk 4: Graph API changes (Low)
+   - Mitigation strategies for each
+
+8. Development Environment
+   - Dependencies: tantivy, criterion, rayon, dashmap
+   - Tools: cargo-tarpaulin, flamegraph, valgrind
+   - Daily workflow: code → test → checkpoint → push
+
+9. Next Immediate Actions (Thread 04 - Day 1)
+   - Review LocAgent name dictionary
+   - Study Graph API documentation
+   - Design NameIndex struct
+   - Implement exact + prefix match
+   - Unit tests + Graph integration
+
+10. Success Criteria
+    - Phase completion criteria defined
+    - Task completion criteria from metadata
+    - Ready to unblock T-02-03 and T-03-01
+
+Design Decisions:
+- Upper: HashMap + lowercase map for case-insensitive
+- Tokenizer: Custom (must match LocAgent for parity)
+- BM25: Prototype Tantivy vs custom (Phase 3 decision)
+- Thread-safe: Arc<RwLock> or DashMap
+- Result merging: Deduplicate by EntityId, deterministic sort
+
+Performance Optimization:
+- Memory: Lazy loading, compression, pooling
+- Latency: Caching, parallelization, short-circuit
+- Index build: Multi-threaded processing
+
+Risk Mitigation:
+- Tokenization: Validate early (Day 3)
+- BM25 scoring: Use exact parameters
+- Performance: Benchmark each phase
+- Schedule: Daily checkpoints, adjust after Phase 2
+
+================================================================================
+SESSION 01 SUMMARY
+================================================================================
+
+Total Duration: 1.2 hours (07:17-08:30 UTC)
+Threads Completed: 3
+Commits Created: 3
+
+Commits:
+1. 4f834f6 - docs(milestone): M2 documentation updates (5 files, +62/-13)
+2. 8abc915 - checkpoint(worklog): artifacts updated (5 files, +453)
+3. d281dcc - docs(worklog): raw summary Thread 02 (1 file, +282)
+4. d36ea10 - plan(worklog): implementation planning Thread 03 (1 file, +986)
+
+Git Notes: ✅ All commits have git notes
+Remote: ✅ Synchronized
+
+Artifacts Updated:
+- metadata.yaml: Task metadata with commit tracking
+- git-refs.txt: Git workflow reference
+- 2025-10-31-work-summary.md: Daily progress summary
+- 2025-10-31-commit-log.md: Git commit details
+- 2025-10-31-notes.md: Technical notes and plans
+- raw/WORK-SESSIONS-01-THREADS-01-03-SUMMARY-2025-10-31.txt: This file
+
+Metrics Snapshot:
+- Estimated hours: 32 (4 days × 8 hours)
+- Actual hours: 1.2 (Session 01 complete)
+- Commits: 4 (1 docs, 3 worklogs)
+- Lines added: 62 (documentation only)
+- Lines deleted: 13 (documentation)
+- Files modified: 5 (documentation)
+- Tests added: 0
+- Test coverage: 0.0%
+
+Acceptance Criteria Status:
+All 6 criteria: NOT STARTED (planning complete, ready for implementation)
+
+================================================================================
+NEXT SESSION: SESSION 02 - IMPLEMENTATION (THREAD 04+)
+================================================================================
+
+Next Session Plan:
+- Session 02 will start Thread 04: Upper Index implementation (Day 1)
+- Expected duration: 4-6 hours
+- Deliverables: name_index.rs + unit tests
+- Success criteria: Exact match + prefix match working, >80% coverage
+
+Pre-Implementation Checklist:
+- [x] Task artifacts initialized
+- [x] Documentation updated
+- [x] Comprehensive plan created
+- [x] Graph API analyzed
+- [x] LocAgent reference studied
+- [x] Test strategy defined
+- [ ] Review LocAgent name dictionary implementation
+- [ ] Study Graph API docs in detail
+- [ ] Set up test fixtures
+
+Implementation Phases (from planning):
+- Phase 1 (Days 1-2): Upper Index - Name/ID HashMap ← START HERE
+- Phase 2 (Day 3): Custom Tokenizer
+- Phase 3 (Days 3-5): BM25 Lower Index
+- Phase 4 (Day 6): Hierarchical Search Strategy
+- Phase 5 (Days 7-8): Parity & Benchmarking
+
+Technical Context for Session 02:
+- Graph builder output: 4 node types, 4 edge types
+- Parity target: ≥90% overlap@10 on 50 queries
+- Performance target: <500ms p95, <5s build
+- Test coverage target: >95%
+
+Dependencies Available:
+✅ Graph builder (T-02-01) provides entity metadata
+✅ Parity baselines (T-06-01) provide search queries
+✅ Tantivy/DashMap in workspace dependencies
+✅ Planning document with detailed roadmap
+
+Blocked Until: None (ready to start implementation)
+
+================================================================================
+END OF WORK SESSION 01
+================================================================================
+
+Generated: 2025-10-31T08:30:00Z
+Session Owner: Claude Code Agent + Rust Dev 2
+Next Session: 02 (Day 1 - Implementation Phase 1)
+Status: ✅ PLANNING COMPLETE - Ready for coding
+
+================================================================================
+RAW LOG FILE NAMING CONVENTION
+================================================================================
+
+Format: WORK-SESSIONS-{NN}-THREADS-{START}-{END}-SUMMARY-{YYYY-MM-DD}.txt
+
+Where:
+- NN: Session number (01, 02, 03, ...)
+- START: First thread number in session
+- END: Last thread number in session
+- YYYY-MM-DD: Date of session
+
+Examples:
+- WORK-SESSIONS-01-THREADS-01-03-SUMMARY-2025-10-31.txt (this file)
+- WORK-SESSIONS-02-THREADS-04-07-SUMMARY-2025-10-31.txt (next session)
+- WORK-SESSIONS-03-THREADS-08-10-SUMMARY-2025-11-01.txt (day 2)
+
+When to create new session RAW log:
+- Different work session (after break, next day, etc.)
+- Previous session reached 1000+ lines
+- Logical checkpoint (e.g., completed a Phase)
+
+Thread numbering:
+- Continuous across all sessions (01, 02, 03, ...)
+- Each thread is a focused work unit (30min - 2h)
+- Threads separated by context switches or breaks
+
+Session vs Phase vs Thread:
+- Session: Work period (1-8 hours), multiple threads
+- Phase: Implementation stage (Upper Index, Tokenizer, etc.)
+- Thread: Continuous work unit within session
+
+Example workflow:
+Day 1, Session 01, Threads 01-03: Planning
+Day 1, Session 02, Threads 04-06: Upper Index impl
+Day 1, Session 03, Thread 07: Checkpoint & review
+Day 2, Session 04, Threads 08-10: Tokenizer impl

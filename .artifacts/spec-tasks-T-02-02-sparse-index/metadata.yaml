@@ -68,11 +68,13 @@ metrics:
 
 notes: |
   Implementation roadmap (6-8 days):
-  - Phase 1 (Days 1-2): Upper Index - Name/ID HashMap
-  - Phase 2 (Day 3): Custom Tokenizer
-  - Phase 3 (Days 3-5): BM25 Lower Index (Tantivy or custom)
-  - Phase 4 (Day 6): Hierarchical Search Strategy
-  - Phase 5 (Days 7-8): Parity & Benchmarking
+  - Phase 0 (Day 1): Priority 0 - Planning & Analysis
+  - Phase 1 (Day 1): Upper Index - Name/ID HashMap
+  - Phase 2 (Day 1): Custom Tokenizer
+  - Phase 3 (Day 1): BM25 Lower Index (Tantivy or custom)
+  - Phase 4 (Days 2): Hierarchical Search Strategy
+  - Phase 5 (Days 2): Parity & Benchmarking
+  - Phase 6 (Day 1): Testing & Validation & pre-PR)
 
   Technical risks:
   - Tokenization mismatch with LocAgent
