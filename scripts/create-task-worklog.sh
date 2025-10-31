@@ -32,9 +32,10 @@ mkdir -p "${TASK_DIR}/worklogs"
 cp "${TEMPLATE_DIR}/metadata.template.yaml" "${TASK_DIR}/metadata.yaml"
 
 # Replace placeholders in metadata
-sed -i.bak "s/{TASK_ID}/${TASK_ID}/g" "${TASK_DIR}/metadata.yaml"
-sed -i.bak "s/{TASK_TITLE}/${TASK_TITLE}/g" "${TASK_DIR}/metadata.yaml"
-sed -i.bak "s/{DEVELOPER_NAME}/${DEVELOPER}/g" "${TASK_DIR}/metadata.yaml"
+# Use | as separator to handle / in TASK_TITLE (e.g., "Name/ID + BM25")
+sed -i.bak "s|{TASK_ID}|${TASK_ID}|g" "${TASK_DIR}/metadata.yaml"
+sed -i.bak "s|{TASK_TITLE}|${TASK_TITLE}|g" "${TASK_DIR}/metadata.yaml"
+sed -i.bak "s|{DEVELOPER_NAME}|${DEVELOPER}|g" "${TASK_DIR}/metadata.yaml"
 sed -i.bak "s|{TASK_DIR}|${TASK_ID}|g" "${TASK_DIR}/metadata.yaml"
 rm "${TASK_DIR}/metadata.yaml.bak"
 

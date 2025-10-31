@@ -2,6 +2,7 @@
 
 This file provides guidance to Codex when working with code in this "CDSAgent" repository.
 
+- @docs/RFC-DEV-TOOLS.md <📌> ["Development Tools Architecture & Quick Reference"](docs/RFC-DEV-TOOLS.md) </📌>
 - @docs/WORKTREE_WORKFLOW.md <📌> ["CDSAgent" codebase Spec-Tasks DEV-COOKING Workflow SOP](docs/WORKTREE_WORKFLOW.md) </📌>
 - @docs/NEXT_TASK_CHECKLIST.md <📌> ["Next Task Selection & Environment Setup Checklist"](docs/NEXT_TASK_CHECKLIST.md) </📌>
 - @docs/WORK_SESSION_CHECKPOINT_WORKFLOW.md <📌> ["Work Session Checkpoint - Review & Update Workflow"](docs/WORK_SESSION_CHECKPOINT_WORKFLOW.md) </📌>

@@ -20,15 +20,38 @@ WORKLOG_DIR="${TASK_DIR}/worklogs"
 TEMPLATE_DIR="${REPO_ROOT}/.artifacts/spec-tasks-templates/worklogs"
 
 # Colors
+RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# Worktree context validation
+CURRENT_DIR=$(pwd)
+WORKTREE_EXPECTED="/.worktrees/${TASK_ID}"
+
+if [[ ! "$CURRENT_DIR" =~ $WORKTREE_EXPECTED ]]; then
+    echo -e "${YELLOW}⚠ Warning: Not running from worktree!${NC}"
+    echo "Current directory: $CURRENT_DIR"
+    echo "Expected: */.worktrees/${TASK_ID}"
+    echo ""
+    echo "Recommendation: Navigate to worktree first:"
+    echo "  cd ~/dev-space/CDSAgent-${TASK_ID}"
+    echo "  /Users/arthur/dev-space/CDSAgent/scripts/create-daily-worklog.sh ${TASK_ID}"
+    echo ""
+    echo "Continuing anyway, but artifacts may not be visible in worktree..."
+fi
+
+# Check if task directory exists
 if [ ! -d "${TASK_DIR}" ]; then
-    echo -e "${YELLOW}Task directory not found. Creating...${NC}"
-    echo "Run: ./scripts/create-task-worklog.sh ${TASK_ID} \"Task Title\" \"Developer\""
-    exit 1
+    echo -e "${RED}✗ Task directory not found: ${TASK_DIR}${NC}"
+    echo ""
+    echo "Creating task directory structure..."
+    mkdir -p "${WORKLOG_DIR}"
+    echo -e "${GREEN}✓ Created ${TASK_DIR}${NC}"
+    echo ""
+    echo "Note: You should initialize task artifacts first:"
+    echo "  ./scripts/create-task-worklog.sh ${TASK_ID} \"Task Title\" \"Developer\""
 fi
 
 echo -e "${BLUE}Creating daily worklog for ${TASK_ID} on ${DATE}...${NC}"
@@ -45,7 +68,8 @@ for template in work-summary commit-log notes; do
     cp "${TEMPLATE_DIR}/${template}.template.md" "${OUTPUT_FILE}"
 
     # Replace date placeholder
-    sed -i.bak "s/{DATE}/${DATE}/g" "${OUTPUT_FILE}"
+    # Use | as separator to handle / in values
+    sed -i.bak "s|{DATE}|${DATE}|g" "${OUTPUT_FILE}"
 
     # Try to get task info from metadata if it exists
     if [ -f "${TASK_DIR}/metadata.yaml" ]; then
@@ -53,9 +77,10 @@ for template in work-summary commit-log notes; do
         DEVELOPER=$(grep '^  primary:' "${TASK_DIR}/metadata.yaml" | sed 's/.*: "\(.*\)"/\1/')
         BRANCH=$(grep '^  branch:' "${TASK_DIR}/metadata.yaml" | sed 's/.*: "\(.*\)"/\1/')
 
-        sed -i.bak "s/{TASK_ID}/${TASK_ID}/g" "${OUTPUT_FILE}"
-        sed -i.bak "s/{TASK_TITLE}/${TASK_TITLE}/g" "${OUTPUT_FILE}"
-        sed -i.bak "s/{DEVELOPER_NAME}/${DEVELOPER}/g" "${OUTPUT_FILE}"
+        # Use | as separator to handle / in TASK_TITLE
+        sed -i.bak "s|{TASK_ID}|${TASK_ID}|g" "${OUTPUT_FILE}"
+        sed -i.bak "s|{TASK_TITLE}|${TASK_TITLE}|g" "${OUTPUT_FILE}"
+        sed -i.bak "s|{DEVELOPER_NAME}|${DEVELOPER}|g" "${OUTPUT_FILE}"
         sed -i.bak "s|{BRANCH_NAME}|${BRANCH}|g" "${OUTPUT_FILE}"
     fi
 

@@ -1157,6 +1157,85 @@ git checkout main
 git reset --hard origin/main
 ```
 
+### Preventing Common Errors
+
+**NEW**: Automated tools to catch errors before they happen!
+
+#### Prevention 1: Sed Separator Issue (FIXED)
+
+**Problem**: Task titles containing "/" (e.g., "Name/ID + BM25") caused sed to fail
+
+**Solution**: `create-task-worklog.sh` and `create-daily-worklog.sh` now use `|` separator
+
+**Status**: ✅ Fixed in all scripts
+
+#### Prevention 2: Worktree Context Validation
+
+**Problem**: Running scripts from main instead of worktree creates artifacts in wrong place
+
+**Solution**: `create-daily-worklog.sh` now warns if not run from worktree
+
+```shell
+cd ~/dev-space/CDSAgent  # Wrong directory
+./scripts/create-daily-worklog.sh T-XX-XX
+
+# Output:
+# ⚠ Warning: Not running from worktree!
+# Recommendation: Navigate to worktree first:
+#   cd ~/dev-space/CDSAgent-T-XX-XX
+```
+
+**Best Practice**: Always run worktree scripts FROM the worktree!
+
+#### Prevention 3: Git Notes Verification
+
+**Problem**: Forgetting to add git notes before checkpoint
+
+**Solution**: Use automated verification script
+
+```shell
+# Before checkpoint, verify all commits have notes
+./scripts/git-notes-check.sh
+
+# Example output (failure):
+# ✗ Commits missing notes (2):
+#   - a3f4d89: feat(index): implement BM25
+#   - 7e2c1b0: test(index): add BM25 tests
+```
+
+**Best Practice**: Run `git-notes-check.sh` before every checkpoint!
+
+#### Prevention 4: Pre-Checkpoint Validation
+
+**Problem**: Missing artifacts, inconsistent metadata, uncommitted changes
+
+**Solution**: Use comprehensive checkpoint helper
+
+```shell
+# Before checkpoint, run comprehensive validation
+./scripts/checkpoint-helper.sh T-XX-XX
+
+# Checks:
+# ✓ Git status clean or only artifacts
+# ✓ All commits have git notes
+# ✓ Daily worklogs exist
+# ✓ Metadata consistency
+# ✓ Artifact completeness
+```
+
+**Best Practice**: Run `checkpoint-helper.sh` before Phase 4 of checkpoint workflow!
+
+**Quick Reference Table**:
+
+| Problem | Prevention Tool | When to Use |
+|---------|----------------|-------------|
+| Sed error with "/" in title | Built-in fix | Automatic |
+| Wrong directory context | Worktree validation | Every script run |
+| Missing git notes | `git-notes-check.sh` | Before checkpoint |
+| Incomplete artifacts | `checkpoint-helper.sh` | Before Phase 4 |
+
+---
+
 ### Getting Help
 
 1. **Check documentation**:

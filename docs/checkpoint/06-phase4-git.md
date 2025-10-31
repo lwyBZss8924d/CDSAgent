@@ -24,6 +24,55 @@ Phase 4 handles all git operations in the correct sequence:
 
 ⚠️ **CRITICAL**: Git notes must be pushed separately with `git push origin refs/notes/commits`
 
+### Pre-Flight Check (Recommended)
+
+**NEW**: Before starting Phase 4, run the checkpoint helper script to verify readiness:
+
+```shell
+# Run comprehensive pre-checkpoint checks
+./scripts/checkpoint-helper.sh [task_id]
+
+# Example
+./scripts/checkpoint-helper.sh T-02-02-sparse-index
+```
+
+This automated tool checks:
+
+- ✅ Git status (clean or only artifact changes)
+- ✅ All commits have git notes
+- ✅ Daily worklogs exist
+- ✅ Metadata has no PENDING fields
+- ✅ Commit count matches between git and metadata
+
+**Output example**:
+
+```text
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Checkpoint Helper - Pre-flight Checks
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[1/5] Checking git status...
+  ✓ Only artifact changes (expected)
+
+[2/5] Checking git notes...
+  ✓ All 3 commits have git notes
+
+[3/5] Checking daily worklogs...
+  ✓ Today's worklogs exist
+
+[4/5] Checking metadata consistency...
+  ✓ No PENDING fields in metadata
+  ✓ Commit count consistent (3 in metadata, 3 in git)
+
+[5/5] Checking artifact completeness...
+  ✓ All required artifacts exist
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ Ready for checkpoint!
+```
+
+If any checks fail, the script will provide specific actions to fix them before proceeding.
+
 ---
 
 ## Step 4.1: Create Code Commit (If Applicable)
@@ -150,6 +199,53 @@ Files: 7 code files (+1,072/-140 lines)
 - [ ] Day, Date, Sessions filled correctly
 - [ ] Parity/Status summarized accurately
 - [ ] Verified with `git notes show <hash>`
+
+### Automated Verification
+
+**NEW**: Use `git-notes-check.sh` to verify all commits have notes:
+
+```shell
+# Verify git notes on all commits
+./scripts/git-notes-check.sh
+
+# Or specify custom base commit
+./scripts/git-notes-check.sh <base-commit-hash>
+```
+
+**Output example (success)**:
+
+```text
+Git Notes Verification
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Branch: feat/task/T-02-02-sparse-index
+Base:   origin/main
+
+Checking 3 commit(s)...
+
+✓ 52c2b7e - Notes present
+✓ a3f4d89 - Notes present
+✓ 7e2c1b0 - Notes present
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ All commits have valid git notes!
+```
+
+**Output example (failure)**:
+
+```text
+✗ Git notes check FAILED
+
+Commits missing notes (2):
+  - a3f4d89: feat(index): implement BM25 scoring
+  - 7e2c1b0: test(index): add BM25 unit tests
+
+How to fix:
+1. Add git notes to each commit:
+   git notes add -m "spec-tasks/T-XX-XX-task-name
+   ...
+```
+
+This automated check ensures you don't forget the git notes step before pushing!
 
 ---
 
