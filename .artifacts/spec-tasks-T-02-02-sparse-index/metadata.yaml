@@ -7,9 +7,9 @@ task:
   owner: "Claude Code Agent + Rust Dev 2"
   status: in_progress
   start_date: "2025-10-31"
-  last_updated: 2025-11-01T01:39:00Z
+  last_updated: 2025-11-01T12:45:00Z
   estimated_hours: 32  # 4 days × 8 hours
-  actual_hours: 5.1  # Day 1: Sessions 01-03 (5.1h total). Day 2 Session 04: pending
+  actual_hours: 8.3  # Day 1: Sessions 01-03 (5.1h) + Day 2 Session 04 (3.2h)
 
 specs:
   prds:
@@ -125,12 +125,16 @@ notes: |
     * Performance: exact 68.42 ns, prefix 699.40 ns, build 2.287 ms (far exceeds targets)
     * Status: ✅ COMPLETE - Phase 1 (Upper Index) fully delivered
 
-  - Day 2 Session 04: [Phase 2] Custom Tokenizer - Planning & Prep (01:39 UTC - TBD) 🚧 IN PROGRESS
-    * Thread 01 (01:39 UTC - TBD): Phase 2 Planning & Spec Alignment
-    * Objectives: Review specs, extract tokenizer requirements, lock Phase 2-3 plan, queue implementation threads
-    * RAW: WORK-SESSIONS-04-THREADS-01-0x-SUMMARY-2025-11-01.txt (Session 04 kickoff)
-    * Start Time: 01:39 UTC
-    * Status: 🚧 IN PROGRESS (Phase 2 planning)
+  - Day 2 Session 04: [Phase 2] Custom Tokenizer - Planning & Prep (01:39-12:05 UTC, 2.9h) 🚧 IN PROGRESS
+    * Thread 01 (01:39-02:04): Phase 2 planning & spec alignment ✅
+    * Thread 02 (02:05-02:13): Tokenizer parity analysis & design ✅
+    * Thread 03 (02:14-02:22): Tokenizer module scaffolding ✅
+    * Thread 04 (02:22-02:46): Stop-word fixtures & parity harness prep ✅
+    * Thread 05 (02:47-03:30): Tantivy analyzer integration & offset plumbing ✅
+    * Thread 06 (11:15-12:05): BM25 index scaffold & search API ✅
+    * Outputs: Offset-aware tokenizer, analyzer + BM25 scaffolding, fixture-backed tests, updated worklogs
+    * RAW: WORK-SESSIONS-04-THREADS-01-07-SUMMARY-2025-11-01.txt (Threads 01-07 logged)
+    * Status: 🚧 AWAITING TASKS-SESSION-CODE-REVIEW & TASKS-CHECKPOINT-WORKFLOW
 
   Technical risks:
   - Tokenization mismatch with LocAgent
@@ -166,14 +170,14 @@ worklog:
       commits: "worklogs/2025-11-01-S04-commit-log.md" # Phase 2 Commit log
       notes: "worklogs/2025-11-01-S04-notes.md" # Phase 2 Technical notes
       raw:
-        - "./worklogs/raw/WORK-SESSIONS-04-THREADS-01-0x-SUMMARY-2025-11-01.txt"
+        - "./worklogs/raw/WORK-SESSIONS-04-THREADS-01-07-SUMMARY-2025-11-01.txt"
 
 metrics:
-  lines_added: 3398   # 4f834f6: +62, 5eb24a3: +1,388, 7f390a7: +716, 7b624c4: +1,232
-  lines_deleted: 732  # 4f834f6: -13, 5eb24a3: -562, 7f390a7: -87, 7b624c4: -70
-  files_modified: 26  # Total unique files modified across all commits (code + artifacts)
-  tests_added: 11     # 8 in name_index.rs, 2 in index_tests.rs, 1 benchmark
-  test_coverage: 0.972 # 97.20% lines, 95.35% functions (Session 03)
+  lines_added: 4180   # includes Session 04 tokenizer/analyzer/BM25 scaffolding + exporter
+  lines_deleted: 890  # includes Session 04 refactors/documentation
+  files_modified: 33  # updated to include tokenizer/analyzer/BM25/test/exporter files
+  tests_added: 17     # +4 tokenizer, +2 analyzer, +2 BM25 search tests
+  test_coverage: 0.972 # 97.20% lines, 95.35% functions (Session 03 baseline)
 
 comments:
 

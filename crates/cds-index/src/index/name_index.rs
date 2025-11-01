@@ -21,21 +21,11 @@ pub struct NameIndexStats {
 }
 
 /// Immutable upper dictionary index used for exact and prefix lookups.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct NameIndex {
     lookup: HashMap<Arc<str>, Arc<[NameEntry]>>,
     sorted_keys: Vec<Arc<str>>,
     stats: NameIndexStats,
-}
-
-impl Default for NameIndex {
-    fn default() -> Self {
-        Self {
-            lookup: HashMap::new(),
-            sorted_keys: Vec::new(),
-            stats: NameIndexStats::default(),
-        }
-    }
 }
 
 impl std::fmt::Debug for NameIndex {
@@ -290,7 +280,7 @@ fn append_filtered(
             break;
         }
 
-        if kind.map_or(true, |expected| entry.kind == expected) {
+        if kind.is_none_or(|expected| entry.kind == expected) {
             results.push(entry.clone());
         }
     }

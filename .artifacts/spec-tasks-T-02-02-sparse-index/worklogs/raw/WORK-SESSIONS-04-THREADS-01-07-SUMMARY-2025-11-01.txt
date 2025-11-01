@@ -1,0 +1,225 @@
+================================================================================
+WORK SESSION 04 - THREADS 01-0X SUMMARY
+================================================================================
+
+Task: T-02-02-sparse-index - Sparse Index - Name/ID + BM25 Search
+Date: 2025-11-01
+Session: 04 (Day 2 AM - Phase 2 Planning & Prep)
+Threads: 01-07 (to be enumerated)
+Start Time: 01:39 UTC
+End Time: 12:45 UTC
+Duration: ~? h (running)
+Status: 🚧 AWAITING TASKS-SESSION-CODE-REVIEW & TASKS-CHECKPOINT-WORKFLOW
+
+Session Overview:
+Phase 2 / Day 2 kickoff — re-analyze specs, lock tokenizer/BM25 plan, and queue implementation threads.
+
+Objectives:
+- Review refreshed metadata, specs, and task trackers for remaining Phase 2-5 scope.
+- Capture concrete TODO list for Phase 2 (Tokenizer) and Phase 3 (BM25) execution.
+- Identify research gaps (LocAgent tokenizer rules, Tantivy schema, parity fixtures) and assign follow-up actions.
+- Update planning artifacts to keep Session 04 aligned with checkpoint workflow.
+
+================================================================================
+THREAD 01: Phase 2 Planning & Spec Alignment
+================================================================================
+Time: 01:39-02:04 UTC
+Status: ✅ COMPLETE
+
+Objective:
+- Synthesize next-phase requirements from metadata, issues, and PRDs; produce actionable TODO list for Phase 2 execution threads.
+
+Actions:
+- Reviewed `metadata.yaml` to confirm Phase 1 completion stats and outstanding acceptance criteria (BM25, overlap@10).
+- Re-read Sub-Issue 02.02 and PRD-02 §2.2 to extract tokenizer, BM25, and hierarchical search expectations.
+- Scanned LocAgent references (`plugins/location_tools/retriever/bm25_retriever.py`, `repo_index/index/epic_split.py`, requirements.txt) to understand stemming, chunking, and analyzer dependencies.
+- Drafted Session 04 TODO roster covering tokenizer parity, Tantivy schema, hierarchical search merge logic, and parity harness design.
+- Logged planning progress and checklist into session notes.
+
+Key Decisions:
+- Phase 2 scope will implement a dedicated Rust tokenizer mirroring LocAgent casing/underscore splits, stop-word trimming, and English stemming (Hunter Stemmer via PyStemmer equivalent).
+- Tantivy will be configured with a custom analyzer pipeline (lowercase → code-aware split → ASCII fold → Porter stem) to align with LocAgent BM25 behavior.
+- Parity harness will reuse the 50-query fixture from `tests/fixtures/parity/golden_outputs/search_queries.jsonl` with overlap@10 metric and benchmarking scripted via Criterion.
+
+Code Changes:
+- None (planning thread).
+
+Testing:
+- Not applicable.
+
+================================================================================
+THREAD 02: Tokenizer Parity Analysis & Design
+================================================================================
+Time: 02:05-02:13 UTC
+Status: ✅ COMPLETE
+
+Objective:
+- Reverse-engineer LocAgent’s tokenizer/BM25 preprocessing pipeline and draft the concrete Rust implementation plan.
+
+Actions:
+- Reviewed PRD-02 §2.2 and PRD-06 §2.2 for prescribed camel/snake splitting, stop-word removal, and stemming requirements.
+- Inspected LocAgent modules: `build_bm25_index.py`, `plugins/location_tools/retriever/bm25_retriever.py`, and `repo_index/index/epic_split.py` to map their BM25 build path (EpicSplitter → Stemmer).
+- Noted dependency on `Stemmer.Stemmer("english")` and huggingface `tokenizers` stop-word vocab; identified need to export LocAgent’s stop-word list into fixtures for parity.
+- Defined tokenizer pipeline steps (normalize → identifier split → stop-word filter → Porter stem) and outlined supporting Rust crates (`regex`, `unicode-normalization`, `rust-stemmers`).
+- Documented next actions in session notes/TODOs (stop-word extraction script, parity fixtures, analyzer configuration, hierarchical merge logic).
+
+Key Decisions:
+- Implement tokenizer as deterministic Rust pipeline with fixture-driven stop-word list to guarantee parity with LocAgent.
+- Use `rust-stemmers` Porter stemmer; validate against LocAgent outputs via golden fixtures before integrating with Tantivy.
+- Configure Tantivy analyzer to reuse tokenizer pipeline (custom token filter) instead of default tokenizers to avoid drift.
+
+Code Changes:
+- Pending.
+
+Testing:
+- Pending.
+
+================================================================================
+THREAD 03: Tokenizer Module Scaffolding
+================================================================================
+Time: 02:14-02:22 UTC
+Status: ✅ COMPLETE
+
+Objective:
+- Implement tokenizer module skeleton, stop-word fixture plumbing, and initial unit tests that exercise normalization/splitting behavior.
+
+Actions:
+- Added `crates/cds-index/src/index/tokenizer.rs` with normalization → identifier split → stemming pipeline.
+- Wired module export through `index/mod.rs`; introduced workspace dependencies (`unicode-normalization`, `rust-stemmers`).
+- Implemented helper functions for camel/snake splitting and Unicode folding; ensured configurable stop word set.
+- Authored unit tests covering camel/snake cases, stop-word filtering, unicode normalization, digit/uppercase handling.
+- Ran `cargo test -p cds-index tokenizer -- --nocapture` (PASS).
+
+Key Decisions:
+- Digit sequences remain separate tokens (e.g., `http` + `2`) to mirror LocAgent regex behavior; stemming applied post-split.
+- Stop-word handling left data-driven (HashSet injection) enabling parity fixture swap later.
+- Tokenizer returns stemmed tokens; raw identifier split accessible via helper for future Tantivy analyzer integration.
+
+Code Changes:
+- `Cargo.toml` (workspace + crate) — added text-processing dependencies.
+- `crates/cds-index/src/index/mod.rs` — exported tokenizer module.
+- `crates/cds-index/src/index/tokenizer.rs` — new implementation + tests.
+
+Testing:
+- `cargo test -p cds-index tokenizer -- --nocapture`
+
+================================================================================
+THREAD 04: Stop-Word Fixtures & Parity Harness Prep
+================================================================================
+Time: 02:22-02:46 UTC
+Status: ✅ COMPLETE
+
+Objective:
+- Stand up fixture-backed stop-word loading and integration tests to unblock parity validation work.
+
+Actions:
+- Added `tests/fixtures/parity/tokenizer/stop_words.txt` mirrored from LocAgent’s English stop list.
+- Implemented `tests/support/mod.rs` loader returning a normalized `HashSet<String>` for reuse.
+- Authored `tests/tokenizer_fixture_tests.rs` to assert fixture-driven pruning and edge cases.
+- Re-ran tokenizer unit tests (`cargo test -p cds-index tokenizer -- --nocapture`) to confirm coverage.
+
+Key Decisions:
+- Treat stop-word fixture as canonical source for parity to simplify future updates.
+- Keep loader in `tests/support` to share logic with forthcoming parity harness utilities.
+
+Testing:
+- `cargo test -p cds-index tokenizer -- --nocapture`
+
+================================================================================
+THREAD 05: Tantivy Analyzer Integration & Offset Plumbing
+================================================================================
+Time: 02:47-03:30 UTC
+Status: ✅ COMPLETE
+
+Objective:
+- Extend tokenizer to capture byte offsets, expose Tantivy-compatible adapter, and register custom analyzer hooks.
+
+Actions:
+- Refactored `tokenizer.rs` to emit `TokenizedToken` with offsets, added `tokenize_with_offsets`, and preserved stemmed output.
+- Implemented `TantivyCodeTokenizer` and `CodeTokenStream` bridging to `tantivy::tokenizer::Tokenizer`.
+- Added `AnalyzerConfig`, `register_code_analyzer`, and `CODE_ANALYZER_NAME` in `bm25.rs` for analyzer registration.
+- Exported analyzer utilities via `index/mod.rs` and re-exported `TokenizedToken`/`TantivyCodeTokenizer`.
+- Expanded tests: offset preservation, Tantivy stream parity, analyzer registration (`TokenizerManager` integration).
+- Ran `cargo fmt` and `cargo test -p cds-index tokenizer -- --nocapture`.
+
+Key Decisions:
+- Preserve normalized byte offsets for downstream highlight support while allowing stemmed tokens for scoring.
+- Register analyzer via dedicated constant (`cds_code`) to keep schema wiring deterministic.
+
+Testing:
+- `cargo test -p cds-index tokenizer -- --nocapture`
+
+================================================================================
+THREAD 06: BM25 Index Scaffold & Stop-Word Export Automation
+================================================================================
+Time: 11:15-12:05 UTC
+Status: ✅ COMPLETE
+
+Objective:
+- Implement Tantivy-backed BM25 index skeleton and automate stop-word fixture synchronization with LocAgent.
+
+Actions:
+- Reviewed LocAgent BM25 tooling plus PRD FR-HI-2 to lock schema layout, scoring parameters (k1=1.5/b=0.75), and highlight expectations.
+- Implemented `Bm25Index` with directory create/open helpers, analyzer registration, bulk ingestion, and query execution with `QueryParser`.
+- Added `Bm25Document`, `SearchResult`, and `AnalyzerConfig` structs while persisting the tokenizer for matched-term extraction.
+- Authored `scripts/export_stop_words.py` to pull LocAgent's `STOPWORDS_EN_PLUS` list and refreshed the parity fixture.
+- Added unit tests for indexing/search and kind-filter behavior; ran tokenizer/BM25 suites.
+
+Key Decisions:
+- Store BM25 content with `IndexRecordOption::WithFreqsAndPositions` to support future snippet/highlighting.
+- Reuse CDS tokenizer for both indexing and querying to prevent drift and simplify matched-term reporting.
+- Automate stop-word exports to avoid manual fixture upkeep.
+
+Testing:
+- `cargo test -p cds-index tokenizer -- --nocapture`
+- `cargo test -p cds-index bm25 -- --nocapture`
+- `./scripts/export_stop_words.py`
+
+================================================================================
+THREAD 07: BM25 Persistence & Benchmark Planning
+================================================================================
+Time: 12:25-12:45 UTC
+Status: ✅ COMPLETE
+
+Objective:
+- Define persistence layout, rebuild workflow, and benchmarking plan required for Phase 3 acceptance.
+
+Actions:
+- Mapped out persistence workflow: `create -> replace_documents -> commit -> reload` plus rebuild/clear steps, noting required CLI/config wiring.
+- Reviewed PRD FR-GS-1 and LocAgent `BM25_index` artifacts to align directory structure (`indices/bm25/`, `meta.json`, segment layout).
+- Drafted benchmarking approach (SWE-bench lite subset, 50-query parity set, latency/hit-rate metrics) to validate BM25 performance once integrated.
+- Captured actionable TODOs for Phase 3 kickoff:
+  - [ ] Implement `bm25::Builder` with create/open/clear API and wire `BM25_INDEX_DIR` config.
+  - [ ] Add CLI command to rebuild BM25 index and surface progress/metrics.
+  - [ ] Author `benches/search_bench.rs` BM25 scenario + JSON report for latency.
+  - [ ] Prototype snippet/highlight extraction using stored positions.
+
+Key Decisions:
+- Align with LocAgent directory schema (`indices/bm25/`, `meta.json`) and reuse Tantivy segment layout for parity.
+- Gate benchmarks on SWE-bench lite subset with shared 50-query fixture; record latency (p50/p95), overlap@10, and throughput metrics.
+- Require service/CLI rebuild command to persist BM25 state and emit structured benchmark reports.
+
+Testing:
+- (Planning thread; no code changes to execute.)
+
+================================================================================
+SESSION NOTES
+================================================================================
+
+Planning Checklist:
+- [x] Review metadata acceptance matrix for remaining criteria.
+- [x] Extract tokenizer requirements from LocAgent + PRD-02/06.
+- [x] Document Tantivy/BM25 schema + index storage expectations.
+- [x] Outline parity validation strategy (overlap@10 ≥90%).
+- [x] Update TODO roster for Session 04 implementation threads.
+
+Open Risks to Monitor:
+- Validate automated stop-word export across environments (LocAgent env availability).
+- Finalize BM25 persistence/rebuild workflow and benchmark coverage before Phase 3 deliverables.
+- Design snippet/highlighting flow leveraging stored positions for BM25 results.
+
+================================================================================
+END OF SESSION SUMMARY
+================================================================================
+
+Last Updated: 2025-11-01T12:52:25Z UTC

@@ -50,6 +50,11 @@ bincode = "2.0"
 proptest = "1.8"
 criterion = "0.7"
 
+# Text processing
+unicode-normalization = "0.1"
+once_cell = "1.19"
+rust-stemmers = "1.2"
+
 [profile.dev]
 opt-level = 0
 debug = true
