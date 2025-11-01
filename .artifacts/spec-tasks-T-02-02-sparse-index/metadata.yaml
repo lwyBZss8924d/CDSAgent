@@ -7,7 +7,7 @@ task:
   owner: "Claude Code Agent + Rust Dev 2"
   status: in_progress
   start_date: "2025-10-31"
-  last_updated: 2025-11-01T12:45:00Z
+  last_updated: 2025-11-01T13:24:56Z
   estimated_hours: 32  # 4 days × 8 hours
   actual_hours: 8.3  # Day 1: Sessions 01-03 (5.1h) + Day 2 Session 04 (3.2h)
 
@@ -24,6 +24,11 @@ git:
   branch: feat/task/T-02-02-sparse-index
   base_commit: 2a2ad34
   commits:
+    - hash: "414f7f2"
+      message: "feat(index): T-02-02 Phase 2 - tokenizer + BM25 scaffold with parity strategy"
+      date: "2025-11-01"
+      files_changed: 17
+      notes: "Day 2 Session 04 (Threads 01-07, 01:39-12:45 UTC, 3.2h): Phase 2 Custom Tokenizer + BM25 Scaffold COMPLETE. Tokenizer (387 lines) with offset preservation, BM25 Tantivy backend (+442 lines), stop-word automation (export_stop_words.py), 12 new tests (7 tokenizer, 2 BM25, 3 fixture). Quality: 78/78 tests passing, 5 clippy errors fixed, ~95% coverage. 17 files (+2,013/-108). ✅ Phase 2 COMPLETE"
     - hash: "7b624c4"
       message: "checkpoint(worklog): T-02-02 Day 1 Session 03 complete - Phase 1 Upper Index delivered"
       date: "2025-10-31"
@@ -64,7 +69,8 @@ acceptance_criteria:
     status: completed
     notes: "Exact match 68 ns, prefix match 699 ns (Thread 03)"
   - criterion: "Lower index (BM25 k1=1.5, b=0.75)"
-    status: not_started
+    status: in_progress
+    notes: "Scaffold complete (Session 04): Tantivy backend, custom analyzer, search API. Parity validation pending Phase 3."
   - criterion: "Search latency <500ms p95"
     status: completed
     notes: "Prefix queries <1μs, far below 500ms target (Thread 03)"
@@ -125,16 +131,19 @@ notes: |
     * Performance: exact 68.42 ns, prefix 699.40 ns, build 2.287 ms (far exceeds targets)
     * Status: ✅ COMPLETE - Phase 1 (Upper Index) fully delivered
 
-  - Day 2 Session 04: [Phase 2] Custom Tokenizer - Planning & Prep (01:39-12:05 UTC, 2.9h) 🚧 IN PROGRESS
+  - Day 2 Session 04: [Phase 2] Custom Tokenizer + BM25 Scaffold (01:39-12:45 UTC, 3.2h) ✅ COMPLETE
     * Thread 01 (01:39-02:04): Phase 2 planning & spec alignment ✅
     * Thread 02 (02:05-02:13): Tokenizer parity analysis & design ✅
     * Thread 03 (02:14-02:22): Tokenizer module scaffolding ✅
     * Thread 04 (02:22-02:46): Stop-word fixtures & parity harness prep ✅
     * Thread 05 (02:47-03:30): Tantivy analyzer integration & offset plumbing ✅
     * Thread 06 (11:15-12:05): BM25 index scaffold & search API ✅
-    * Outputs: Offset-aware tokenizer, analyzer + BM25 scaffolding, fixture-backed tests, updated worklogs
-    * RAW: WORK-SESSIONS-04-THREADS-01-07-SUMMARY-2025-11-01.txt (Threads 01-07 logged)
-    * Status: 🚧 AWAITING TASKS-SESSION-CODE-REVIEW & TASKS-CHECKPOINT-WORKFLOW
+    * Thread 07 (12:25-12:45): BM25 persistence & benchmark planning ✅
+    * RAW: WORK-SESSIONS-04-THREADS-01-07-SUMMARY-2025-11-01.txt
+    * Commits: 414f7f2 (code)
+    * Deliverables: tokenizer.rs (387), bm25.rs (+442), stop_words.rs (180), export_stop_words.py (176), fixtures + tests
+    * Quality: 78/78 tests passing, 5 clippy errors fixed, ~95% coverage
+    * Status: ✅ COMPLETE - Phase 2 (Custom Tokenizer + BM25 Scaffold) fully delivered
 
   Technical risks:
   - Tokenization mismatch with LocAgent
@@ -169,6 +178,7 @@ worklog:
       summary: "worklogs/2025-11-01-S04-work-summary.md" # Phase 2 Planning & Prep
       commits: "worklogs/2025-11-01-S04-commit-log.md" # Phase 2 Commit log
       notes: "worklogs/2025-11-01-S04-notes.md" # Phase 2 Technical notes
+      codereview: "worklogs/2025-11-01-S04-codereview.md" # Phase 2 Code review
       raw:
         - "./worklogs/raw/WORK-SESSIONS-04-THREADS-01-07-SUMMARY-2025-11-01.txt"
 
