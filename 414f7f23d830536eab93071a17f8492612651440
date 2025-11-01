@@ -1,0 +1,22 @@
+spec-tasks/T-02-02-sparse-index
+Day: 2
+Date: 2025-11-01
+Sessions: 04 (Threads 01-07)
+Duration: 3.2h
+Phase: Phase 2 - Custom Tokenizer + BM25 Scaffold
+Worklog: .artifacts/spec-tasks-T-02-02-sparse-index/worklogs/2025-11-01-S04-*
+Status: Phase 2 COMPLETE - tokenizer + BM25 scaffold delivered
+
+Implementation:
+- tokenizer.rs (387 lines): NFKD→ASCII→split→stop-word→stem
+- bm25.rs (+442 lines): Tantivy backend with custom analyzer
+- stop_words.rs (180 words): English stop-word list
+- export_stop_words.py (176 lines): LocAgent sync automation
+- stop_words.txt fixture (179 words): Parity validation
+
+Tests: +12 (7 tokenizer, 2 BM25, 3 fixture)
+Quality: 78/78 passing, 5 clippy errors fixed, ~95% coverage
+
+Files: 17 (+2,013/-108 lines)
+
+Next: Phase 3 BM25 integration + hierarchical search
