@@ -1,0 +1,493 @@
+======================================================================================
+T-02-02 SPARSE INDEX - PHASE 3: BM25 INTEGRATION & PARITY VALIDATION
+SESSION 05 - THREADS 01-NN - 2025-11-02
+======================================================================================
+
+TASK: T-02-02-sparse-index - Sparse Index - Name/ID + BM25 Search
+PHASE: Phase 3 - BM25 Integration & Parity Validation
+SESSION: 05 (Day 3)
+DATE: 2025-11-02
+DEVELOPER: Claude Code Agent
+START TIME: 07:43 UTC
+
+OBJECTIVES:
+- Implement BM25Index::from_graph() builder
+- Create unified SparseIndex wrapper (hierarchical search)
+- Build parity test harness for 50 LocAgent queries
+- Achieve search overlap@10 ≥90% (CRITICAL ACCEPTANCE CRITERION)
+- Validate search latency <500ms p95
+- Maintain test coverage >95%
+
+======================================================================================
+THREAD 01: PHASE 3 PLANNING & INTEGRATION STRATEGY
+======================================================================================
+
+START: 07:43 UTC
+OBJECTIVE: Analyze integration requirements, design hierarchical search architecture
+DURATION: ~30 min (estimated)
+
+--- BACKGROUND ANALYSIS ---
+
+Current State (Sessions 01-04, 8.3h complete):
+✅ Phase 0: Planning & Analysis (1.75h) - Spec alignment, parity baselines
+✅ Phase 1: Upper Index (3.3h) - NameIndex with exact/prefix match (68ns/699ns)
+✅ Phase 2: Tokenizer + BM25 Scaffold (3.2h) - Tokenizer (387 lines), BM25 backend (+442 lines)
+
+Implementation Status:
+✅ name_index.rs - COMPLETE (exact_match, prefix_match, from_graph) - 8 tests
+✅ tokenizer.rs - COMPLETE (tokenize, tokenize_with_offsets) - 7 tests
+✅ bm25.rs - SCAFFOLD (create_in_dir, open, search) - 2 tests
+✅ stop_words.rs - COMPLETE (180 Python stop words from LocAgent)
+❌ sparse_index.rs - NOT STARTED (Phase 3 deliverable)
+
+Test Status: 78/78 passing, 97.20% coverage
+
+--- INTEGRATION REQUIREMENTS ANALYSIS ---
+
+1. BM25Index::from_graph() Implementation
+
+   SIGNATURE:
+   ```rust
+   pub fn from_graph(
+       graph: &Graph,
+       path: impl AsRef<Path>,
+       config: AnalyzerConfig,
+   ) -> Result<Self>
+   ```
+
+   DESIGN DECISIONS:
+
+   Q1: How to map GraphNode → Bm25Document?
+   A: Extract entity fields from graph nodes:
+      - entity_id: node.id (e.g., "file.py:MyClass.method")
+      - name: Some(node.display_name) for searchable name
+      - path: node.file_path (file location)
+      - kind: node.kind (Class, Function, Method, Variable)
+      - content: SYNTHESIZE from display_name + attributes
+
+   Q2: Why synthesize content instead of source code?
+   A: Graph nodes (from T-02-01) don't store full source text, only:
+      - display_name (e.g., "MyClass.method")
+      - attributes (metadata dict)
+      - range (line numbers)
+
+   SOLUTION: Synthesize searchable content:
+   ```rust
+   fn synthesize_content(node: &GraphNode) -> String {
+       // Combine name + attributes for BM25 indexing
+       let mut parts = vec![node.display_name.clone()];
+
+       // Add attribute values (e.g., docstrings, decorators)
+       parts.extend(node.attributes.values().map(|v| v.clone()));
+
+       parts.join(" ")
+   }
+   ```
+
+   Q3: Which node kinds to index?
+   A: Index semantic entities only (not directories/files):
+      - NodeKind::Class
+      - NodeKind::Function
+      - NodeKind::Method
+      - NodeKind::Variable
+
+   Skip: Directory, File (structural nodes)
+
+   Q4: How to handle bulk indexing?
+   A: Use existing replace_documents() API:
+   ```rust
+   let docs: Vec<Bm25Document> = graph.nodes()
+       .filter(|n| matches!(n.kind, NodeKind::Class | NodeKind::Function | ...))
+       .map(|n| Bm25Document {
+           entity_id: &n.id,
+           name: Some(&n.display_name),
+           path: n.file_path.as_ref().unwrap().to_str().unwrap(),
+           kind: n.kind,
+           content: &synthesize_content(n),
+       })
+       .collect();
+
+   idx.replace_documents(docs.iter())?;
+   ```
+
+   EXPECTED COMPLEXITY: ~80-100 lines implementation + ~20 lines tests
+
+2. SparseIndex Hierarchical Search Architecture
+
+   DESIGN DECISION:
+   Q: Should hierarchical search logic live in SparseIndex or caller code?
+   A: SparseIndex wrapper encapsulates strategy → cleaner API, single responsibility
+
+   ARCHITECTURE:
+   ```
+   SparseIndex
+   ├── upper: NameIndex     (exact + prefix match, <1μs)
+   └── lower: Bm25Index     (full-text BM25, <10ms expected)
+
+   Search Flow:
+   1. exact_match(query) → immediate return if limit satisfied
+   2. prefix_match(query) → merge results, return if limit satisfied
+   3. bm25_search(query) → final fallback for remaining slots
+   ```
+
+   API DESIGN:
+   ```rust
+   pub struct SparseIndex {
+       upper: NameIndex,
+       lower: Bm25Index,
+   }
+
+   impl SparseIndex {
+       pub fn from_graph(
+           graph: &Graph,
+           path: impl AsRef<Path>,
+           config: AnalyzerConfig,
+       ) -> Result<Self>;
+
+       pub fn search(
+           &self,
+           query: &str,
+           limit: usize,
+           kind_filter: Option<NodeKind>,
+       ) -> Result<Vec<SearchResult>>;
+   }
+   ```
+
+   RESULT MERGING STRATEGY:
+   - Exact matches: Highest priority (append first)
+   - Prefix matches: Medium priority (append second)
+   - BM25 results: Lowest priority (append last)
+   - Deduplicate by entity_id
+   - Truncate to limit
+
+   Q: How to convert NameIndex results to SearchResult?
+   A: Need unified SearchResult type:
+   ```rust
+   pub struct SearchResult {
+       pub entity_id: String,
+       pub name: Option<String>,
+       pub path: String,
+       pub kind: NodeKind,
+       pub score: f32,           // Match quality (1.0 for exact, 0.8 for prefix, BM25 score for BM25)
+       pub matched_terms: Vec<String>,
+   }
+
+   impl From<NameIndexEntry> for SearchResult {
+       fn from(entry: NameIndexEntry) -> Self {
+           SearchResult {
+               entity_id: entry.id,
+               name: Some(entry.name),
+               path: entry.path,
+               kind: entry.kind,
+               score: 1.0,  // or 0.8 for prefix
+               matched_terms: vec![],
+           }
+       }
+   }
+   ```
+
+   EXPECTED COMPLEXITY: ~150-180 lines implementation + ~30 lines tests
+
+3. Parity Test Harness Structure
+
+   GOAL: Validate search overlap@10 ≥90% against LocAgent baselines
+
+   DATA AVAILABLE:
+   - tests/fixtures/parity/golden_outputs/search_queries.jsonl (50 queries)
+   - tests/fixtures/parity/golden_outputs/graph_locagent.json (658 nodes)
+
+   QUERY FORMAT (from baseline):
+   ```json
+   {
+     "repo": "LocAgent",
+     "query": "graph builder",
+     "top_10": [
+       {
+         "file": "dependency_graph/build_graph.py",
+         "name": "",
+         "type": "codeblock",
+         "score": 2.29,
+         "line": 453,
+         "text": "def get_inner_nodes(query_node, src_node, graph)..."
+       },
+       ...
+     ],
+     "total_results": 10
+   }
+   ```
+
+   ENTITY ID MAPPING CHALLENGE:
+   - LocAgent IDs: "file:line" (e.g., "dependency_graph/build_graph.py:453")
+   - CDSAgent IDs: "file:class.method" (e.g., "dependency_graph/build_graph.py:get_inner_nodes")
+
+   SOLUTION: Fuzzy matching on file + name:
+   ```rust
+   fn normalize_entity_id(cds_id: &str, loc_result: &ParityResult) -> bool {
+       // Extract file path from both
+       let cds_file = cds_id.split(':').next().unwrap();
+       let loc_file = &loc_result.file;
+
+       // Match: Same file + (name match OR line range match)
+       cds_file == loc_file && (
+           cds_id.contains(&loc_result.name) ||  // Name match
+           is_line_in_range(cds_id, loc_result.line)  // Line range match
+       )
+   }
+   ```
+
+   OVERLAP@10 CALCULATION:
+   ```rust
+   for query in queries {
+       let results = sparse_index.search(&query.query, 10, None)?;
+       let cds_ids: HashSet<_> = results.iter().map(|r| &r.entity_id).collect();
+       let loc_ids: HashSet<_> = query.top_10.iter()
+           .map(|r| format!("{}:{}", r.file, r.line))
+           .collect();
+
+       let overlap = cds_ids.intersection(&loc_ids).count() as f32 / 10.0;
+       overlaps.push(overlap);
+   }
+
+   let mean_overlap = overlaps.iter().sum::<f32>() / overlaps.len() as f32;
+   assert!(mean_overlap >= 0.90, "Expected ≥0.90, got {:.2}", mean_overlap);
+   ```
+
+   EXPECTED COMPLEXITY: ~200-230 lines implementation
+
+--- INTEGRATION STRATEGY ---
+
+PHASE 3 THREAD BREAKDOWN:
+
+Thread 01 (CURRENT): Planning & Integration Strategy (~30 min) ✓
+  - Review Phase 2 scaffold ✓
+  - Design BM25::from_graph() ✓
+  - Design SparseIndex architecture ✓
+  - Define parity test structure ✓
+
+Thread 02: Implement BM25Index::from_graph() (1-1.5h)
+  - Add from_graph() method to bm25.rs
+  - Implement content synthesis helper
+  - Add unit tests (build from graph, verify indexing)
+  - Integration test with LocAgent graph fixture
+
+Thread 03: Create SparseIndex Wrapper (1-1.5h)
+  - Create sparse_index.rs module
+  - Implement from_graph() builder
+  - Implement hierarchical search logic
+  - Add SearchResult conversion traits
+  - Unit tests (exact fallback, prefix fallback, BM25 fallback)
+
+Thread 04: Build Parity Test Harness (1h)
+  - Create search_parity_tests.rs
+  - Implement query loader (parse JSONL)
+  - Implement graph loader (parse graph JSON)
+  - Implement entity ID normalization
+  - Implement overlap@10 calculation
+  - Main test: search_overlap_at_10_locagent_baseline()
+
+Thread 05: Run Parity Validation & Tuning (1-2h)
+  - Run cargo test search_parity_tests -- --nocapture
+  - Analyze per-query overlap results
+  - Identify failure patterns
+  - Tune BM25 parameters if needed (k1, b)
+  - Iterate until overlap@10 ≥0.90
+
+Thread 06: Performance Benchmarking (30 min)
+  - Add benchmarks to search_bench.rs
+  - Measure exact, prefix, BM25, hierarchical latencies
+  - Verify p95 <500ms target
+
+Thread 07: Documentation & Code Review (30 min)
+  - Update index/mod.rs with module docs
+  - Add rustdoc comments to public APIs
+  - Run cargo doc --open
+  - Self-review checklist (coverage, clippy, fmt)
+
+ESTIMATED TOTAL: 5-6 hours
+
+--- RISK ASSESSMENT ---
+
+HIGH RISK: Overlap@10 <90% due to entity ID mismatch
+MITIGATION: Fuzzy matching on file + name, normalize both ID formats
+CONTINGENCY: If <80%, add entity name boosting to BM25, implement Levenshtein distance matching
+
+MEDIUM RISK: Content synthesis quality affects BM25 ranking
+MITIGATION: Include rich attributes (docstrings, decorators) in synthesized content
+CONTINGENCY: Extract actual source text if available in graph (check T-02-01 implementation)
+
+LOW RISK: BM25 parameter tuning iterations take >1h
+MITIGATION: Start with k1=1.5, b=0.75 (LocAgent defaults)
+CONTINGENCY: Automated grid search over parameter space
+
+--- IMPLEMENTATION READINESS CHECKLIST ---
+
+[✓] Graph API available (crates/cds-index/src/graph/mod.rs from T-02-01)
+[✓] Graph nodes have required fields (id, kind, display_name, file_path, attributes)
+[✓] BM25Index scaffold complete (create_in_dir, open, search, replace_documents)
+[✓] Tokenizer integrated with Tantivy analyzer
+[✓] Stop words aligned with LocAgent (180 words)
+[✓] Parity baselines available (50 queries, LocAgent graph)
+[✓] Test infrastructure ready (fixtures, test files)
+
+--- NEXT ACTIONS ---
+
+THREAD 01 COMPLETE: Planning & Integration Strategy
+DURATION: 07:43-08:13 UTC (~30 min)
+STATUS: ✓ COMPLETE
+
+KEY DECISIONS MADE:
+1. BM25::from_graph() will synthesize content from display_name + attributes
+2. Index only semantic entities (Class, Function, Method, Variable)
+3. SparseIndex wrapper encapsulates hierarchical search logic
+4. Parity tests use fuzzy matching on file + name for entity ID normalization
+5. Target: Mean overlap@10 ≥0.90 across 50 queries
+
+DELIVERABLES:
+- Integration architecture designed
+- API signatures defined
+- Risk mitigation strategies planned
+- Implementation roadmap finalized
+
+NEXT: Thread 02 - Implement BM25Index::from_graph()
+
+======================================================================================
+THREAD 02: IMPLEMENT BM25INDEX::FROM_GRAPH()
+======================================================================================
+
+START: 14:20 UTC (approximate based on conversation continuation)
+OBJECTIVE: Build BM25 index from graph entities with content synthesis
+DURATION: ~45 min
+
+--- IMPLEMENTATION SUMMARY ---
+
+**Files Modified:**
+- `crates/cds-index/src/index/bm25.rs` (+72 lines, +1 test)
+
+**Changes:**
+
+1. **Added Graph Integration Import** (lines 17-18):
+   ```rust
+   use crate::graph::{DependencyGraph, GraphNode, NodeKind};
+   ```
+
+2. **Implemented from_graph() Method** (lines 143-221, 79 lines):
+   - **Signature:**
+     ```rust
+     pub fn from_graph(
+         graph: &DependencyGraph,
+         path: impl AsRef<Path>,
+         config: AnalyzerConfig,
+     ) -> Result<Self>
+     ```
+
+   - **Implementation Strategy:**
+     * Collect owned data first (entity_data Vec + contents Vec)
+     * Filter: Only index semantic entities (Class, Function)
+     * Skip structural nodes (Directory, File)
+     * Synthesize content using `synthesize_content()` helper
+     * Map GraphNode → Bm25Document with borrowed references
+     * Bulk index via `replace_documents()`
+
+   - **Lifetime Management:**
+     * Fixed lifetime issues by storing owned Strings
+     * Created Bm25Documents with references to owned data
+     * Avoided dangling references from loop-local variables
+
+3. **Added Content Synthesis Helper** (lines 360-380, 21 lines):
+   ```rust
+   fn synthesize_content(node: &GraphNode) -> String {
+       let mut parts = vec![node.display_name.clone()];
+       parts.extend(node.attributes.values().cloned());
+       parts.join(" ")
+   }
+   ```
+
+   **Why Synthesis?**
+   - Graph nodes don't store full source code
+   - Only have display_name + attributes (metadata)
+   - Combine both for rich searchable text
+   - Attributes include docstrings, decorators, etc.
+
+4. **Added Integration Test** (lines 459-567, 109 lines):
+   ```rust
+   #[test]
+   fn bm25_from_graph_indexes_semantic_entities() -> Result<()>
+   ```
+
+   **Test Coverage:**
+   * Verifies Directory/File nodes are skipped
+   * Verifies Class/Function nodes are indexed
+   * Tests search finds entities by synthesized content
+   * Tests kind filtering works correctly
+   * Verifies entity_id, name, path, kind preservation
+
+**Testing:**
+```bash
+$ cargo test --lib index::bm25::tests::bm25_from_graph_indexes_semantic_entities
+test index::bm25::tests::bm25_from_graph_indexes_semantic_entities ... ok
+
+$ cargo test --lib
+running 19 tests
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured
+
+$ cargo clippy --lib -- -D warnings
+Finished `dev` profile [unoptimized + debuginfo] target(s) in 9.48s
+```
+
+**Quality Metrics:**
+- ✅ All 19 tests passing (18 existing + 1 new)
+- ✅ Zero clippy warnings
+- ✅ Proper error handling with anyhow::Result
+- ✅ Comprehensive rustdoc comments
+- ✅ Lifetime safety verified by compiler
+
+--- KEY DESIGN DECISIONS ---
+
+**Q: How to handle GraphNode → Bm25Document mapping?**
+A: Extract all fields (entity_id from node.id, name from display_name, path from file_path, kind directly, content via synthesis)
+
+**Q: Why synthesize content instead of using source code?**
+A: Graph nodes (from T-02-01) only store metadata, not full source text. Synthesis combines display_name + attributes for searchable content.
+
+**Q: Which nodes to index?**
+A: Only semantic entities (Class, Function). Skip structural nodes (Directory, File) to reduce index size and improve search relevance.
+
+**Q: How to handle lifetime issues?**
+A: Store owned Strings in separate Vecs, then create Bm25Documents with borrowed references. This ensures data lives long enough for indexing.
+
+--- DELIVERABLES ---
+
+✅ BM25Index::from_graph() method implemented (79 lines)
+✅ synthesize_content() helper function (21 lines)
+✅ Integration test with 4 test scenarios (109 lines)
+✅ All tests passing (19/19)
+✅ Zero clippy warnings
+✅ Proper documentation and error handling
+
+--- THREAD 02 COMPLETE ---
+
+DURATION: 14:20-15:05 UTC (~45 min)
+STATUS: ✅ COMPLETE
+LINES ADDED: +202 (code + tests + docs)
+TESTS: 19/19 passing
+CLIPPY: 0 warnings
+
+NEXT: Thread 03 - Create SparseIndex wrapper with hierarchical search
+
+======================================================================================
+THREAD 03: CREATE SPARSEINDEX WRAPPER
+======================================================================================
+
+START: [TBD]
+OBJECTIVE: Unified hierarchical search combining NameIndex + BM25Index
+DURATION: ~1-1.5h (estimated)
+
+[Thread 03 work will be documented here as it progresses...]
+
+======================================================================================
+END OF SESSION 05 RAW LOG (IN PROGRESS)
+======================================================================================
+
+CURRENT STATUS: Thread 01-02 COMPLETE, Thread 03 PENDING
+TOTAL TIME: ~1.25h (Thread 01: 30min, Thread 02: 45min)
+NEXT ACTION: Begin Thread 03 - SparseIndex wrapper implementation

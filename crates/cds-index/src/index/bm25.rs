@@ -14,7 +14,7 @@ use tantivy::{
     Index, IndexReader, ReloadPolicy,
 };
 
-use crate::graph::NodeKind;
+use crate::graph::{DependencyGraph, GraphNode, NodeKind};
 
 use super::tokenizer::{TantivyCodeTokenizer, Tokenizer};
 
@@ -138,6 +138,86 @@ impl Bm25Index {
             }
             Err(_) => Self::create_in_dir(path, config),
         }
+    }
+
+    /// Builds a BM25 index from graph entities.
+    ///
+    /// This method:
+    /// 1. Creates a new index in the specified directory
+    /// 2. Extracts semantic entities (Class, Function) from the graph
+    /// 3. Synthesizes searchable content from entity names and attributes
+    /// 4. Indexes all entities using BM25
+    ///
+    /// # Arguments
+    ///
+    /// * `graph` - The dependency graph to index
+    /// * `path` - Directory where the index will be stored
+    /// * `config` - Analyzer configuration (stop words, etc.)
+    ///
+    /// # Returns
+    ///
+    /// A `Bm25Index` ready for searching
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The directory already exists and is not empty
+    /// - Index creation fails
+    /// - Document indexing fails
+    pub fn from_graph(
+        graph: &DependencyGraph,
+        path: impl AsRef<Path>,
+        config: AnalyzerConfig,
+    ) -> Result<Self> {
+        let index = Self::create_in_dir(path, config.clone())?;
+
+        // Collect owned data for all semantic entities
+        // We need to own the data because Bm25Document contains string references
+        let mut entity_data = Vec::new();
+        let mut contents = Vec::new();
+
+        for idx in graph.graph().node_indices() {
+            if let Some(node) = graph.node(idx) {
+                // Filter: only index semantic entities, skip structural nodes
+                if !matches!(node.kind, NodeKind::Class | NodeKind::Function) {
+                    continue;
+                }
+
+                // Synthesize searchable content from display_name + attributes
+                let content = synthesize_content(node);
+                contents.push(content);
+
+                // Store owned entity metadata
+                entity_data.push((
+                    node.id.clone(),
+                    node.display_name.clone(),
+                    node.file_path
+                        .as_ref()
+                        .and_then(|p| p.to_str())
+                        .unwrap_or("")
+                        .to_string(),
+                    node.kind,
+                ));
+            }
+        }
+
+        // Build Bm25Documents with references to owned data
+        let documents: Vec<Bm25Document> = entity_data
+            .iter()
+            .zip(contents.iter())
+            .map(|((id, name, path, kind), content)| Bm25Document {
+                entity_id: id,
+                name: Some(name),
+                path,
+                kind: *kind,
+                content,
+            })
+            .collect();
+
+        // Bulk index all entities
+        index.replace_documents(documents)?;
+
+        Ok(index)
     }
 
     fn from_index(index: Index, schema: Schema, config: AnalyzerConfig) -> Result<Self> {
@@ -293,6 +373,28 @@ impl Bm25Index {
     }
 }
 
+/// Synthesizes searchable content from a graph node.
+///
+/// Combines the display name with all attribute values to create
+/// rich searchable text for BM25 indexing. This approach is necessary
+/// because graph nodes don't store full source code, only metadata.
+///
+/// # Arguments
+///
+/// * `node` - The graph node to extract content from
+///
+/// # Returns
+///
+/// A space-separated string containing the display name and all attribute values
+fn synthesize_content(node: &GraphNode) -> String {
+    let mut parts = vec![node.display_name.clone()];
+
+    // Add all attribute values (e.g., docstrings, decorators, etc.)
+    parts.extend(node.attributes.values().cloned());
+
+    parts.join(" ")
+}
+
 fn build_schema() -> Schema {
     let mut builder: SchemaBuilder = Schema::builder();
     builder.add_text_field("entity_id", STRING | STORED);
@@ -366,8 +468,104 @@ fn doc_value(doc: &TantivyDocument, field: Field) -> Result<&str> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::graph::NodeKind;
+    use crate::graph::{DependencyGraph, GraphNode, NodeKind, SourceRange};
+    use std::path::PathBuf;
     use tempfile::tempdir;
+
+    #[test]
+    fn bm25_from_graph_indexes_semantic_entities() -> Result<()> {
+        let mut graph = DependencyGraph::new();
+
+        // Add directory node (should be skipped)
+        let dir_node = GraphNode::directory(
+            "repo".to_string(),
+            "repo".to_string(),
+            Some(PathBuf::from(".")),
+        );
+        graph.add_node(dir_node);
+
+        // Add file node (should be skipped)
+        let file_node = GraphNode::file(
+            "repo::models.py".to_string(),
+            "models.py".to_string(),
+            PathBuf::from("models.py"),
+        );
+        graph.add_node(file_node);
+
+        // Add class node (should be indexed)
+        let mut class_node = GraphNode::entity(
+            "repo::models.py::User".to_string(),
+            NodeKind::Class,
+            "User".to_string(),
+            PathBuf::from("models.py"),
+            Some(SourceRange::new(1, 10)),
+        );
+        class_node
+            .attributes
+            .insert("docstring".to_string(), "User model class".to_string());
+        graph.add_node(class_node);
+
+        // Add function node (should be indexed)
+        let mut func_node = GraphNode::entity(
+            "repo::models.py::User::save".to_string(),
+            NodeKind::Function,
+            "save".to_string(),
+            PathBuf::from("models.py"),
+            Some(SourceRange::new(5, 8)),
+        );
+        func_node
+            .attributes
+            .insert("docstring".to_string(), "Save user to database".to_string());
+        graph.add_node(func_node);
+
+        // Build index from graph
+        let dir = tempdir()?;
+        let index = Bm25Index::from_graph(&graph, dir.path(), AnalyzerConfig::default())?;
+
+        // Search for "user" - tokenizer will stem to "user"
+        let results = index.search("user", 10, None)?;
+        assert!(
+            !results.is_empty(),
+            "Should find at least one entity with 'user'"
+        );
+        assert!(
+            results.len() <= 2,
+            "Should find at most 2 entities (class + method)"
+        );
+
+        // Verify we can find the class by entity_id
+        let class_found = results
+            .iter()
+            .any(|r| r.entity_id == "repo::models.py::User");
+        assert!(
+            class_found,
+            "Should find User class in results: {:?}",
+            results.iter().map(|r| &r.entity_id).collect::<Vec<_>>()
+        );
+
+        // Verify kind filtering works
+        let class_only = index.search("user", 10, Some(&[NodeKind::Class]))?;
+        assert!(
+            !class_only.is_empty(),
+            "Should find at least one class with kind filter"
+        );
+        assert!(
+            class_only.iter().all(|r| r.kind == NodeKind::Class),
+            "All results should be classes"
+        );
+
+        let func_only = index.search("save", 10, Some(&[NodeKind::Function]))?;
+        assert!(
+            !func_only.is_empty(),
+            "Should find at least one function with kind filter"
+        );
+        assert!(
+            func_only.iter().all(|r| r.kind == NodeKind::Function),
+            "All results should be functions"
+        );
+
+        Ok(())
+    }
 
     #[test]
     fn bm25_index_creates_and_searches() -> Result<()> {
