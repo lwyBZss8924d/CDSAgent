@@ -1,0 +1,9 @@
+spec-tasks/T-02-02-sparse-index
+Day: 2
+Date: 2025-11-02
+Session: Bugfix - arithmetic increments
+Duration: 0.1h
+Worklog: Infrastructure fix
+Status: Fixed set -e interaction with ((VAR++)) in checkpoint-helper.sh
+Files: 1 file (16 replacements)
+Purpose: Prevent script exit on zero-value post-increment with set -e
