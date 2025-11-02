@@ -37,7 +37,7 @@ else
     fi
 fi
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 TASK_DIR="${REPO_ROOT}/.artifacts/spec-tasks-${TASK_ID}"
 TODAY=$(date +%Y-%m-%d)
 
