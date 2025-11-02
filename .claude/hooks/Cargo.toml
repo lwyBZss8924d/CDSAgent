@@ -4,9 +4,6 @@ members = [
     "rs/pre-tool-use-approval",
     "rs/user-prompt-submit",
     "rs/inject-datetime",
-    "rs/validate-sdd-compliance",
-    "rs/post-sdd-check",
-    "rs/sdd-task-fetch",
     "rs/markdown-formatter",
 ]
 resolver = "2"
@@ -21,7 +18,7 @@ serde_json = "1.0"
 thiserror = "1.0"
 
 [workspace.package]
-authors = ["ACPLazyBridge Hooks Team"]
+authors = ["CDSAgent AI Engineer Team"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 publish = false
