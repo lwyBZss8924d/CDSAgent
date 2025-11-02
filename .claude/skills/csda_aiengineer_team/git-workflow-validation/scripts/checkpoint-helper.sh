@@ -1,0 +1,1 @@
+../../../../../.dev/scripts/validation/checkpoint-helper.sh

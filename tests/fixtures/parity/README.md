@@ -37,7 +37,7 @@ These fixtures serve three critical purposes:
 
 (1) **LocAgent Environment Setup**
 
-```bash
+```shell
 # Navigate to LocAgent reference implementation
 cd tmp/LocAgent
 
@@ -73,7 +73,7 @@ Select 5 small-to-medium Python repositories with diverse characteristics:
 
 #### 1. Extract Graph Structure Baseline
 
-```bash
+```shell
 # For LocAgent's own codebase
 cd tmp/LocAgent
 python dependency_graph/build_graph.py \
@@ -123,7 +123,7 @@ Create 50 diverse search queries covering:
 - **camelCase/snake_case** (10 queries): `"getUserData"`, `"parse_ast_node"`, etc.
 - **Edge cases** (10 queries): Single char `"x"`, numbers `"404"`, special chars `"@property"`, etc.
 
-```bash
+```shell
 # Run search queries on LocAgent repo
 python plugins/location_tools/locationtools.py search_entities \
   --repo_path . \
@@ -150,7 +150,7 @@ Create 10 traversal scenarios:
 - **Inherit traversal** (2): Class → Parent classes, child classes
 - **Mixed relation** (2): Multi-hop with all relations
 
-```bash
+```shell
 # Run traversal scenarios
 python plugins/location_tools/locationtools.py traverse_graph \
   --repo_path . \
@@ -167,7 +167,7 @@ python plugins/location_tools/locationtools.py traverse_graph \
 
 #### 4. Extract Performance Baselines
 
-```bash
+```shell
 # Benchmark index building
 time python dependency_graph/build_graph.py \
   --repo_path tests/fixtures/parity/sample_repos/pytest \
@@ -226,7 +226,7 @@ When comparing CDSAgent output to these baselines:
 
 Use the `scripts/parity-check.sh` automation:
 
-```bash
+```shell
 # Run all parity checks
 ./scripts/parity-check.sh --all
 
@@ -239,7 +239,7 @@ Use the `scripts/parity-check.sh` automation:
 
 ### Manual Validation
 
-```bash
+```shell
 # Compare graph structure
 diff <(jq -S . tests/fixtures/parity/golden_outputs/graph_locagent.json) \
      <(jq -S . target/debug/cds_graph_output.json)

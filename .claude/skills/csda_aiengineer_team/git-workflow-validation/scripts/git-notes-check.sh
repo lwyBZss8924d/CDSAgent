@@ -1,0 +1,1 @@
+../../../../../.dev/scripts/validation/git-notes-check.sh

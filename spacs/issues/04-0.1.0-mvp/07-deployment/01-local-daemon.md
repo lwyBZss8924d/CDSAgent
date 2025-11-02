@@ -127,7 +127,7 @@ WantedBy=multi-user.target
 
 #### Linux (systemd)
 
-```bash
+```shell
 #!/bin/bash
 # scripts/install-daemon-linux.sh
 
@@ -181,7 +181,7 @@ echo "  Restart: systemctl restart cds-index"
 
 #### macOS (launchd)
 
-```bash
+```shell
 #!/bin/bash
 # scripts/install-daemon-macos.sh
 
@@ -322,7 +322,7 @@ metrics_path = "/metrics"
 
 ### Management Scripts
 
-```bash
+```shell
 #!/bin/bash
 # scripts/daemon-ctl.sh - Unified daemon control script
 

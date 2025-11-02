@@ -47,7 +47,7 @@ systemd = { version = "0.10", features = ["journal"] }
 
 ### ✅ Rust Checks (All Passed)
 
-```bash
+```shell
 # Format check
 cargo fmt --all
 # ✓ No changes needed
@@ -64,7 +64,7 @@ cargo clippy --all-targets --all-features
 
 ### ✅ TypeScript/Bun Checks (All Passed)
 
-```bash
+```shell
 # Lint check
 bun run lint
 # ✓ No errors, no warnings
@@ -131,7 +131,7 @@ bun run typecheck
 
 1. **Verify Build** (5 minutes)
 
-   ```bash
+   ```shell
    just build      # Should compile successfully
    just status     # Show environment status
    ```
@@ -157,7 +157,7 @@ bun run typecheck
 
 ### Development Workflow
 
-```bash
+```shell
 # Daily workflow
 just check        # Fast compile check
 just test         # Run tests

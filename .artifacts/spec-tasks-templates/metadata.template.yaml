@@ -8,6 +8,7 @@ task:
   milestone: "{MILESTONE_ID}"
   week: 1
   duration_days: 3
+  last_updated: null  # YYYY-MM-DDTHH:MM:SSZ
 
 owner:
   primary: "{DEVELOPER_NAME}"
@@ -36,6 +37,7 @@ git:
     #   message: "feat(scope): description"
     #   date: "2025-10-19"
     #   files_changed: 5
+    #   notes: "Session details from git notes"
   pr:
     number: null
     url: null
@@ -60,14 +62,51 @@ acceptance_criteria:
     status: "pending"
     notes: ""
 
+# Structured session tracking (NEW in v1.1)
+sessions:
+  - id: "01"
+    date: "{DATE}"
+    day: 1
+    phase: "{PHASE}"
+    description: "{SESSION_DESCRIPTION}"
+    threads:
+      count: 0
+      range: "01-XX"
+    duration:
+      start_time: null  # HH:MM UTC
+      end_time: null    # HH:MM UTC
+      hours: 0.0
+    status: "not_started"  # not_started | in_progress | completed
+    objectives: []
+      # Example: ["Implement feature X", "Add tests for Y"]
+    commits: []
+      # Example: ["abc1234", "def5678"]
+    raw_log: null
+      # Example: "./worklogs/raw/WORK-SESSIONS-01-THREADS-01-03-SUMMARY-{DATE}.txt"
+    artifacts:
+      work_summary: null  # "./worklogs/{DATE}-S01-work-summary.md"
+      commit_log: null    # "./worklogs/{DATE}-S01-commit-log.md"
+      notes: null         # "./worklogs/{DATE}-S01-notes.md"
+      codereview: null    # "./worklogs/{DATE}-S01-codereview.md" (optional)
+    metrics:
+      lines_added: 0
+      lines_deleted: 0
+      files_modified: 0
+      tests_added: 0
+
+# Legacy worklog entries (can coexist with sessions)
 worklog:
   base_path: ".artifacts/spec-tasks-{TASK_ID}/worklogs/"
   entries: []
-    # Example:
-    # - date: "2025-10-19"
-    #   summary: "worklogs/2025-10-19-work-summary.md"
-    #   commits: "worklogs/2025-10-19-commit-log.md"
-    #   notes: "worklogs/2025-10-19-notes.md"
+    # Example (session-specific naming):
+    # - date: "2025-10-31-S01"
+    #   session: "01"
+    #   summary: "worklogs/2025-10-31-S01-work-summary.md"
+    #   commits: "worklogs/2025-10-31-S01-commit-log.md"
+    #   notes: "worklogs/2025-10-31-S01-notes.md"
+    #   codereview: "worklogs/2025-10-31-S01-codereview.md"  # Optional
+    #   raw:
+    #     - "./worklogs/raw/WORK-SESSIONS-01-THREADS-01-03-SUMMARY-2025-10-31.txt"
 
 metrics:
   estimated_hours: 24  # 3 days * 8 hours
@@ -79,7 +118,7 @@ metrics:
   test_coverage: 0.0  # 0.0 to 1.0
 
 comments:
-  - date: "2025-10-19"
+  - date: "{DATE}"
     author: "{DEVELOPER_NAME}"
     text: "Initial metadata created"
 
@@ -88,3 +127,19 @@ related_artifacts:
     path: "docs/api/schema.md"
   - type: "test_fixture"
     path: "tests/fixtures/sample.json"
+
+# Implementation notes (free-form narrative)
+notes: |
+  Implementation Phases (technical stages):
+  - Phase 0: Planning & Analysis
+  - Phase 1: Core Implementation
+  - Phase 2: Advanced Features
+
+  Work Sessions (by day):
+  - Day 1 Session 01: [Phase 0] Description (Threads 01-XX, Xh) STATUS
+    * Thread 01: Work description (Xh)
+    * Thread 02: Work description (Xh)
+    * RAW: WORK-SESSIONS-01-THREADS-01-XX-SUMMARY-{DATE}.txt
+    * Commits: hash1, hash2
+    * Duration: HH:MM-HH:MM UTC (Xh total)
+    * Status: ✅ COMPLETE / 🚧 IN PROGRESS / ⏳ NOT STARTED

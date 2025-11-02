@@ -306,7 +306,7 @@ tests/fixtures/
 
 Task 6: Golden Output Generation
 
-```bash
+```shell
 # tests/fixtures/parity/generate_baseline.sh
 
 #!/bin/bash

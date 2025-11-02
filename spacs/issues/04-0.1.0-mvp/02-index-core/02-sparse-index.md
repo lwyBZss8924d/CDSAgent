@@ -527,7 +527,7 @@ fn test_hierarchical_search_parity() {
 
 **Baseline Generation**:
 
-```bash
+```shell
 # Run LocAgent to generate search result baselines
 cd tmp/LocAgent
 python -c "

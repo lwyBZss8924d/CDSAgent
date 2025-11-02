@@ -214,7 +214,7 @@ mod service_integration_tests {
 
 ### CLI Integration Tests
 
-```bash
+```shell
 #!/bin/bash
 # tests/integration/cli_integration_test.sh
 

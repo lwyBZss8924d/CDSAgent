@@ -13,7 +13,7 @@ Provide environment-based configuration with .env templates, validation, and sup
 
 ### .env.example Template
 
-```bash
+```shell
 # .env.example - Copy to .env and configure
 
 # ===== Environment Profile =====
@@ -163,7 +163,7 @@ export function loadAgentConfig(): AgentConfig {
 
 ### Profile-Based Configuration
 
-```bash
+```shell
 # scripts/load-profile.sh
 #!/bin/bash
 

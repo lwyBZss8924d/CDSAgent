@@ -207,7 +207,7 @@ test('preToolUse hook injects index path', async () => {
 
 **Test Scenarios**:
 
-```bash
+```shell
 # tests/integration/cli_test.sh
 
 # Test 1: Search returns valid JSON
@@ -297,7 +297,7 @@ test('agent can locate XSS vulnerability', async () => {
 
 **Test Procedure**:
 
-```bash
+```shell
 # 1. Index SWE-bench repos
 for repo in $(cat swebench_lite_repos.txt); do
   cds init $repo --output /data/index/$repo
@@ -372,7 +372,7 @@ criterion_main!(benches);
 
 **CLI Benchmarks**:
 
-```bash
+```shell
 # Measure search latency
 hyperfine --warmup 3 'cds search "sanitize" --format json'
 
@@ -383,7 +383,7 @@ hyperfine --warmup 3 'cds search "sanitize" --format json'
 
 **Concurrent Queries**:
 
-```bash
+```shell
 # Apache Bench (ab) for load testing daemon
 ab -n 1000 -c 10 -p search_request.json -T application/json http://localhost:9876/rpc
 
@@ -394,7 +394,7 @@ ab -n 1000 -c 10 -p search_request.json -T application/json http://localhost:987
 
 **Tool**: `heaptrack` (Linux), `valgrind --tool=massif`
 
-```bash
+```shell
 # Profile memory usage during indexing
 valgrind --tool=massif --massif-out-file=massif.out cds init /large/repo
 
@@ -514,7 +514,7 @@ tests/golden/
 
 **Update Golden Files**:
 
-```bash
+```shell
 # Regenerate golden outputs (after verified changes)
 ./tests/update_golden.sh
 ```

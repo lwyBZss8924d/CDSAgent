@@ -123,7 +123,7 @@ spacs/tasks/0.1.0-mvp/
 
 ### 1. Clone/Pull Latest
 
-```bash
+```shell
 cd /Users/arthur/dev-space/CDSAgent
 git status  # Should be clean
 git log --oneline -3  # Verify commits
@@ -131,7 +131,7 @@ git log --oneline -3  # Verify commits
 
 ### 2. Review Specs & Create Branch
 
-```bash
+```shell
 # Read the PRDs and issue specs
 cat spacs/prd/0.1.0-MVP-PRDs-v0/01-system-architecture.md
 
@@ -162,7 +162,7 @@ Each task file (`T-XX-XX.md`) contains:
 
 ### Create GitHub Issues from Tasks
 
-```bash
+```shell
 # Example: Create issue for first task
 gh issue create \
   --title "T-02-01: Graph Builder Implementation" \
@@ -197,7 +197,7 @@ gh issue create \
 
 ## Git Commands Reference
 
-```bash
+```shell
 # Show 0.1.0 milestone commits
 git log --oneline | grep -E "docs\(prd\)|docs\(ci\)|chore\(rust\)"
 

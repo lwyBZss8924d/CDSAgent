@@ -13,7 +13,7 @@ Validate performance targets (search latency p95 <500ms, index build <5min, File
 
 ### SWE-bench Lite Evaluation
 
-```bash
+```shell
 #!/bin/bash
 # tests/benchmarks/swe-bench/run-eval.sh
 
@@ -317,7 +317,7 @@ fn test_index_memory_usage() {
 
 ### Index Build Performance
 
-```bash
+```shell
 #!/bin/bash
 # tests/benchmarks/index_build_bench.sh
 

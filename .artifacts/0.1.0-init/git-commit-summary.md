@@ -204,7 +204,7 @@ Actionable task documents organized by module:
 
 ## Git Status
 
-```bash
+```shell
 $ git log --oneline -5
 c9a9c3d (HEAD -> main) docs(prd): add 0.1.0 MVP PRDs documentation suite
 430f927 Merge branch 'chore/rust-upgrade-workspace-deps-20251019'
@@ -233,7 +233,7 @@ c9a9c3d (HEAD -> main) docs(prd): add 0.1.0 MVP PRDs documentation suite
 
 1. **Push to Remote**
 
-   ```bash
+   ```shell
    git push origin main
    ```
 

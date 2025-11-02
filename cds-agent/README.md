@@ -4,7 +4,7 @@ TypeScript client library and Claude Agent SDK integration for the CDSAgent code
 
 ## Installation
 
-```bash
+```shell
 # Install dependencies
 bun install
 
@@ -73,7 +73,7 @@ console.log(`Indexed ${rebuildResult.stats.files_indexed} files`);
 
 Configuration can be set via environment variables. See `.env.example` for all options:
 
-```bash
+```shell
 # Copy example configuration
 cp .env.example .env
 
@@ -146,7 +146,7 @@ result.entities.forEach((entity: Entity) => {
 
 ### Running Tests
 
-```bash
+```shell
 # Run all tests
 bun test
 

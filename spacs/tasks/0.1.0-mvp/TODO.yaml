@@ -125,7 +125,7 @@ tasks:
     artifacts:
       - .worktrees/ (7 task branches)
       - scripts/worktree-symlink.sh
-      - docs/WORKTREE_WORKFLOW.md
+      - .dev/workflows/WORKTREE_WORKFLOW.md
       - DEVELOPMENT_STATUS.md
 
   # ==================== Phase 1: API Contracts & Parity (Week 1) ====================
@@ -1006,12 +1006,40 @@ artifacts:
   template:
     worklog_structure: |
       .artifacts/spec-tasks-{TASK_ID}/
-      ├── worklogs/
-      │   ├── {date}-work-summary.md
-      │   ├── {date}-commit-log.md
-      │   └── {date}-notes.md
       ├── metadata.yaml
-      └── git-refs.txt
+      ├── git-refs.txt
+      ├── CLAUDE.md                          # Task-specific AI guide (optional)
+      ├── WORKLOG-HANDBOOK.md                 # Session lifecycle reference (optional)
+      └── worklogs/
+          ├── {date}-S{NN}-work-summary.md    # Session-specific (NN = session number)
+          ├── {date}-S{NN}-commit-log.md      # Session-specific
+          ├── {date}-S{NN}-notes.md           # Session-specific
+          ├── {date}-S{NN}-codereview.md      # Optional (testing/code review phase)
+          └── raw/                            # RAW logs for AI handoff
+              └── WORK-SESSIONS-{NN}-THREADS-{START}-{END}-SUMMARY-{date}.txt
+
+    session_naming:
+      pattern: "{date}-S{NN}-{type}.md"
+      examples:
+        - "2025-11-02-S05-work-summary.md"    # Session 05
+        - "2025-11-02-S05-commit-log.md"
+        - "2025-11-02-S05-notes.md"
+        - "2025-11-02-S05-codereview.md"      # Optional
+      notes:
+        - "Session numbers (NN) are sequential across all days: 01, 02, 03, 04, 05, ..."
+        - "Multiple sessions can occur on same day (e.g., Sessions 01-03 on 2025-10-31)"
+        - "Thread numbers reset to 01 for each new session"
+
+    raw_log_naming:
+      pattern: "WORK-SESSIONS-{NN}-THREADS-{START}-{END}-SUMMARY-{date}.txt"
+      location: "worklogs/raw/"
+      examples:
+        - "WORK-SESSIONS-01-THREADS-01-03-SUMMARY-2025-10-31.txt"
+        - "WORK-SESSIONS-04-THREADS-01-07-SUMMARY-2025-11-01.txt"
+      notes:
+        - "Created AFTER session completes (not before or during)"
+        - "One RAW log per session"
+        - "Contains complete session narrative for AI handoff"
 
 # Comments and notes
 comments:

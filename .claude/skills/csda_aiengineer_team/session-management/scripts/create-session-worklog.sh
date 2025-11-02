@@ -1,0 +1,1 @@
+../../../../../.dev/scripts/session/create-session-worklog.sh

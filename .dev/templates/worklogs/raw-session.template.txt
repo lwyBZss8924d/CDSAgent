@@ -1,0 +1,105 @@
+================================================================================
+WORK SESSION {SESSION} - THREADS {THREAD_START}-{THREAD_END} SUMMARY
+================================================================================
+
+Task: {TASK_ID} - {TASK_TITLE}
+Date: {DATE}
+Session: {SESSION} (Day {DAY} - {PHASE_DESCRIPTION})
+Threads: {THREAD_START}-{THREAD_END}
+Start Time: {START_TIME} UTC
+End Time: {END_TIME} UTC
+Duration: {DURATION}h
+Status: {STATUS}    # ✅ SESSION COMPLETE / 🚧 IN PROGRESS / ⏳ PENDING
+
+Session Overview:
+{OVERVIEW_DESCRIPTION}
+
+Objectives:
+- {OBJECTIVE_1}
+- {OBJECTIVE_2}
+- {OBJECTIVE_3}
+
+================================================================================
+THREAD {THREAD_01_NUM}: {THREAD_01_TITLE}
+================================================================================
+Time: {THREAD_01_START}-{THREAD_01_END} UTC
+Status: {THREAD_01_STATUS}    # ✅ THREAD COMPLETE / 🚧 THREAD IN PROGRESS / ⏳ THREAD PENDING
+
+Objective:
+- {THREAD_01_OBJECTIVE}
+
+Actions:
+- {THREAD_01_ACTION_1}
+- {THREAD_01_ACTION_2}
+- {THREAD_01_ACTION_3}
+
+Key Decisions:
+- {THREAD_01_DECISION_1}
+- {THREAD_01_DECISION_2}
+
+Code Changes:
+- {THREAD_01_CODE_CHANGES}
+
+Testing:
+- {THREAD_01_TESTING}
+
+================================================================================
+THREAD {THREAD_02_NUM}: {THREAD_02_TITLE}
+================================================================================
+Time: {THREAD_02_START}-{THREAD_02_END} UTC
+Status: {THREAD_02_STATUS}    # ✅ THREAD COMPLETE / 🚧 THREAD IN PROGRESS / ⏳ THREAD PENDING
+
+Objective:
+- {THREAD_02_OBJECTIVE}
+
+Actions:
+- {THREAD_02_ACTION_1}
+- {THREAD_02_ACTION_2}
+
+Key Decisions:
+- {THREAD_02_DECISION_1}
+- {THREAD_02_DECISION_2}
+
+Code Changes:
+- {THREAD_02_CODE_CHANGES}
+
+Testing:
+- {THREAD_02_TESTING}
+
+================================================================================
+[Additional threads as needed - copy THREAD template and increment numbers]
+================================================================================
+
+================================================================================
+SESSION {SESSION} SUMMARY
+================================================================================
+
+Total Duration: {DURATION} hours ({START_TIME}-{END_TIME} UTC)
+Threads Completed: {THREAD_COUNT}
+Commits Created: {COMMIT_COUNT}
+
+Commits:
+1. {COMMIT_1_HASH} - {COMMIT_1_MESSAGE}
+2. {COMMIT_2_HASH} - {COMMIT_2_MESSAGE}
+
+Git Notes: {GIT_NOTES_STATUS}
+Remote: {REMOTE_STATUS}
+
+Artifacts Updated:
+- metadata.yaml: {METADATA_UPDATES}
+- git-refs.txt: {GIT_REFS_UPDATES}
+- {DATE}-S{SESSION}-work-summary.md: {WORK_SUMMARY_STATUS}
+- {DATE}-S{SESSION}-commit-log.md: {COMMIT_LOG_STATUS}
+- {DATE}-S{SESSION}-notes.md: {NOTES_STATUS}
+
+Metrics Snapshot:
+- Actual hours: {CUMULATIVE_HOURS} (Session {SESSION} complete)
+- Commits: {COMMIT_COUNT}
+- Lines added: {LINES_ADDED}
+- Lines deleted: {LINES_DELETED}
+- Files modified: {FILES_MODIFIED}
+- Tests added: {TESTS_ADDED}
+
+================================================================================
+END OF WORK SESSION {SESSION}
+================================================================================

@@ -135,7 +135,7 @@ This issue tracks the **methodology** for parity checks; specific validations ha
 
 ### Automated Regression Tests
 
-```bash
+```shell
 # tests/parity/run_parity_checks.sh
 
 # 1. Graph parity
@@ -172,7 +172,7 @@ tests/fixtures/parity/
 
 ### Regenerating Golden Outputs
 
-```bash
+```shell
 # Run LocAgent to produce baseline
 cd tmp/LocAgent
 python auto_search_main.py --dataset custom --output ../../tests/fixtures/parity/golden_outputs/

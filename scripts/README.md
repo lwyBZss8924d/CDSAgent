@@ -6,7 +6,7 @@ This directory contains automation scripts for development, testing, and parity 
 
 ### Parity Baseline Extraction
 
-```bash
+```shell
 ./scripts/swe-lite check        # Verify environment
 ./scripts/swe-lite select       # Select 5 SWE-bench Lite instances
 ./scripts/swe-lite fetch        # Clone repositories
@@ -23,7 +23,7 @@ Unified CLI for extracting LocAgent parity baselines from SWE-bench Lite reposit
 
 **Usage:**
 
-```bash
+```shell
 # Complete workflow
 ./scripts/swe-lite check        # Verify environment
 ./scripts/swe-lite select       # Select instances → samples.yaml
@@ -55,7 +55,7 @@ Manages git worktree symlinks for parallel task development.
 
 **Usage:**
 
-```bash
+```shell
 # Create symlinks for all worktrees in ~/dev-space/
 ./scripts/worktree-symlink.sh create
 
@@ -78,7 +78,7 @@ Manages git worktree symlinks for parallel task development.
 
 **Examples:**
 
-```bash
+```shell
 # After creating new worktrees
 git worktree add .worktrees/T-08-01-unit-tests -b feat/task/T-08-01-unit-tests main
 ./scripts/worktree-symlink.sh create
@@ -114,7 +114,7 @@ All scripts use `uv run` for dependency management and set `PYTHONPATH` to inclu
 | `create-daily-worklog.sh` | Create daily worklog entries |
 | `sync-worktrees.sh` | Sync all worktrees with main branch |
 
-**Documentation:** [Worktree Workflow SOP](../docs/WORKTREE_WORKFLOW.md)
+**Documentation:** [Worktree Workflow SOP](../.dev/workflows/WORKTREE_WORKFLOW.md)
 
 ---
 
@@ -153,5 +153,5 @@ When adding new scripts:
 
 **See Also:**
 
-- [Worktree Workflow Documentation](../docs/WORKTREE_WORKFLOW.md)
+- [Worktree Workflow Documentation](../.dev/workflows/WORKTREE_WORKFLOW.md)
 - [Development Guide](../README.md#development)

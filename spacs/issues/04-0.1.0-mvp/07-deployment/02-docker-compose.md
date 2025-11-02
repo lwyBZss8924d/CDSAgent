@@ -133,7 +133,7 @@ volumes:
 
 ### build-all.sh
 
-```bash
+```shell
 #!/bin/bash
 set -e
 
@@ -151,7 +151,7 @@ echo "All images built successfully!"
 
 ### deploy.sh
 
-```bash
+```shell
 #!/bin/bash
 set -e
 

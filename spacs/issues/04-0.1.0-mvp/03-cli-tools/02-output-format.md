@@ -517,7 +517,7 @@ fn test_fold_format() {
 
 **Golden Output Comparison**:
 
-```bash
+```shell
 # tests/fixtures/parity/compare_outputs.sh
 
 #!/bin/bash

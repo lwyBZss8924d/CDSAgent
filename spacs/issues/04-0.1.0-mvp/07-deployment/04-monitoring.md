@@ -235,7 +235,7 @@ services:
 
 ### Health Check Script
 
-```bash
+```shell
 #!/bin/bash
 # scripts/health-check.sh
 

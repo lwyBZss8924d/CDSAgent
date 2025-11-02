@@ -39,7 +39,7 @@ CDS-Tools provides a unified command-line interface (CLI) that exposes LocAgent'
 
 **Command Signature**:
 
-```bash
+```shell
 cds search [OPTIONS] <QUERY>
 
 OPTIONS:
@@ -112,7 +112,7 @@ Found 3 results for "sanitize user input"
 
 **Command Signature**:
 
-```bash
+```shell
 cds traverse [OPTIONS] <ENTITY_ID>...
 
 OPTIONS:
@@ -183,7 +183,7 @@ process_request (function) [entity_abc] - server.py:12
 
 **Command Signature**:
 
-```bash
+```shell
 cds retrieve [OPTIONS] <ENTITY_ID>...
 
 OPTIONS:
@@ -230,7 +230,7 @@ OPTIONS:
 
 **Command Signature**:
 
-```bash
+```shell
 cds combo [OPTIONS] <PLAN_FILE>
 
 OPTIONS:
@@ -315,7 +315,7 @@ json_pretty = true
 
 **Command**:
 
-```bash
+```shell
 cds config [get|set|list] <KEY> [VALUE]
 
 # Examples:
@@ -342,7 +342,7 @@ cds config list
 
 **Command**:
 
-```bash
+```shell
 cds init [OPTIONS] <REPO_PATH>
 
 OPTIONS:
@@ -372,7 +372,7 @@ OPTIONS:
 
 **Examples**:
 
-```bash
+```shell
 # Pipe search results to traverse
 cds search "sanitize" -f json | jq '.results[].entity_id' | xargs cds retrieve
 
@@ -439,7 +439,7 @@ Hint: Run 'cds init <repo>' to create an index, or set GRAPH_INDEX_DIR
 
 **Help Output Example**:
 
-```bash
+```shell
 $ cds search --help
 Search for code entities using keywords
 
@@ -579,7 +579,7 @@ fn format_tree(graph: &SubGraph, root: &NodeID) -> String {
 
 ### 6.1 Example 1: XSS Vulnerability Search
 
-```bash
+```shell
 # Step 1: Find sanitization functions
 cds search "sanitize XSS" --type function --format json > sanitize_funcs.json
 
@@ -598,7 +598,7 @@ cat entry_points.json | jq -r '.id' | xargs cds retrieve --format code
 
 ### 6.2 Example 2: Dead Code Detection
 
-```bash
+```shell
 # Find all functions
 cds search "*" --type function --format json > all_funcs.json
 

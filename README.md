@@ -63,14 +63,14 @@ CDSAgent is a graph-guided code localization agent designed to serve as a sub-ag
 
 ### 1. Clone the Repository
 
-```bash
+```shell
 git clone https://github.com/lwyBZss8924d/CDSAgent
 cd CDSAgent
 ```
 
 ### 2. Install Dependencies
 
-```bash
+```shell
 # Install Rust dependencies
 cargo build --all
 
@@ -83,7 +83,7 @@ just install
 
 ### 3. Set Up Environment
 
-```bash
+```shell
 # Initialize development environment
 just dev-setup
 
@@ -98,7 +98,7 @@ cp cds-agent/.env.example cds-agent/.env
 
 ### 4. Run the Index Service
 
-```bash
+```shell
 # Using just:
 just run-service
 
@@ -108,7 +108,7 @@ GRAPH_INDEX_DIR=./data/graph_index BM25_INDEX_DIR=./data/bm25_index cargo run --
 
 ### 5. Use the CLI
 
-```bash
+```shell
 # Search for entities
 just run-cli search "Calculator" --limit 10
 
@@ -121,7 +121,7 @@ just run-cli retrieve "file.py::MyClass" --context 5
 
 ### 6. Run the Agent
 
-```bash
+```shell
 # In a separate terminal:
 just agent-dev
 
@@ -169,7 +169,7 @@ CDSAgent/
 
 ### Common Development Tasks
 
-```bash
+```shell
 # Build everything
 just build
 
@@ -191,7 +191,7 @@ just clean
 
 ### Running Tests
 
-```bash
+```shell
 # Rust unit tests
 cargo test --all
 
@@ -254,7 +254,7 @@ Recommended extensions:
 
 #### Index Service (crates/cds-index)
 
-```bash
+```shell
 GRAPH_INDEX_DIR=./data/graph_index   # Graph index storage
 BM25_INDEX_DIR=./data/bm25_index     # BM25 index storage
 INDEX_SERVICE_PORT=3030              # Service port
@@ -264,7 +264,7 @@ RUST_LOG=info                        # Log level
 
 #### Agent (cds-agent)
 
-```bash
+```shell
 ANTHROPIC_API_KEY=sk-ant-...         # Required: Claude API key
 OPENAI_API_KEY=sk-...                # Optional: OpenAI API key (v0.2.0)
 AGENT_MAX_ITERATIONS=10              # Max tool call iterations
@@ -283,7 +283,7 @@ See `spacs/issues/04-0.1.0-mvp/07-deployment/01-local-daemon.md` for detailed in
 
 #### Linux (systemd)
 
-```bash
+```shell
 sudo scripts/install-daemon-linux.sh
 sudo systemctl status cds-index
 journalctl -u cds-index -f
@@ -291,7 +291,7 @@ journalctl -u cds-index -f
 
 #### macOS (launchd)
 
-```bash
+```shell
 scripts/install-daemon-macos.sh
 launchctl list | grep cds
 tail -f ~/Library/Logs/cdsagent/stdout.log
@@ -299,7 +299,7 @@ tail -f ~/Library/Logs/cdsagent/stdout.log
 
 ### Docker Compose
 
-```bash
+```shell
 cd deployment
 cp config/.env.example config/.env
 # Edit config/.env with your API keys

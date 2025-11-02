@@ -131,7 +131,7 @@ impl ParserRegistry {
 
 **Built-in Extension Point**:
 
-```bash
+```shell
 # CLI composability (v0.1.0)
 cds search "query" | jq '.results[].entity_id' | xargs cds retrieve
 
@@ -231,7 +231,7 @@ export const cdsSearchTool = tool({
 **Problem**: BM25 misses semantically similar code without keyword match.
 **Solution**: Hybrid retrieval (BM25 + vector embeddings).
 
-```bash
+```shell
 # New CLI command
 cds semantic-search "find code that handles authentication" --k 10
 ```
@@ -262,7 +262,7 @@ cds semantic-search "find code that handles authentication" --k 10
 **Problem**: Claude/GPT-4 may not optimize for code localization.
 **Solution**: Fine-tune on successful agent trajectories (LocAgent §5.2 approach).
 
-```bash
+```shell
 # Collect trajectories
 python collect_agent_traces.py --dataset swebench --output traces.jsonl
 

@@ -296,7 +296,7 @@ fn test_locagent_repo_parity() {
 
 **Baseline Generation**:
 
-```bash
+```shell
 # Run LocAgent to generate baseline
 cd tmp/LocAgent
 python dependency_graph/build_graph.py --repo . --output ../../tests/fixtures/parity/locagent_graph.json

@@ -1,0 +1,1 @@
+../../../../../.dev/scripts/task/sync-worktrees.sh

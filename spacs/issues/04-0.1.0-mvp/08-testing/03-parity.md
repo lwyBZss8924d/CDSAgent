@@ -392,7 +392,7 @@ mod regression_tests {
 
 ## Golden Output Generation
 
-```bash
+```shell
 #!/bin/bash
 # tests/parity/generate_golden_outputs.sh
 

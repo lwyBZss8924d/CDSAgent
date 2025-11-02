@@ -27,7 +27,7 @@ Get CDSAgent running in under 10 minutes.
 
 ## 1. Clone and Configure
 
-```bash
+```shell
 git clone https://github.com/your-org/CDSAgent.git
 cd CDSAgent/deployment
 
@@ -44,7 +44,7 @@ nano config/.env
 
 ## 2. Build and Deploy
 
-```bash
+```shell
 # Build all Docker images (first time only, ~5 minutes)
 ./scripts/build-all.sh
 
@@ -57,7 +57,7 @@ docker-compose up -d
 
 ## 3. Verify Installation
 
-```bash
+```shell
 # Check service status
 docker-compose ps
 
@@ -73,7 +73,7 @@ docker-compose logs -f agent
 
 ## 4. Build Your First Index
 
-```bash
+```shell
 # Copy your codebase to the index volume
 cp -r /path/to/your/repo ./volumes/graph_index/my_repo
 
@@ -94,7 +94,7 @@ docker-compose exec cli-tools cds search "MyClass" --type class
 
 ## Stopping Services
 
-```bash
+```shell
 # Stop all services (preserves data)
 docker-compose down
 
@@ -116,7 +116,7 @@ Common issues and solutions.
 **Cause**: Another service is using port 3030.
 
 **Solution**:
-```bash
+```shell
 # Find process using port 3030
 lsof -i :3030
 
@@ -131,7 +131,7 @@ docker-compose up -d
 
 **Solution**:
 
-```bash
+```shell
 # Edit .env and add your key
 echo "ANTHROPIC_API_KEY=sk-ant-..." >> config/.env
 
@@ -147,7 +147,7 @@ docker-compose restart agent
 
 **Diagnosis**:
 
-```bash
+```shell
 # Check service logs
 docker-compose logs index-service
 
@@ -163,7 +163,7 @@ curl http://localhost:3030/health
 
 **Solution**:
 
-```bash
+```shell
 # Recreate volumes
 docker-compose down -v
 docker-compose up -d
@@ -177,7 +177,7 @@ docker-compose up -d
 
 **Solution**:
 
-```bash
+```shell
 # Check supported languages (v0.1.0: Python only)
 # For multi-language support, wait for v0.2.0 or file a feature request
 ```
@@ -188,7 +188,7 @@ docker-compose up -d
 
 **Solution**:
 
-```bash
+```shell
 # Fix permissions on host
 chmod -R 755 volumes/graph_index
 
@@ -204,7 +204,7 @@ user: "${UID}:${GID}"
 
 **Solution**:
 
-```bash
+```shell
 # Reduce agent max iterations in .env
 echo "AGENT_MAX_ITERATIONS=5" >> config/.env
 docker-compose restart agent
@@ -218,7 +218,7 @@ docker-compose restart agent
 
 **Diagnosis**:
 
-```bash
+```shell
 # Check search performance
 docker-compose exec cli-tools time cds search "function" --limit 10
 ```
@@ -237,7 +237,7 @@ docker-compose exec cli-tools time cds search "function" --limit 10
 
 **Solution**:
 
-```bash
+```shell
 # Start Docker daemon
 sudo systemctl start docker
 
@@ -252,7 +252,7 @@ newgrp docker
 
 **Solution**:
 
-```bash
+```shell
 # Clean up Docker resources
 docker system prune -a --volumes
 
@@ -266,7 +266,7 @@ df -h  # Check disk usage
 
 **Diagnosis**:
 
-```bash
+```shell
 # Check Prometheus metrics
 curl http://localhost:3030/metrics | grep cds_search_duration
 
@@ -371,7 +371,7 @@ Pre-launch validation for production environments.
    - Name it "CDSAgent Production"
    - Copy the key (starts with `sk-ant-`)
 3. **Set in .env**:
-   ```bash
+   ```shell
    ANTHROPIC_API_KEY=sk-ant-api03-...
    ```
 
@@ -388,7 +388,7 @@ Pre-launch validation for production environments.
    - Copy the key (starts with `sk-`)
 3. **Set in .env**:
 
-   ```bash
+   ```shell
    OPENAI_API_KEY=sk-...
    ```
 
@@ -400,7 +400,7 @@ Pre-launch validation for production environments.
 
 Store in `.env` file (gitignored):
 
-```bash
+```shell
 cp config/.env.example config/.env
 # Edit .env with your keys
 ```
@@ -409,7 +409,7 @@ cp config/.env.example config/.env
 
 Use Docker secrets:
 
-```bash
+```shell
 # Create secrets
 echo "sk-ant-..." | docker secret create anthropic_api_key -
 
@@ -435,7 +435,7 @@ Or use external secret managers:
 2. Update .env or secret manager
 3. Restart affected services:
 
-   ```bash
+   ```shell
    docker-compose restart agent
    ```
 

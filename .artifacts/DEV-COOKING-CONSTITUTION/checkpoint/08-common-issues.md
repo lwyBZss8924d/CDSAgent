@@ -1,0 +1,1 @@
+../../../.dev/workflows/checkpoint/08-common-issues.md

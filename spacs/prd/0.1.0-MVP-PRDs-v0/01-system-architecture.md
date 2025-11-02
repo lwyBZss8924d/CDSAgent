@@ -211,7 +211,7 @@ Each stage requires regression checks that mirror the LocAgent Python baselines 
 
 **Rationale**: Unix philosophy enables hybrid retrieval:
 
-```bash
+```shell
 cds search "XSS vulnerability" | jq '.ids[]' | cds traverse --depth 2 | rg "sanitize"
 ```
 

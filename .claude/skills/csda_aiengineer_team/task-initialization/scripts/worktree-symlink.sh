@@ -1,0 +1,1 @@
+../../../../../.dev/scripts/task/worktree-symlink.sh

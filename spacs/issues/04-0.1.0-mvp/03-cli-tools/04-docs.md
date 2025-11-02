@@ -155,13 +155,13 @@ Task 4: User Guide
 
 ## Installation
 
-```bash
+```shell
 cargo install cds-cli
 ```
 
 Or build from source:
 
-```bash
+```shell
 git clone https://github.com/your-org/CDSAgent.git
 cd CDSAgent/cds-cli
 cargo build --release
@@ -171,7 +171,7 @@ cargo build --release
 
 ### 1. Initialize Index
 
-```bash
+```shell
 # Index your repository
 cds init /path/to/repo
 ```
@@ -180,7 +180,7 @@ This creates `.cds-index/` in your repository with graph and search indices.
 
 ### 2. Search for Code
 
-```bash
+```shell
 # Search for functions
 cds search "authenticate" --type function
 
@@ -190,7 +190,7 @@ cds search "database connection" --type class --limit 5
 
 ### 3. Explore Dependencies
 
-```bash
+```shell
 # Find what a function calls
 cds traverse entity_abc --depth 2 --relations invoke
 
@@ -200,7 +200,7 @@ cds traverse entity_xyz --direction backward --relations invoke
 
 ### 4. Retrieve Full Code
 
-```bash
+```shell
 # Get full code for an entity
 cds retrieve entity_abc --format code
 ```
@@ -211,7 +211,7 @@ cds retrieve entity_abc --format code
 
 Agent-friendly structured output. Pipe to `jq` for processing:
 
-```bash
+```shell
 cds search "utils" --format json | jq '.results[].entity_id'
 ```
 
@@ -219,7 +219,7 @@ cds search "utils" --format json | jq '.results[].entity_id'
 
 Human-readable summary with code previews:
 
-```bash
+```shell
 cds search "sanitize" --format text
 ```
 
@@ -227,7 +227,7 @@ cds search "sanitize" --format text
 
 Hierarchical graph visualization (traverse only):
 
-```bash
+```shell
 cds traverse entity_root --format tree
 ```
 
@@ -251,7 +251,7 @@ json_pretty = true
 
 Or use environment variables:
 
-```bash
+```shell
 export GRAPH_INDEX_DIR=/path/to/index
 export CDS_SERVICE_URL=http://localhost:9001
 ```
@@ -291,7 +291,7 @@ Combine CDS-Tools with standard Unix tools for powerful code analysis.
 
 ## Example 1: Find XSS Vulnerabilities
 
-```bash
+```shell
 # 1. Find sanitization functions
 cds search "sanitize XSS" --type function --format json > sanitize_funcs.json
 
@@ -312,7 +312,7 @@ cat entry_points.json | jq -r '.id' | xargs cds retrieve --format code
 
 ## Example 2: Dead Code Detection
 
-```bash
+```shell
 # Find all functions
 cds search "*" --type function --format json > all_funcs.json
 
@@ -327,7 +327,7 @@ done
 
 ## Example 3: Dependency Analysis
 
-```bash
+```shell
 # Find all imports from a module
 cds search "import requests" --format json | \
   jq -r '.results[].file_path' | \
@@ -339,7 +339,7 @@ cat files_using_requests.txt | xargs rg "from requests import"
 
 ## Example 4: Code Search with ripgrep
 
-```bash
+```shell
 # Find files with TODOs in specific entities
 cds search "utils" --format json | \
   jq -r '.results[].file_path' | \
@@ -355,7 +355,7 @@ cds search "deprecated" --format json | \
 
 ## Example 5: ast-grep Integration
 
-```bash
+```shell
 # Find error handling patterns
 cds search "validate" --type function --format json | \
   jq -r '.results[].file_path' | \
@@ -390,13 +390,13 @@ Unified command-line interface for Code Discovery System (CDS).
 
 ## Installation
 
-```bash
+```shell
 cargo install cds-cli
 ```
 
 ## QUICK START
 
-```bash
+```shell
 # Index a repository
 cds init /path/to/repo
 
@@ -425,7 +425,7 @@ cds retrieve entity_xyz
 
 ## Examples
 
-```bash
+```shell
 # Find all classes in a module
 cds search "module_name" --type class
 
@@ -492,7 +492,7 @@ Apache 2.0
 
 ### Example Validation
 
-```bash
+```shell
 # tests/docs/validate_examples.sh
 
 #!/bin/bash

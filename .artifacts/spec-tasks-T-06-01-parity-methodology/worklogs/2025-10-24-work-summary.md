@@ -60,6 +60,7 @@ Extracted graph traversal patterns for 10 scenarios × 6 repos = 60 total:
 **File**: `tests/fixtures/parity/golden_outputs/traverse_samples.jsonl` (60 lines)
 
 **Example scenario**:
+
 ```json
 {
   "scenario": "callees_1hop_function_1",
@@ -84,6 +85,7 @@ Extracted graph traversal patterns for 10 scenarios × 6 repos = 60 total:
 **Root Cause**: `llama-index` v0.11.22 `SimpleDirectoryReader` validates `required_exts=['.py']` at root directory level before recursing. SWE-bench repos have Python code in subdirectories (e.g., `django/django/`, `sklearn/sklearn/`), causing validation to fail.
 
 **Workarounds Attempted**:
+
 1. ❌ Package directory detection - llama-index validates before accepting subdirectory paths
 2. ❌ Dummy file creation - llama-index still fails to detect `.py` files
 
@@ -111,6 +113,7 @@ Extracted graph traversal patterns for 10 scenarios × 6 repos = 60 total:
 **File**: `scripts/swe-lite` (311 lines)
 
 **Commands**:
+
 - `./scripts/swe-lite fetch` - Download SWE-bench Lite instances from Hugging Face
 - `./scripts/swe-lite check` - Verify environment setup
 - `./scripts/swe-lite baseline graph` - Extract graph baselines
@@ -119,6 +122,7 @@ Extracted graph traversal patterns for 10 scenarios × 6 repos = 60 total:
 - `./scripts/swe-lite baseline perf` - Extract performance baselines
 
 **Features**:
+
 - Automatic HF_TOKEN validation
 - uv venv management for LocAgent
 - Error handling and progress reporting
@@ -169,6 +173,7 @@ Extracted graph traversal patterns for 10 scenarios × 6 repos = 60 total:
 **New Section**: "10. Known Limitations" (130+ lines)
 
 **Content**:
+
 - Detailed explanation of llama-index SimpleDirectoryReader limitation
 - Root cause analysis with code references
 - Impact assessment (why it doesn't block CDSAgent development)
@@ -181,6 +186,7 @@ Extracted graph traversal patterns for 10 scenarios × 6 repos = 60 total:
 **File**: `tests/fixtures/parity/golden_outputs/README.md` (148 lines)
 
 **Sections**:
+
 - Baseline Files overview (6 graph JSONs, traverse/search/perf files)
 - Schema documentation for each baseline type
 - Known Limitations (search & performance baselines)
@@ -188,6 +194,7 @@ Extracted graph traversal patterns for 10 scenarios × 6 repos = 60 total:
 - Regeneration instructions
 
 **Key Content**:
+
 ```markdown
 ## Known Limitations
 
@@ -245,12 +252,14 @@ spacs/tasks/0.1.0-mvp/TODO.yaml
 **Decision**: Document limitation thoroughly and proceed with partial search/perf baselines
 
 **Rationale**:
+
 - Graph baselines (most critical for T-02-01) are 100% complete
 - Traverse baselines (important for graph validation) are 100% complete
 - Search validation can use live comparison instead of static baselines
 - CDSAgent Rust implementation won't have this limitation (uses `walkdir`)
 
 **Alternatives Considered**:
+
 1. Modify llama-index source code - Rejected (adds external dependency maintenance burden)
 2. Create symlinks at root level - Rejected (pollutes repo structure)
 3. Wait for llama-index fix - Rejected (no timeline, blocks M1 milestone)
@@ -262,11 +271,13 @@ spacs/tasks/0.1.0-mvp/TODO.yaml
 **Decision**: Document limitation in 3 locations (methodology, README, inline comments)
 
 **Rationale**:
+
 - Future developers need context when implementing T-02-02 (BM25 search)
 - README provides quick reference for baseline users
 - Methodology Section 10 provides root cause analysis for technical audience
 
 **Alternatives Considered**:
+
 1. Minimal documentation - Rejected (future confusion likely)
 2. Only methodology doc - Rejected (not visible enough for daily usage)
 
@@ -277,11 +288,13 @@ spacs/tasks/0.1.0-mvp/TODO.yaml
 **Decision**: Create comprehensive CLI wrapper with 7 helper scripts
 
 **Rationale**:
+
 - Reproducibility: Anyone can regenerate baselines with one command
 - T-02-01 and T-08-03 will need to re-run baselines during development
 - CI/CD integration for regression testing
 
 **Alternatives Considered**:
+
 1. Manual step-by-step instructions - Rejected (error-prone, time-consuming)
 2. Single monolithic script - Rejected (hard to maintain, less modular)
 
@@ -293,7 +306,7 @@ spacs/tasks/0.1.0-mvp/TODO.yaml
 
 **Problem**: `SimpleDirectoryReader` with `required_exts=['.py']` validates file existence at root directory level before recursing. For SWE-bench repos where Python code lives in subdirectories (e.g., `django/django/`, `sklearn/sklearn/`), this validation fails with:
 
-```
+```text
 ValueError: No files found in /path/to/repo.
 ```
 
@@ -302,21 +315,25 @@ ValueError: No files found in /path/to/repo.
 **Attempted Solutions**:
 
 1. **Package directory detection** (❌ Failed)
+
    ```python
    package_dirs = [item for item in repo_path.iterdir()
                   if item.is_dir() and (item / "__init__.py").exists()]
    source_path = package_dirs[0]  # Use subdirectory
    retriever = build_code_retriever_from_repo(str(source_path))
    ```
+
    **Result**: llama-index validates before accepting the path, still raises ValueError
 
 2. **Dummy file creation** (❌ Failed)
+
    ```python
    dummy_file = repo_path / "dummy_llamaindex_workaround.py"
    dummy_file.write_text("# Temporary file\n")
    retriever = build_code_retriever_from_repo(str(repo_path))
    dummy_file.unlink()
    ```
+
    **Result**: File created successfully (verified with stat), but llama-index still raises ValueError
 
 **Final Resolution**: Accept limitation and document thoroughly. CDSAgent Rust implementation will use standard filesystem traversal without llama-index dependency:
@@ -337,6 +354,7 @@ pub fn build_from_repo(repo_path: &Path) -> Result<BM25Index> {
 ```
 
 **References**:
+
 - LocAgent source: `tmp/LocAgent/plugins/location_tools/retriever/bm25_retriever.py`
 - llama-index: `llama_index/core/readers/file/base.py:345`
 - CDSAgent plan: `docs/parity-validation-methodology.md` Section 10.2
@@ -345,7 +363,7 @@ pub fn build_from_repo(repo_path: &Path) -> Result<BM25Index> {
 
 **Problem**: Initial traverse baseline extraction failed with:
 
-```
+```text
 ModuleNotFoundError: No module named 'pydot'
 File "tmp/LocAgent/dependency_graph/traverse_graph.py", line 309, in traverse_graph_structure
     pydot_graph = nx.drawing.nx_pydot.to_pydot(H)
@@ -353,7 +371,7 @@ File "tmp/LocAgent/dependency_graph/traverse_graph.py", line 309, in traverse_gr
 
 **Solution**: Installed pydot in LocAgent uv environment:
 
-```bash
+```shell
 cd tmp/LocAgent && uv pip install pydot
 # Result: Installed pydot==4.0.1
 ```
@@ -363,6 +381,7 @@ cd tmp/LocAgent && uv pip install pydot
 **Prevention**: Added dependency check to `scripts/swe-lite check` command
 
 **References**:
+
 - Dependency: `networkx.drawing.nx_pydot.to_pydot` requires pydot
 - Fix location: `scripts/extract-traverse-baseline.py` line 45
 
@@ -373,11 +392,13 @@ cd tmp/LocAgent && uv pip install pydot
 **Solution**: Created selection criteria script with diversity metrics:
 
 **Criteria**:
+
 - **Size diversity**: 50-500 files per repo (avoid extremes)
 - **Domain diversity**: Web framework, ML, visualization, testing, HTTP
 - **Complexity diversity**: Large (6.8K nodes) to small (752 nodes)
 
 **Selected Instances**:
+
 1. django__django-10914 - Web framework, 6,876 nodes
 2. scikit-learn__scikit-learn-10297 - ML library, 6,613 nodes
 3. matplotlib__matplotlib-18869 - Visualization, 1,304 nodes
@@ -387,6 +408,7 @@ cd tmp/LocAgent && uv pip install pydot
 **Output**: `tests/fixtures/parity/swe-bench-lite/samples.yaml`
 
 **References**:
+
 - Selection script: `scripts/select-swe-bench-instances.py`
 - Dataset: princeton-nlp/SWE-bench_Lite (Hugging Face)
 
@@ -403,6 +425,7 @@ cd tmp/LocAgent && uv pip install pydot
 ## Acceptance Criteria Progress
 
 ### Phase 1: Documentation & Infrastructure (✅ Completed 2025-10-20)
+
 - [x] docs/parity-validation-methodology.md published (62KB, 9 sections → 10 sections)
 - [x] scripts/parity-check.sh functional (469 lines, 4 check types)
 - [x] Test fixtures directory structure created with .gitkeep files
@@ -410,6 +433,7 @@ cd tmp/LocAgent && uv pip install pydot
 - [x] Phase-gated checkpoints defined (Week 2, 5, 7, 10)
 
 ### Phase 2: Baseline Extraction (✅ Completed 2025-10-24)
+
 - [x] Extract golden outputs for 6 repos (LocAgent + 5 SWE-bench Lite)
   - ✅ Graph baselines: 6/6 repos (22,194 nodes total)
   - ✅ Traverse baselines: 60/60 scenarios

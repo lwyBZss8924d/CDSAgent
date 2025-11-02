@@ -85,7 +85,7 @@ User → cds CLI → JSON-RPC → cds-indexd (daemon) → Index files
 
 **Daemon Management**:
 
-```bash
+```shell
 # Systemd service (Linux)
 [Unit]
 Description=CDS Index Service
@@ -256,7 +256,7 @@ format = "text"
 
 ### 3.3 CLI Configuration Commands
 
-```bash
+```shell
 # View current config
 cds config list
 
@@ -276,7 +276,7 @@ cds config validate
 
 ### 4.1 Initial Indexing
 
-```bash
+```shell
 # Index a repository
 cds init /path/to/repo --languages python,typescript --output /data/index
 
@@ -315,7 +315,7 @@ Summary:
 
 **Trigger**: File changes detected (manual or via file watcher)
 
-```bash
+```shell
 # Update index after code changes
 cds update /path/to/repo
 
@@ -364,7 +364,7 @@ fn load_index(path: &Path) -> Result<Index> {
 
 **Migration**:
 
-```bash
+```shell
 # Migrate old index to new version
 cds migrate-index --from v2.2 --to v2.3 /data/old_index /data/new_index
 ```
@@ -528,14 +528,14 @@ max_files = 10
 
 **Backup**:
 
-```bash
+```shell
 # Backup index
 tar -czf cds-index-backup-$(date +%Y%m%d).tar.gz /data/graph_index
 ```
 
 **Recovery**:
 
-```bash
+```shell
 # Restore index
 tar -xzf cds-index-backup-20251018.tar.gz -C /data/
 ```

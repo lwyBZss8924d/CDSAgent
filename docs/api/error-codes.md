@@ -154,7 +154,7 @@ Used by `cds-tools` CLI commands (`cds search`, `cds traverse`, `cds retrieve`)
 
 **Usage Example:**
 
-```bash
+```shell
 #!/bin/bash
 
 # Check if search found results

@@ -87,7 +87,7 @@ test result: ok. 3 passed; 0 failed
 
 ### Initial Clippy Run - 5 Errors Found
 
-```bash
+```shell
 cargo clippy -p cds-index --all-targets -- -D warnings
 ```
 
@@ -297,7 +297,7 @@ redundant.
 
 ### Clippy Re-Run After All Fixes
 
-```bash
+```shell
 $ cargo clippy -p cds-index --all-targets -- -D warnings
    Checking cds-index v0.1.0
    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.26s
@@ -307,7 +307,7 @@ $ cargo clippy -p cds-index --all-targets -- -D warnings
 
 ### Full Test Suite After Fixes
 
-```bash
+```shell
 $ cargo test -p cds-index --lib --tests
 ...
 test result: ok. 18 passed; 0 failed

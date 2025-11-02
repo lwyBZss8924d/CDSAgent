@@ -271,7 +271,7 @@ let response = client.call("search_entities", json!({
 
 ### CLI
 
-```bash
+```shell
 # Search for entities
 cds search "sanitize" --limit 10
 
@@ -290,7 +290,7 @@ cds retrieve "entity_abc" --context 5
 
 Run contract tests to validate API responses:
 
-```bash
+```shell
 cargo test --package cds-index --test service_contract_tests
 ```
 
@@ -300,7 +300,7 @@ cargo test --package cds-index --test service_contract_tests
 
 ### Manual Testing with curl
 
-```bash
+```shell
 # Search entities
 curl -X POST http://localhost:9876/rpc \
   -H "Content-Type: application/json" \

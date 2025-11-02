@@ -553,7 +553,7 @@ describe('CLI Bash Tool Integration', () => {
 
 ### Test Environment Setup
 
-```bash
+```shell
 # tests/integration/setup.sh
 
 #!/bin/bash
@@ -584,7 +584,7 @@ echo "Test environment ready!"
 
 ### Test Teardown
 
-```bash
+```shell
 # tests/integration/teardown.sh
 
 #!/bin/bash

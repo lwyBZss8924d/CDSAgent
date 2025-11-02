@@ -72,7 +72,7 @@ This mapping ensures every LocAgent Python module has a Rust equivalent:
 
 **Validation**: Before completing any module, verify:
 
-```bash
+```shell
 # Check that Rust module exposes same functionality
 cargo test --package cds-index --test module_api_tests
 ```
@@ -98,7 +98,7 @@ const PYTHON_CLASS_QUERY: &str = include_str!("queries/python.scm");
 
 **Validation**:
 
-```bash
+```shell
 # Verify .scm files match LocAgent exactly
 diff crates/cds-index/src/graph/ast_parser/queries/python.scm \
      tmp/LocAgent/repo_index/codeblocks/parser/queries/python.scm
@@ -154,7 +154,7 @@ pub fn build_repo_graph(repo_path: &Path) -> Result<CodeGraph> {
 
 **Test**:
 
-```bash
+```shell
 cargo test --test graph_builder_tests::test_directory_traversal_order
 ```
 
@@ -195,7 +195,7 @@ pub fn extract_entities(tree: &Tree, source: &str) -> Vec<Entity> {
 
 **Test**:
 
-```bash
+```shell
 # Parse LocAgent's own codebase, compare entity counts
 cargo test --test graph_builder_tests::test_locagent_repo_entity_count
 # Expected: ~1200 entities (match Python output)
@@ -216,7 +216,7 @@ Preserve LocAgent's edge creation order and logic exactly. See PRD-06 §2.1 for 
 
 **Validation**:
 
-```bash
+```shell
 # Compare edge counts by type
 cargo test --test graph_builder_tests::test_edge_type_counts
 # Expected: contain > invoke > import > inherit (same proportions as LocAgent)
@@ -282,7 +282,7 @@ pub fn tokenize_code(code: &str) -> Vec<String> {
 
 **Test**:
 
-```bash
+```shell
 cargo test --test tokenizer_tests::test_camel_case_splitting
 cargo test --test tokenizer_tests::test_snake_case_splitting
 cargo test --test tokenizer_tests::test_stop_words
@@ -338,7 +338,7 @@ impl BM25Index {
 
 **Test**:
 
-```bash
+```shell
 # Compare BM25 scores on 10 sample queries
 cargo test --test bm25_tests::test_score_parity_with_locagent
 # Expected: All scores within 0.01 tolerance
@@ -418,7 +418,7 @@ pub fn traverse_graph(
 
 **Test**:
 
-```bash
+```shell
 # Run 10 traversal scenarios, compare node sets
 cargo test --test traverse_tests::test_traversal_parity
 # Expected: 10/10 exact matches
@@ -457,7 +457,7 @@ pub fn format_fold(entity: &Entity) -> String {
 
 **Validation**:
 
-```bash
+```shell
 # Generate fold snippets, compare character-by-character
 cargo test --test format_tests::test_fold_snippet_parity
 ```
@@ -491,7 +491,7 @@ pub fn format_preview(entity: &Entity) -> String {
 
 **Validation**:
 
-```bash
+```shell
 # Compare preview line counts and content
 cargo test --test format_tests::test_preview_snippet_parity
 ```
@@ -516,7 +516,7 @@ Use `├─`, `│`, `└─` box-drawing characters exactly as LocAgent.
 
 **Validation**:
 
-```bash
+```shell
 # Generate tree output, diff character-by-character
 cargo test --test format_tests::test_tree_format_parity
 ```
@@ -544,7 +544,7 @@ cargo test --test format_tests::test_tree_format_parity
 
 **Python Baseline Extraction**:
 
-```bash
+```shell
 # Index benchmark
 cd tmp/LocAgent
 time python dependency_graph/build_graph.py \
@@ -562,7 +562,7 @@ hyperfine --warmup 10 --runs 100 \
 
 **Rust Benchmark**:
 
-```bash
+```shell
 # Index benchmark
 cargo bench --bench graph_build_bench
 
@@ -596,7 +596,7 @@ criterion_main!(benches);
 
 **Validation**:
 
-```bash
+```shell
 # Run all performance benchmarks, compare to baselines
 cargo bench --all
 # Expected: All metrics meet or exceed targets
@@ -618,7 +618,7 @@ cargo bench --all
 
 **Rust**:
 
-```bash
+```shell
 # Install tarpaulin (if not already installed)
 cargo install cargo-tarpaulin
 
@@ -631,7 +631,7 @@ cargo tarpaulin --package cds-index --out Stdout
 
 **TypeScript**:
 
-```bash
+```shell
 # Run Jest with coverage
 cd cds-agent
 bun test --coverage
@@ -679,7 +679,7 @@ bun test --coverage --coverageReporters=text-summary
 
 **Validation Command**:
 
-```bash
+```shell
 cargo test --test graph_parity_tests
 ./scripts/parity-check.sh --graph
 ```
@@ -696,7 +696,7 @@ cargo test --test graph_parity_tests
 
 **Validation Command**:
 
-```bash
+```shell
 cargo test --test search_parity_tests
 cargo test --test traverse_parity_tests
 ./scripts/parity-check.sh --search --traverse
@@ -716,7 +716,7 @@ cargo bench --bench search_bench --bench traverse_bench
 
 **Validation Command**:
 
-```bash
+```shell
 cargo bench --all
 ./scripts/parity-check.sh --performance
 ```
@@ -733,7 +733,7 @@ cargo bench --all
 
 **Validation Command**:
 
-```bash
+```shell
 cargo test --all --release
 ./scripts/parity-check.sh --all
 ./scripts/run-swe-bench-lite.sh
@@ -769,7 +769,7 @@ cargo test --all --release
 
 **Usage**:
 
-```bash
+```shell
 # Run all parity checks
 ./scripts/parity-check.sh --all
 
@@ -867,7 +867,7 @@ jobs:
 
 1. **Check directory traversal order**:
 
-   ```bash
+   ```shell
    # Compare file lists
    diff <(python tmp/LocAgent/scripts/list_files.py) \
         <(cargo run --bin cds-list-files)
@@ -875,21 +875,21 @@ jobs:
 
 2. **Compare tree-sitter queries**:
 
-   ```bash
+   ```shell
    diff crates/cds-index/src/graph/ast_parser/queries/python.scm \
         tmp/LocAgent/repo_index/codeblocks/parser/queries/python.scm
    ```
 
 3. **Debug entity extraction**:
 
-   ```bash
+   ```shell
    # Enable debug logging
    RUST_LOG=debug cargo test --test graph_builder_tests::test_entity_extraction
    ```
 
 4. **Inspect specific files with mismatches**:
 
-   ```bash
+   ```shell
    # Find files with different entity counts
    ./scripts/debug-graph-diff.sh
    ```
@@ -914,7 +914,7 @@ jobs:
 
 1. **Check tokenization**:
 
-   ```bash
+   ```shell
    cargo test --test tokenizer_tests -- --nocapture
    # Compare tokenized output with LocAgent
    ```
@@ -929,7 +929,7 @@ jobs:
 
 3. **Compare BM25 scores**:
 
-   ```bash
+   ```shell
    # Run search with score logging
    RUST_LOG=debug cargo run --bin cds search "sanitize input" --repo . --debug
    # Compare with LocAgent scores
@@ -937,7 +937,7 @@ jobs:
 
 4. **Check stop word list**:
 
-   ```bash
+   ```shell
    diff crates/cds-index/src/index/stop_words.txt \
         tmp/LocAgent/repo_index/utils/stop_words.txt
    ```
@@ -963,7 +963,7 @@ jobs:
 
 1. **Visualize graph difference**:
 
-   ```bash
+   ```shell
    ./scripts/visualize-graph-diff.sh invoke_depth_2
    # Outputs: golden_graph.dot, actual_graph.dot
    dot -Tpng golden_graph.dot -o golden.png
@@ -972,20 +972,20 @@ jobs:
 
 2. **Check BFS traversal logic**:
 
-   ```bash
+   ```shell
    cargo test --test traverse_tests::test_bfs_order -- --nocapture
    ```
 
 3. **Verify relation filtering**:
 
-   ```bash
+   ```shell
    # Ensure "invoke" edges are being followed
    cargo test --test traverse_tests::test_relation_filter
    ```
 
 4. **Compare visited sets**:
 
-   ```bash
+   ```shell
    # Log visited nodes
    RUST_LOG=trace cargo test --test traverse_tests::test_invoke_depth_2
    ```
@@ -1085,7 +1085,7 @@ The `swe-lite` CLI provides a unified interface for extracting parity baselines 
 
 ### 10.2 Installation
 
-```bash
+```shell
 # Ensure uv is installed
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
@@ -1095,7 +1095,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ### 10.3 Complete Workflow
 
-```bash
+```shell
 # Step 1: Select 5 diverse SWE-bench Lite instances
 ./scripts/swe-lite select
 # Output: tests/fixtures/parity/swe-bench-lite/samples.yaml
@@ -1115,7 +1115,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ### 10.4 Individual Baseline Types
 
-```bash
+```shell
 # Extract only graph baselines (nodes + edges)
 ./scripts/swe-lite baseline graph
 
@@ -1144,7 +1144,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 When LocAgent is updated or you need to refresh baselines:
 
-```bash
+```shell
 # Re-extract LocAgent baseline only
 ./scripts/swe-lite baseline graph
 
@@ -1172,7 +1172,7 @@ All scripts use `uv run` for dependency management and set `PYTHONPATH` to inclu
 
 **Problem**: `uv: command not found`
 
-```bash
+```shell
 # Install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
 source ~/.bashrc  # or ~/.zshrc
@@ -1180,7 +1180,7 @@ source ~/.bashrc  # or ~/.zshrc
 
 **Problem**: `LocAgent not found`
 
-```bash
+```shell
 # Ensure LocAgent is present
 ls -la tmp/LocAgent/
 # Should show dependency_graph/, plugins/, etc.
@@ -1188,7 +1188,7 @@ ls -la tmp/LocAgent/
 
 **Problem**: `datasets module not found`
 
-```bash
+```shell
 # Install dataset dependencies
 cd tmp/LocAgent
 uv pip install datasets pyyaml gitpython psutil
@@ -1196,7 +1196,7 @@ uv pip install datasets pyyaml gitpython psutil
 
 **Problem**: Graph baseline too large (>5MB)
 
-```bash
+```shell
 # Use --max-files to limit extraction
 python scripts/extract-parity-baseline.py \
     --repo-path .artifacts/tmp/swe-bench-lite/<id> \
@@ -1308,7 +1308,7 @@ pub fn build_from_repo(repo_path: &Path) -> Result<BM25Index> {
 
 **T-08-03 Parity Validation Strategy**:
 
-```bash
+```shell
 # Primary validation (graph structure)
 ./scripts/parity-check.sh graph django__django-10914
 # Uses: tests/fixtures/parity/golden_outputs/graph_*.json ✅

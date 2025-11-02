@@ -220,7 +220,7 @@ All tasks are tracked in **[TODO.yaml](./TODO.yaml)** with complete metadata:
 
 **Usage:**
 
-```bash
+```shell
 # View all task metadata
 cat spacs/tasks/0.1.0-mvp/TODO.yaml
 
@@ -266,13 +266,13 @@ Each task maintains a worklog in `.artifacts/spec-tasks-{TASK_ID}/worklogs/`:
 - **Backlog**: `spacs/plan/0.1.0-mvp-backlog.md` - Master backlog plan
 - **Architecture**: `spacs/issues/02-CDSAgent-Tech-Architecture-Plan.md` - System design
 - **Development Status**: `DEVELOPMENT_STATUS.md` - Current project state
-- **Worktree Workflow**: `docs/WORKTREE_WORKFLOW.md` - Git worktree guide
+- **Worktree Workflow**: `.dev/workflows/WORKTREE_WORKFLOW.md` - Git worktree guide
 
 ## Task Tracking Tools
 
 ### CLI Usage
 
-```bash
+```shell
 # List all tasks for a component
 ls spacs/tasks/0.1.0-mvp/02-index-core/
 
