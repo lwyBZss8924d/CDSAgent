@@ -1,0 +1,9 @@
+spec-tasks/T-02-02-sparse-index
+Day: 2
+Date: 2025-11-02
+Session: Bugfix - checkpoint-helper path
+Duration: 0.1h
+Worklog: Infrastructure fix
+Status: Fixed REPO_ROOT path calculation in checkpoint-helper.sh
+Files: 1 file (+1/-1 lines)
+Purpose: Adapt script to new .dev/scripts/validation/ location
