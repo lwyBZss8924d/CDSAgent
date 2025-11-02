@@ -63,18 +63,18 @@ GIT_STATUS=$(git status --porcelain)
 
 if [ -z "$GIT_STATUS" ]; then
     echo -e "${GREEN}  ✓ Working tree is clean${NC}"
-    ((CHECKS_PASSED++))
+    ((CHECKS_PASSED++)) || true
 else
     # Check if only artifacts are changed
     NON_ARTIFACT_CHANGES=$(echo "$GIT_STATUS" | grep -v "^.. .artifacts/" || true)
 
     if [ -z "$NON_ARTIFACT_CHANGES" ]; then
         echo -e "${GREEN}  ✓ Only artifact changes (expected)${NC}"
-        ((CHECKS_PASSED++))
+        ((CHECKS_PASSED++)) || true
     else
         echo -e "${RED}  ✗ Uncommitted code changes detected${NC}"
         echo "$NON_ARTIFACT_CHANGES" | sed 's/^/    /'
-        ((CHECKS_FAILED++))
+        ((CHECKS_FAILED++)) || true
         echo ""
         echo "  Action: Commit or stash code changes before checkpoint"
     fi
@@ -91,7 +91,7 @@ COMMITS=$(git log --format="%H" origin/main..HEAD 2>/dev/null || echo "")
 
 if [ -z "$COMMITS" ]; then
     echo -e "${YELLOW}  ⚠ No commits to check${NC}"
-    ((WARNINGS++))
+    ((WARNINGS++)) || true
 else
     TOTAL_COMMITS=$(echo "$COMMITS" | wc -l | tr -d ' ')
     MISSING_NOTES=0
@@ -105,10 +105,10 @@ else
 
     if [ $MISSING_NOTES -eq 0 ]; then
         echo -e "${GREEN}  ✓ All $TOTAL_COMMITS commits have git notes${NC}"
-        ((CHECKS_PASSED++))
+        ((CHECKS_PASSED++)) || true
     else
         echo -e "${RED}  ✗ $MISSING_NOTES out of $TOTAL_COMMITS commits missing notes${NC}"
-        ((CHECKS_FAILED++))
+        ((CHECKS_FAILED++)) || true
         echo ""
         echo "  Action: Run ./scripts/git-notes-check.sh for details"
     fi
@@ -124,7 +124,7 @@ WORKLOG_DIR="${TASK_DIR}/worklogs"
 
 if [ ! -d "$WORKLOG_DIR" ]; then
     echo -e "${RED}  ✗ Worklog directory not found${NC}"
-    ((CHECKS_FAILED++))
+    ((CHECKS_FAILED++)) || true
 else
     REQUIRED_FILES=(
         "${WORKLOG_DIR}/${TODAY}-work-summary.md"
@@ -141,13 +141,13 @@ else
 
     if [ ${#MISSING_WORKLOGS[@]} -eq 0 ]; then
         echo -e "${GREEN}  ✓ Today's worklogs exist${NC}"
-        ((CHECKS_PASSED++))
+        ((CHECKS_PASSED++)) || true
     else
         echo -e "${YELLOW}  ⚠ Missing worklog files:${NC}"
         for file in "${MISSING_WORKLOGS[@]}"; do
             echo "    - $file"
         done
-        ((WARNINGS++))
+        ((WARNINGS++)) || true
         echo ""
         echo "  Action: Run ./scripts/create-daily-worklog.sh ${TASK_ID}"
     fi
@@ -163,17 +163,17 @@ METADATA_FILE="${TASK_DIR}/metadata.yaml"
 
 if [ ! -f "$METADATA_FILE" ]; then
     echo -e "${RED}  ✗ metadata.yaml not found${NC}"
-    ((CHECKS_FAILED++))
+    ((CHECKS_FAILED++)) || true
 else
     # Check for PENDING placeholders
     PENDING_FIELDS=$(grep -c "PENDING\|TODO\|FIXME" "$METADATA_FILE" 2>/dev/null || echo "0")
 
     if [ "$PENDING_FIELDS" -eq 0 ]; then
         echo -e "${GREEN}  ✓ No PENDING fields in metadata${NC}"
-        ((CHECKS_PASSED++))
+        ((CHECKS_PASSED++)) || true
     else
         echo -e "${YELLOW}  ⚠ Found $PENDING_FIELDS PENDING/TODO/FIXME markers${NC}"
-        ((WARNINGS++))
+        ((WARNINGS++)) || true
         echo ""
         echo "  Action: Update metadata.yaml with actual values"
     fi
@@ -184,10 +184,10 @@ else
 
     if [ "$COMMITS_IN_METADATA" -ge "$COMMITS_IN_GIT" ]; then
         echo -e "${GREEN}  ✓ Commit count consistent ($COMMITS_IN_METADATA in metadata, $COMMITS_IN_GIT in git)${NC}"
-        ((CHECKS_PASSED++))
+        ((CHECKS_PASSED++)) || true
     else
         echo -e "${YELLOW}  ⚠ Commit count mismatch: $COMMITS_IN_METADATA in metadata, $COMMITS_IN_GIT in git${NC}"
-        ((WARNINGS++))
+        ((WARNINGS++)) || true
         echo ""
         echo "  Action: Update git.commits section in metadata.yaml"
     fi
@@ -214,13 +214,13 @@ done
 
 if [ ${#MISSING_ARTIFACTS[@]} -eq 0 ]; then
     echo -e "${GREEN}  ✓ All required artifacts exist${NC}"
-    ((CHECKS_PASSED++))
+    ((CHECKS_PASSED++)) || true
 else
     echo -e "${RED}  ✗ Missing artifacts:${NC}"
     for artifact in "${MISSING_ARTIFACTS[@]}"; do
         echo "    - $artifact"
     done
-    ((CHECKS_FAILED++))
+    ((CHECKS_FAILED++)) || true
     echo ""
     echo "  Action: Run ./scripts/create-task-worklog.sh ${TASK_ID} \"Title\" \"Developer\""
 fi
