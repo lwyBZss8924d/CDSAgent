@@ -7,7 +7,7 @@
 use super::python::ast_utils::collect_module_data_from_ast;
 use crate::graph::{
     DependencyGraph, EdgeKind, GraphNode, GraphNodeIndex, ImportDirective, ModuleSpecifier,
-    ParsedEntity, ParserError, PythonParser,
+    NodeKind, ParsedEntity, ParserError, PythonParser, SourceRange,
 };
 use rustpython_parser::ast::Suite;
 use rustpython_parser::Parse;
@@ -341,7 +341,7 @@ impl BuilderState {
         let file_idx = self.ensure_file_node(rel_path);
         let source = fs::read_to_string(absolute_path)?;
         let tree = parser.parse(&source)?;
-        let entities = PythonParser::collect_entities_from_tree(&tree, &source);
+        let mut entities = PythonParser::collect_entities_from_tree(&tree, &source);
         let module_data = match Suite::parse(&source, rel_path.to_string_lossy().as_ref()) {
             Ok(ast) => {
                 let rc = Rc::new(ast);
@@ -350,15 +350,42 @@ impl BuilderState {
                 data
             }
             Err(err) => {
-                warn!("Failed to parse Python AST for {:?}: {err}", rel_path);
-                println!(
-                    "[PARITY DEBUG] rustpython parse failed for {}: {}",
-                    rel_path.display(),
-                    err
-                );
-                AstModuleData {
-                    imports: PythonParser::collect_imports_from_tree(&tree, &source),
-                    exports: ModuleExports::default(),
+                if let Some(sanitized) = sanitize_f_string_prefixes(&source) {
+                    match Suite::parse(&sanitized, rel_path.to_string_lossy().as_ref()) {
+                        Ok(ast) => {
+                            let rc = Rc::new(ast);
+                            let data = collect_module_data_from_ast(rc.as_ref());
+                            self.parsed_modules.insert(rel_path.to_path_buf(), rc);
+                            data
+                        }
+                        Err(err2) => {
+                            warn!(
+                                "Failed to parse Python AST for {:?}: {err} (sanitized: {err2})",
+                                rel_path
+                            );
+                            println!(
+                                "[PARITY DEBUG] rustpython parse failed for {}: {}; sanitized err: {}",
+                                rel_path.display(),
+                                err,
+                                err2
+                            );
+                            AstModuleData {
+                                imports: PythonParser::collect_imports_from_tree(&tree, &source),
+                                exports: ModuleExports::default(),
+                            }
+                        }
+                    }
+                } else {
+                    warn!("Failed to parse Python AST for {:?}: {err}", rel_path);
+                    println!(
+                        "[PARITY DEBUG] rustpython parse failed for {}: {}",
+                        rel_path.display(),
+                        err
+                    );
+                    AstModuleData {
+                        imports: PythonParser::collect_imports_from_tree(&tree, &source),
+                        exports: ModuleExports::default(),
+                    }
                 }
             }
         };
@@ -377,6 +404,9 @@ impl BuilderState {
         self.file_sources
             .entry(rel_path.to_path_buf())
             .or_insert_with(|| source.clone());
+        if entities.is_empty() {
+            entities = fallback_entities_from_source(&source);
+        }
         let absolute = absolute_path.to_path_buf();
         self.add_entities(file_idx, rel_path, &absolute, entities);
         Ok(())
@@ -452,6 +482,20 @@ impl BuilderState {
             .file_entities
             .entry(rel_path.to_path_buf())
             .or_default();
+        if let Some(source) = self.file_sources.get(rel_path) {
+            if let Some(file_node) = self.graph.graph_mut().node_weight_mut(file_idx) {
+                file_node
+                    .attributes
+                    .entry("source_snippet".to_string())
+                    .or_insert_with(|| source.clone());
+                if let Some(doc) = extract_docstring(source) {
+                    file_node
+                        .attributes
+                        .entry("docstring".to_string())
+                        .or_insert(doc);
+                }
+            }
+        }
 
         for entity in entities {
             let suffix = entity.qualified_name("::");
@@ -460,13 +504,27 @@ impl BuilderState {
                 .identifier()
                 .map(|name| name.to_string())
                 .unwrap_or_else(|| suffix.clone());
-            let node = GraphNode::entity(
+            let range = entity.range;
+            let mut node = GraphNode::entity(
                 node_id.clone(),
                 entity.kind,
                 display_name,
                 absolute_path.to_path_buf(),
-                entity.range,
+                range,
             );
+            if let Some(range) = range {
+                if let Some(source) = self.file_sources.get(rel_path) {
+                    if let Some(snippet) = extract_source_snippet(source, range) {
+                        if !snippet.trim().is_empty() {
+                            if let Some(doc) = extract_docstring(&snippet) {
+                                node.attributes.insert("docstring".to_string(), doc);
+                            }
+                            node.attributes
+                                .insert("source_snippet".to_string(), snippet);
+                        }
+                    }
+                }
+            }
             let node_idx = self.graph.add_node(node);
             self.entity_segments
                 .insert(node_idx, entity.segments.clone());
@@ -518,6 +576,272 @@ pub(super) fn normalize_allowed_id(id: &str) -> String {
     } else {
         id.to_string()
     }
+}
+
+fn extract_source_snippet(source: &str, range: SourceRange) -> Option<String> {
+    let start = range.start_line.saturating_sub(1) as usize;
+    let end = range.end_line.max(range.start_line) as usize;
+    if start >= end {
+        return None;
+    }
+
+    let lines: Vec<&str> = source.lines().collect();
+    if lines.is_empty() || start >= lines.len() {
+        return None;
+    }
+    let end = end.min(lines.len());
+    Some(lines[start..end].join("\n"))
+}
+
+fn sanitize_f_string_prefixes(source: &str) -> Option<String> {
+    if !source.contains(['f', 'F']) {
+        return None;
+    }
+
+    let mut sanitized = source.to_string();
+    const REPLACEMENTS: [(&str, &str); 16] = [
+        ("rf\"\"\"", "r\"\"\""),
+        ("fr\"\"\"", "r\"\"\""),
+        ("RF\"\"\"", "R\"\"\""),
+        ("FR\"\"\"", "R\"\"\""),
+        ("rf'''", "r'''"),
+        ("fr'''", "r'''"),
+        ("RF'''", "R'''"),
+        ("FR'''", "R'''"),
+        ("rf\"", "r\""),
+        ("fr\"", "r\""),
+        ("RF\"", "R\""),
+        ("FR\"", "R\""),
+        ("rf'", "r'"),
+        ("fr'", "r'"),
+        ("RF'", "R'"),
+        ("FR'", "R'"),
+    ];
+    for (pattern, replacement) in REPLACEMENTS {
+        sanitized = sanitized.replace(pattern, replacement);
+    }
+    sanitized = sanitized.replace("f\"\"\"", "\"\"\"");
+    sanitized = sanitized.replace("F\"\"\"", "\"\"\"");
+    sanitized = sanitized.replace("f'''", "'''");
+    sanitized = sanitized.replace("F'''", "'''");
+    sanitized = sanitized.replace("f\"", "\"");
+    sanitized = sanitized.replace("F\"", "\"");
+    sanitized = sanitized.replace("f'", "'");
+    sanitized = sanitized.replace("F'", "'");
+
+    Some(strip_format_specs(&sanitized))
+}
+
+fn strip_format_specs(input: &str) -> String {
+    let mut output = String::with_capacity(input.len());
+    let mut brace_depth = 0usize;
+    let mut skipping_format = false;
+
+    for ch in input.chars() {
+        if skipping_format {
+            match ch {
+                '{' => {
+                    brace_depth += 1;
+                }
+                '}' => {
+                    brace_depth = brace_depth.saturating_sub(1);
+                    skipping_format = false;
+                    output.push('}');
+                }
+                _ => {}
+            }
+            continue;
+        }
+
+        match ch {
+            '{' => {
+                brace_depth += 1;
+                output.push(ch);
+            }
+            '}' => {
+                brace_depth = brace_depth.saturating_sub(1);
+                output.push(ch);
+            }
+            ':' if brace_depth > 0 => {
+                skipping_format = true;
+            }
+            _ => output.push(ch),
+        }
+    }
+
+    output
+}
+
+fn fallback_entities_from_source(source: &str) -> Vec<ParsedEntity> {
+    let lines: Vec<&str> = source.lines().collect();
+    if lines.is_empty() {
+        return Vec::new();
+    }
+
+    let mut entities = Vec::new();
+    let mut scope_stack: Vec<(usize, String)> = Vec::new();
+    let mut line_idx = 0usize;
+
+    while line_idx < lines.len() {
+        let line = lines[line_idx];
+        let trimmed = line.trim_start();
+        if trimmed.starts_with('@') || trimmed.is_empty() {
+            line_idx += 1;
+            continue;
+        }
+
+        let indent = line.len() - trimmed.len();
+        while let Some((level, _)) = scope_stack.last() {
+            if indent <= *level {
+                scope_stack.pop();
+            } else {
+                break;
+            }
+        }
+
+        let mut tokens = trimmed;
+        let mut is_async = false;
+        if tokens.starts_with("async def ") {
+            is_async = true;
+            tokens = &tokens[6..];
+        }
+
+        if tokens.starts_with("def ") {
+            if let Some(name) = parse_identifier(tokens, 4) {
+                let segments = collect_segments(&scope_stack, &name);
+                let end_line = compute_block_extent(&lines, line_idx, indent);
+                entities.push(ParsedEntity {
+                    segments,
+                    kind: NodeKind::Function,
+                    range: Some(SourceRange::new((line_idx + 1) as u32, end_line)),
+                    is_async,
+                });
+                scope_stack.push((indent, name));
+            }
+        } else if tokens.starts_with("class ") {
+            if let Some(name) = parse_identifier(tokens, 6) {
+                let segments = collect_segments(&scope_stack, &name);
+                let end_line = compute_block_extent(&lines, line_idx, indent);
+                entities.push(ParsedEntity {
+                    segments: segments.clone(),
+                    kind: NodeKind::Class,
+                    range: Some(SourceRange::new((line_idx + 1) as u32, end_line)),
+                    is_async: false,
+                });
+                scope_stack.push((indent, name));
+            }
+        }
+
+        line_idx += 1;
+    }
+
+    entities
+}
+
+fn parse_identifier(tokens: &str, offset: usize) -> Option<String> {
+    tokens[offset..]
+        .split(|c: char| c == '(' || c == ':' || c.is_whitespace())
+        .next()
+        .map(str::to_string)
+        .filter(|name| !name.is_empty())
+}
+
+fn collect_segments(scope_stack: &[(usize, String)], name: &str) -> Vec<String> {
+    let mut segments: Vec<String> = scope_stack
+        .iter()
+        .map(|(_, segment)| segment.clone())
+        .collect();
+    segments.push(name.to_string());
+    segments
+}
+
+fn compute_block_extent(lines: &[&str], start_idx: usize, base_indent: usize) -> u32 {
+    let mut end_idx = start_idx;
+    let mut idx = start_idx + 1;
+    let mut saw_body = false;
+
+    while idx < lines.len() {
+        let line = lines[idx];
+        let trimmed = line.trim_start();
+        if trimmed.is_empty() {
+            if saw_body {
+                end_idx = idx;
+            }
+            idx += 1;
+            continue;
+        }
+
+        let indent = line.len() - trimmed.len();
+        if indent <= base_indent && !trimmed.starts_with('#') {
+            break;
+        }
+
+        saw_body = true;
+        end_idx = idx;
+
+        if trimmed.starts_with("\"\"\"") || trimmed.starts_with("'''") {
+            let doc_end = find_docstring_end(lines, idx, trimmed);
+            end_idx = doc_end;
+            idx = doc_end + 1;
+            continue;
+        }
+
+        idx += 1;
+    }
+
+    (end_idx + 1) as u32
+}
+
+fn find_docstring_end(lines: &[&str], start_idx: usize, trimmed: &str) -> usize {
+    let delimiter = if trimmed.starts_with("\"\"\"") {
+        "\"\"\""
+    } else {
+        "'''"
+    };
+
+    if trimmed[delimiter.len()..].contains(delimiter) {
+        return start_idx;
+    }
+
+    let mut idx = start_idx + 1;
+    while idx < lines.len() {
+        if lines[idx].contains(delimiter) {
+            return idx;
+        }
+        idx += 1;
+    }
+
+    lines.len().saturating_sub(1)
+}
+
+fn extract_docstring(text: &str) -> Option<String> {
+    for delim in ["\"\"\"", "'''"] {
+        let mut start_idx = 0usize;
+        while let Some(pos) = text[start_idx..].find(delim) {
+            let absolute_start = start_idx + pos;
+            let prefix_slice = &text[..absolute_start];
+            let has_invalid_prefix = prefix_slice
+                .chars()
+                .rev()
+                .take_while(|c| c.is_ascii_alphabetic())
+                .any(|c| !matches!(c.to_ascii_lowercase(), 'r' | 'u' | 'b' | 'f'));
+            if has_invalid_prefix {
+                start_idx = absolute_start + delim.len();
+                continue;
+            }
+            let after = &text[absolute_start + delim.len()..];
+            if let Some(end_pos) = after.find(delim) {
+                let doc = after[..end_pos].trim();
+                if !doc.is_empty() {
+                    return Some(doc.to_string());
+                }
+                start_idx = absolute_start + delim.len() + end_pos + delim.len();
+            } else {
+                break;
+            }
+        }
+    }
+    None
 }
 
 pub(super) fn normalized_path(path: &Path) -> String {

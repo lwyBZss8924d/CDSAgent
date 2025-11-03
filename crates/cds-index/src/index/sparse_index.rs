@@ -13,7 +13,7 @@
 //! maintaining semantic search capability for complex queries.
 
 use anyhow::Result;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 use crate::graph::{DependencyGraph, NodeKind};
@@ -88,7 +88,11 @@ impl SparseIndex {
         let bm25_path = base.join("bm25");
         let lower = Bm25Index::from_graph(&graph, &bm25_path, config)?;
 
-        Ok(Self { graph, upper, lower })
+        Ok(Self {
+            graph,
+            upper,
+            lower,
+        })
     }
 
     /// Performs hierarchical search with fallback strategy.
@@ -122,6 +126,7 @@ impl SparseIndex {
 
         let mut results = Vec::with_capacity(limit);
         let mut seen_ids: HashSet<String> = HashSet::new();
+        let mut path_index: HashMap<String, usize> = HashMap::new();
 
         // Convert kind filter for upper index (takes Option<NodeKind>, not slice)
         // If multiple kinds provided, we use None (no filter) for upper index
@@ -145,23 +150,23 @@ impl SparseIndex {
             }
             // Convert NameEntry to SearchResult via graph lookup
             if let Some(node) = self.graph.node(entry.node_id) {
-                if seen_ids.insert(node.id.clone()) {
-                    results.push(SearchResult {
-                        entity_id: node.id.clone(),
-                        name: Some(entry.name.to_string()),
-                        path: node
-                            .file_path
-                            .as_ref()
-                            .and_then(|p| p.to_str())
-                            .unwrap_or("")
-                            .to_string(),
-                        kind: entry.kind,
-                        score: 1.0, // Exact match gets perfect score
-                        matched_terms: Vec::new(),
-                    });
-                    if results.len() >= limit {
-                        return Ok(results);
-                    }
+                let path = node
+                    .file_path
+                    .as_ref()
+                    .and_then(|p| p.to_str())
+                    .unwrap_or("")
+                    .to_string();
+                let result = SearchResult {
+                    entity_id: node.id.clone(),
+                    name: Some(entry.name.to_string()),
+                    path,
+                    kind: entry.kind,
+                    score: 1.0, // Exact match gets perfect score
+                    matched_terms: Vec::new(),
+                };
+                Self::insert_or_update(&mut results, &mut seen_ids, &mut path_index, result, limit);
+                if results.len() >= limit {
+                    return Ok(results);
                 }
             }
         }
@@ -179,23 +184,29 @@ impl SparseIndex {
                 }
                 // Convert NameEntry to SearchResult via graph lookup
                 if let Some(node) = self.graph.node(entry.node_id) {
-                    if seen_ids.insert(node.id.clone()) {
-                        results.push(SearchResult {
-                            entity_id: node.id.clone(),
-                            name: Some(entry.name.to_string()),
-                            path: node
-                                .file_path
-                                .as_ref()
-                                .and_then(|p| p.to_str())
-                                .unwrap_or("")
-                                .to_string(),
-                            kind: entry.kind,
-                            score: 0.9, // Prefix match gets slightly lower score
-                            matched_terms: Vec::new(),
-                        });
-                        if results.len() >= limit {
-                            return Ok(results);
-                        }
+                    let path = node
+                        .file_path
+                        .as_ref()
+                        .and_then(|p| p.to_str())
+                        .unwrap_or("")
+                        .to_string();
+                    let result = SearchResult {
+                        entity_id: node.id.clone(),
+                        name: Some(entry.name.to_string()),
+                        path,
+                        kind: entry.kind,
+                        score: 0.9, // Prefix match gets slightly lower score
+                        matched_terms: Vec::new(),
+                    };
+                    Self::insert_or_update(
+                        &mut results,
+                        &mut seen_ids,
+                        &mut path_index,
+                        result,
+                        limit,
+                    );
+                    if results.len() >= limit {
+                        return Ok(results);
                     }
                 }
             }
@@ -205,21 +216,48 @@ impl SparseIndex {
         if results.len() < limit {
             let remaining = limit - results.len();
             // Request more results from BM25 to account for deduplication
-            let oversample = (remaining * 2).max(remaining + 10);
+            let oversample = (remaining * 6).max(remaining + 25);
             let bm25_results = self.lower.search(query, oversample, kind_filter)?;
 
             for bm25_result in bm25_results {
-                // Add unique result
-                if seen_ids.insert(bm25_result.entity_id.clone()) {
-                    results.push(SearchResult::from(bm25_result));
-                    if results.len() >= limit {
-                        break;
-                    }
+                let result = SearchResult::from(bm25_result);
+                Self::insert_or_update(&mut results, &mut seen_ids, &mut path_index, result, limit);
+                if results.len() >= limit {
+                    break;
                 }
             }
         }
 
         Ok(results)
+    }
+
+    fn insert_or_update(
+        results: &mut Vec<SearchResult>,
+        seen_ids: &mut HashSet<String>,
+        path_index: &mut HashMap<String, usize>,
+        result: SearchResult,
+        limit: usize,
+    ) {
+        let path_key = result.path.clone();
+        let boost = 1.0;
+        let penalty = 1.0;
+        let mut result = result;
+        result.score *= boost;
+        result.score /= penalty;
+
+        if path_index.contains_key(&path_key) {
+            return;
+        }
+
+        if seen_ids.contains(&result.entity_id) {
+            return;
+        }
+
+        if results.len() < limit {
+            seen_ids.insert(result.entity_id.clone());
+            path_index.insert(path_key, results.len());
+            results.push(result);
+        }
     }
 
     /// Returns the underlying name index (useful for testing/debugging)
@@ -265,9 +303,10 @@ mod tests {
             PathBuf::from("auth.py"),
             Some(SourceRange::new(1, 20)),
         );
-        user_auth
-            .attributes
-            .insert("docstring".to_string(), "Handles user authentication".to_string());
+        user_auth.attributes.insert(
+            "docstring".to_string(),
+            "Handles user authentication".to_string(),
+        );
         graph.add_node(user_auth);
 
         // Add a function that only matches via BM25 (no name overlap)

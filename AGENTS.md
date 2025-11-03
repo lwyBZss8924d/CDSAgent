@@ -49,6 +49,38 @@ Project Skills package Store them in project path and worktrees .claude/skills/ 
 10 directories, 23 files
 ```
 
+## TIPS!: Your macOS environment available other command-line tools $ for you optional
+
+In your macOS environment, additional command-line tools have been installed to facilitate coding
+When coding, in addition to your default shell command-line tools CMDs, you can call other CLI tools from the shell by following this rubric:
+
+**Environment Available $**:
+
+- Find files by file name: `fd` <https://github.com/sharkdp/fd>
+- Find files with path name: `fd -p <file-path>`
+- List files in a directory: `fd . <directory>`
+- Find files with extension and pattern: `fd -e <extension> <pattern>`
+- Find Text: `rg` (**ripgrep**) <https://github.com/BurntSushi/ripgrep>
+- Structured code search: `ast-grep`
+  - Default to Rust:
+    - Rust → `ast-grep --lang rust -p '<pattern>'`
+  - Common languages:
+    - Bash → `ast-grep --lang bash -p '<pattern>'`
+    - Python → `ast-grep --lang python -p '<pattern>'`
+    - TypeScript → `ast-grep --lang ts -p '<pattern>'`
+    - TSX (React) → `ast-grep --lang tsx -p '<pattern>'`
+    - JavaScript → `ast-grep --lang js -p '<pattern>'`
+    - JSON → `ast-grep --lang json -p '<pattern>'`
+  - For other languages, set `--lang` appropriately.
+- Select among matches: pipe to `fzf`
+- JSON: `jq`
+- YAML/XML: `yq`
+- Dev command line tools: **Cargo**, **Rustfmt**, **Clippy**, **Ruff**, **Prettier**, **ESLint**, etc.
+
+and any Dev command line tools, IDE API tools, Language Server Protocol (LSP) tools, etc.
+
+Tips: `ast-grep` is available! avoid plain‑text searches (`rg`/`grep`) when you need syntax‑aware matching. Use `rg` only when a plain‑text search is explicitly requested.
+
 ## CDSAgent Dev CONSTITUTION & Dev Toolkit
 
 ### 📚 Development Process Entry Point

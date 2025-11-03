@@ -86,7 +86,7 @@ retriever = BM25Retriever.from_defaults(
 
 **Incorrect Interpretation** (Current Implementation):
 
-```
+```text
 Parity = 100% match LocAgent's output on LocAgent repository
        ↓
 Hardcode LocAgent-specific rules to boost overlap@10 from 74% → 90%
@@ -96,7 +96,7 @@ Result: Overfitted to single repository, unusable for other codebases
 
 **Correct Interpretation** (Paper's Intent):
 
-```
+```text
 Parity = Algorithmic equivalence with reasonable variance
        ↓
 Implement same algorithm (graph + BM25 + stemming)
@@ -149,7 +149,7 @@ language="english"
 
 ### 2. Test Results Are Misleading
 
-```
+```text
 Current overlap@10: 80.77% on LocAgent repository
                     ↓
 Actual performance on OTHER repositories: UNKNOWN (likely <50%)
@@ -191,8 +191,6 @@ Actual performance on OTHER repositories: UNKNOWN (likely <50%)
    - Write a 1-page summary: "What is LocAgent's actual BM25 approach?"
    - Identify: "Where did our implementation deviate from the paper?"
 
-### SHORT-TERM (Within 1 Week)
-
 4. **Remove ALL hardcoded rules**
 
    ```rust
@@ -220,8 +218,6 @@ Actual performance on OTHER repositories: UNKNOWN (likely <50%)
    NEW: "Search overlap@10 ≥75% on 50 queries (reasonable variance)"
         + "Validate on 3+ different repositories (not just LocAgent)"
    ```
-
-### MEDIUM-TERM (Within 2 Weeks)
 
 7. **Multi-repository validation**
    - Test on: Django, scikit-learn, pytest, requests, matplotlib
@@ -252,8 +248,6 @@ Actual performance on OTHER repositories: UNKNOWN (likely <50%)
 
 ## Code Locations Requiring Cleanup
 
-### Files to Modify
-
 1. **`crates/cds-index/src/index/bm25.rs`**
    - Lines 200-235: DELETE `CUSTOM_FILE_PHRASES`
    - Lines 240-255: DELETE `SYNONYM_TABLE`
@@ -267,8 +261,6 @@ Actual performance on OTHER repositories: UNKNOWN (likely <50%)
 3. **`crates/cds-index/tests/search_parity_tests.rs`**
    - Rewrite overlap@10 expectations (90% → 75%)
    - Add multi-repo test suite
-
-### Files to Create
 
 4. **`.dev/workflows/ARCHITECTURE_PRINCIPLES.md`**
 
@@ -316,8 +308,6 @@ If this issue is not resolved within **1 week**:
    - `spacs/prd/0.1.0-MVP-PRDs-v0/01-overview.md` (product vision)
    - `spacs/prd/0.1.0-MVP-PRDs-v0/06-rust-refactoring-plan.md` (parity goals)
 
-### Supporting Documents
-
 4. **Metadata**: `.artifacts/spec-tasks-T-02-02-sparse-index/metadata.yaml`
 5. **Session Logs**: `.artifacts/spec-tasks-T-02-02-sparse-index/worklogs/raw/`
 6. **TODO Tracker**: `spacs/tasks/0.1.0-mvp/TODO.yaml`
@@ -347,3 +337,9 @@ Contact the Architecture Review team or escalate to Project Management immediate
 **Document Version**: 1.0
 **Last Updated**: 2025-11-03 07:35 UTC
 **Next Review**: Upon resolution submission
+
+## Status Update (2025-11-03 08:21 UTC)
+
+- Removed all repository-specific synonym/phrase/custom boost tables from the Rust sparse index implementation (`bm25.rs`, `sparse_index.rs`).
+- Restored acceptance criteria to algorithmic parity (average overlap ≥75%) and kept the parity harness ignored pending multi-repo validation.
+- Next: align stemming/stop-word behavior with bm25s defaults and add cross-repository smoke tests before closing the issue.

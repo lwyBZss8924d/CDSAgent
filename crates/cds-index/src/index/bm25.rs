@@ -14,12 +14,17 @@ use tantivy::{
     Index, IndexReader, ReloadPolicy,
 };
 
-use crate::graph::{DependencyGraph, GraphNode, NodeKind};
+use crate::graph::{DependencyGraph, EdgeKind, GraphNode, GraphNodeIndex, NodeKind};
+use petgraph::visit::EdgeRef;
+use petgraph::Direction;
 
 use super::tokenizer::{TantivyCodeTokenizer, Tokenizer};
 
 pub const CODE_ANALYZER_NAME: &str = "cds_code";
 const DEFAULT_WRITER_HEAP_SIZE: usize = 50 * 1024 * 1024; // 50 MiB
+const FILE_CHUNK_LINES: usize = 80;
+const FILE_CHUNK_OVERLAP_LINES: usize = 20;
+const MIN_CHUNK_CHARS: usize = 120;
 
 #[derive(Clone, Debug, Default)]
 pub struct AnalyzerConfig {
@@ -173,31 +178,75 @@ impl Bm25Index {
 
         // Collect owned data for all semantic entities
         // We need to own the data because Bm25Document contains string references
-        let mut entity_data = Vec::new();
+        let mut entity_data: Vec<(String, Option<String>, String, NodeKind)> = Vec::new();
         let mut contents = Vec::new();
 
         for idx in graph.graph().node_indices() {
             if let Some(node) = graph.node(idx) {
                 // Filter: only index semantic entities, skip structural nodes
-                if !matches!(node.kind, NodeKind::Class | NodeKind::Function) {
+                if !matches!(
+                    node.kind,
+                    NodeKind::Class | NodeKind::Function | NodeKind::File
+                ) {
                     continue;
                 }
 
+                let path_string = node
+                    .file_path
+                    .as_ref()
+                    .and_then(|p| p.to_str())
+                    .unwrap_or("")
+                    .to_string();
+
                 // Synthesize searchable content from display_name + attributes
-                let content = synthesize_content(node);
+                let mut content = synthesize_content(node);
+                if node.kind == NodeKind::File {
+                    if let Some(extra) = collect_file_child_context(graph, idx) {
+                        if !content.is_empty() {
+                            content.push(' ');
+                        }
+                        content.push_str(&extra);
+                    }
+                }
                 contents.push(content);
 
                 // Store owned entity metadata
                 entity_data.push((
                     node.id.clone(),
-                    node.display_name.clone(),
-                    node.file_path
-                        .as_ref()
-                        .and_then(|p| p.to_str())
-                        .unwrap_or("")
-                        .to_string(),
+                    if node.display_name.is_empty() {
+                        None
+                    } else {
+                        Some(node.display_name.clone())
+                    },
+                    path_string.clone(),
                     node.kind,
                 ));
+
+                // For file nodes, emit additional chunk-level documents to mimic
+                // LocAgent's BM25 chunking behaviour and improve overlap metrics.
+                if node.kind == NodeKind::File {
+                    if let Some(source) = node.attributes.get("source_snippet") {
+                        for (start_line, end_line, chunk_body) in chunk_source(
+                            source,
+                            FILE_CHUNK_LINES,
+                            FILE_CHUNK_OVERLAP_LINES,
+                            MIN_CHUNK_CHARS,
+                        ) {
+                            let chunk_content =
+                                synthesize_chunk_content(node, &chunk_body, start_line, end_line);
+                            contents.push(chunk_content);
+                            entity_data.push((
+                                format!("{}::chunk:{}-{}", node.id, start_line, end_line),
+                                Some(format!(
+                                    "{}::chunk:{}-{}",
+                                    node.display_name, start_line, end_line
+                                )),
+                                path_string.clone(),
+                                NodeKind::File,
+                            ));
+                        }
+                    }
+                }
             }
         }
 
@@ -207,7 +256,7 @@ impl Bm25Index {
             .zip(contents.iter())
             .map(|((id, name, path, kind), content)| Bm25Document {
                 entity_id: id,
-                name: Some(name),
+                name: name.as_deref(),
                 path,
                 kind: *kind,
                 content,
@@ -286,8 +335,12 @@ impl Bm25Index {
         }
 
         let searcher = self.reader.searcher();
-        let mut parser = QueryParser::for_index(&self.index, vec![self.fields.content]);
-        parser.set_conjunction_by_default();
+        let mut parser = QueryParser::for_index(
+            &self.index,
+            vec![self.fields.content, self.fields.name, self.fields.path],
+        );
+        parser.set_field_boost(self.fields.name, 3.0);
+        parser.set_field_boost(self.fields.path, 2.5);
         let parsed_query = parser
             .parse_query(&query_string)
             .context("failed to parse BM25 query")?;
@@ -387,12 +440,172 @@ impl Bm25Index {
 ///
 /// A space-separated string containing the display name and all attribute values
 fn synthesize_content(node: &GraphNode) -> String {
-    let mut parts = vec![node.display_name.clone()];
+    let mut parts = vec![
+        node.display_name.clone(),
+        node.id.clone(),
+        tokenizable(&node.display_name),
+        tokenizable(&node.id),
+    ];
 
-    // Add all attribute values (e.g., docstrings, decorators, etc.)
+    if let Some(path) = node.file_path.as_ref() {
+        let path_str = path.to_string_lossy();
+        parts.push(path_str.to_string());
+        parts.push(tokenizable(path_str.as_ref()));
+    }
+
+    // Add all attribute values (e.g., source snippet, decorators, docstrings)
     parts.extend(node.attributes.values().cloned());
 
+    if let Some(snippet) = node.attributes.get("source_snippet") {
+        if let Some(comment_text) = extract_comment_text(snippet) {
+            parts.push(comment_text);
+        }
+    }
+
     parts.join(" ")
+}
+
+fn synthesize_chunk_content(
+    node: &GraphNode,
+    chunk_text: &str,
+    start_line: usize,
+    end_line: usize,
+) -> String {
+    let mut parts = Vec::new();
+
+    parts.push(node.display_name.clone());
+    parts.push(node.id.clone());
+    parts.push(format!("lines:{}-{}", start_line, end_line));
+
+    if let Some(path) = node.file_path.as_ref() {
+        let path_str = path.to_string_lossy();
+        parts.push(path_str.to_string());
+        parts.push(tokenizable(path_str.as_ref()));
+    }
+
+    if let Some(docstring) = node.attributes.get("docstring") {
+        parts.push(docstring.clone());
+    }
+
+    parts.push(chunk_text.to_string());
+
+    parts.join(" ")
+}
+
+fn chunk_source(
+    content: &str,
+    chunk_lines: usize,
+    overlap_lines: usize,
+    min_chars: usize,
+) -> Vec<(usize, usize, String)> {
+    let trimmed = content.trim();
+    if trimmed.is_empty() {
+        return Vec::new();
+    }
+
+    let lines: Vec<&str> = content.lines().collect();
+    if lines.is_empty() {
+        return vec![(1, 1, trimmed.to_string())];
+    }
+
+    let mut chunks = Vec::new();
+    let mut start = 0usize;
+
+    while start < lines.len() {
+        let end = (start + chunk_lines).min(lines.len());
+        let chunk_slice = &lines[start..end];
+        let chunk_text = chunk_slice.join("\n");
+        let non_whitespace_len = chunk_text.chars().filter(|c| !c.is_whitespace()).count();
+
+        if non_whitespace_len >= min_chars || chunks.is_empty() {
+            let start_line = start + 1;
+            let end_line = end.max(start + 1);
+            chunks.push((start_line, end_line, chunk_text));
+        }
+
+        if end == lines.len() {
+            break;
+        }
+
+        start = if end > overlap_lines {
+            end - overlap_lines
+        } else {
+            end
+        };
+    }
+
+    if chunks.is_empty() {
+        chunks.push((1, lines.len(), trimmed.to_string()));
+    }
+
+    chunks
+}
+
+fn extract_comment_text(snippet: &str) -> Option<String> {
+    let mut comments = Vec::new();
+    let mut total_chars = 0usize;
+
+    for line in snippet.lines() {
+        let trimmed = line.trim_start();
+        if let Some(rest) = trimmed.strip_prefix('#') {
+            let comment = rest.trim();
+            if !comment.is_empty() {
+                total_chars += comment.len();
+                if total_chars > 4000 {
+                    break;
+                }
+                comments.push(comment.to_string());
+            }
+        }
+    }
+
+    if comments.is_empty() {
+        None
+    } else {
+        Some(comments.join(" "))
+    }
+}
+
+fn collect_file_child_context(graph: &DependencyGraph, file_idx: GraphNodeIndex) -> Option<String> {
+    let mut parts = Vec::new();
+    let storage = graph.graph();
+
+    for edge in storage.edges_directed(file_idx, Direction::Outgoing) {
+        if edge.weight().kind != EdgeKind::Contain {
+            continue;
+        }
+        let target = edge.target();
+        if let Some(child) = graph.node(target) {
+            parts.push(child.display_name.clone());
+            parts.push(tokenizable(&child.display_name));
+            parts.push(child.id.clone());
+            parts.push(tokenizable(&child.id));
+            parts.extend(child.attributes.values().cloned());
+            if let Some(snippet) = child.attributes.get("source_snippet") {
+                if let Some(comment_text) = extract_comment_text(snippet) {
+                    parts.push(comment_text);
+                }
+            }
+        }
+    }
+
+    if parts.is_empty() {
+        None
+    } else {
+        Some(parts.join(" "))
+    }
+}
+
+fn tokenizable(raw: &str) -> String {
+    raw.chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() {
+                c.to_ascii_lowercase()
+            } else {
+                ' '
+            }
+        })
+        .collect()
 }
 
 fn build_schema() -> Schema {

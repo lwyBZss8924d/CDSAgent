@@ -49,46 +49,6 @@ Unified CLI for extracting LocAgent parity baselines from SWE-bench Lite reposit
 
 ---
 
-### `worktree-symlink.sh`
-
-Manages git worktree symlinks for parallel task development.
-
-**Usage:**
-
-```shell
-# Create symlinks for all worktrees in ~/dev-space/
-./scripts/worktree-symlink.sh create
-
-# List all worktrees and their symlinks
-./scripts/worktree-symlink.sh list
-
-# Remove all CDSAgent worktree symlinks
-./scripts/worktree-symlink.sh remove
-
-# Show help
-./scripts/worktree-symlink.sh help
-```
-
-**Features:**
-
-- Automatically creates symlinks for all task worktrees
-- Symlinks pattern: `~/dev-space/CDSAgent-T-XX-XX-task-name`
-- Makes worktrees easier to access in IDEs
-- Color-coded output for better visibility
-
-**Examples:**
-
-```shell
-# After creating new worktrees
-git worktree add .worktrees/T-08-01-unit-tests -b feat/task/T-08-01-unit-tests main
-./scripts/worktree-symlink.sh create
-
-# Access via symlink in IDE
-code ~/dev-space/CDSAgent-T-08-01-unit-tests
-```
-
----
-
 ### Underlying Python Scripts
 
 The `swe-lite` CLI wraps these Python scripts (for advanced usage):
@@ -106,18 +66,6 @@ All scripts use `uv run` for dependency management and set `PYTHONPATH` to inclu
 
 ---
 
-### Task Management Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `create-task-worklog.sh` | Initialize task worklog structure |
-| `create-daily-worklog.sh` | Create daily worklog entries |
-| `sync-worktrees.sh` | Sync all worktrees with main branch |
-
-**Documentation:** [Worktree Workflow SOP](../.dev/workflows/WORKTREE_WORKFLOW.md)
-
----
-
 ## Output Locations
 
 | Artifact | Location | Tracked in Git? |
@@ -128,16 +76,8 @@ All scripts use `uv run` for dependency management and set `PYTHONPATH` to inclu
 | Search baselines | `tests/fixtures/parity/golden_outputs/search_queries.jsonl` | ✅ Yes |
 | Traversal baselines | `tests/fixtures/parity/golden_outputs/traverse_samples.jsonl` | ✅ Yes |
 | Performance baselines | `tests/fixtures/parity/golden_outputs/performance_baselines.json` | ✅ Yes |
-| Task worklogs | `.artifacts/spec-tasks-T-XX-XX/worklogs/` | ✅ Yes |
 
 ---
-
-## Future Scripts
-
-Planned development scripts:
-
-- `test-runner.sh` - Run tests across all worktrees
-- `setup-dev.sh` - One-command development environment setup
 
 ## Contributing
 
@@ -150,8 +90,3 @@ When adding new scripts:
 5. Test on macOS and Linux if possible
 
 ---
-
-**See Also:**
-
-- [Worktree Workflow Documentation](../.dev/workflows/WORKTREE_WORKFLOW.md)
-- [Development Guide](../README.md#development)
