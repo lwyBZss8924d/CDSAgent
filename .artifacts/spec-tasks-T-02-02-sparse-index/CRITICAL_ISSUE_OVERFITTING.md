@@ -340,6 +340,7 @@ Contact the Architecture Review team or escalate to Project Management immediate
 
 ## Status Update (2025-11-03 08:21 UTC)
 
+- English stop-word list reduced to bm25s STOPWORDS_EN (33 terms) so Tantivy tokenizer matches LocAgent defaults.
 - Removed all repository-specific synonym/phrase/custom boost tables from the Rust sparse index implementation (`bm25.rs`, `sparse_index.rs`).
 - Restored acceptance criteria to algorithmic parity (average overlap ≥75%) and kept the parity harness ignored pending multi-repo validation.
 - Next: align stemming/stop-word behavior with bm25s defaults and add cross-repository smoke tests before closing the issue.

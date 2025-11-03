@@ -90,3 +90,13 @@ When adding new scripts:
 5. Test on macOS and Linux if possible
 
 ---
+
+## Smoke Testing on External Repositories
+
+To verify the generic BM25 pipeline on arbitrary repositories, run the ignored smoke test with a comma-separated list of repo roots:
+
+```
+SMOKE_REPO_PATHS="/path/to/django,/path/to/scikit-learn" cargo test -p cds-index smoke_sparse_index_builds_for_external_repos -- --ignored
+```
+
+The test simply builds the graph and sparse index for each repository and fails if any step cannot complete.

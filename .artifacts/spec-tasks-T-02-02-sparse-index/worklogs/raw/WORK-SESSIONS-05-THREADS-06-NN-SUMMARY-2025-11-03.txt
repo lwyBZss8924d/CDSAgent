@@ -217,9 +217,199 @@ Thread 06 Status: ✅ COMPLETE
 END OF THREAD 06
 ================================================================================
 
-Total Session 05 Duration: 2025-11-02 07:43 UTC → 2025-11-03 08:55 UTC
-Threads Complete: 01-06
-Active Phase: Phase 3 (BM25 Integration & Parity Validation)
-Next Thread: 07 (Multi-repo validation or architecture documentation)
+================================================================================
+THREAD 07: SESSION MANAGEMENT & DOCUMENTATION UPDATES
+================================================================================
+Time: 2025-11-03 08:55-09:21 UTC (~0.4h)
+Status: ✅ COMPLETE
+Phase: Phase 3 - Session Management & Checkpoint
+
+## Context
+
+After Thread 06 checkpoint completion, performed session management tasks:
+- Updated RAW log split (Threads 01-05 → Threads 06+)
+- Updated metadata.yaml with Thread 06 details
+- Added git notes to all commits (31/31 coverage achieved)
+- Verified git notes with validation script
+
+## Work Performed
+
+### 1. RAW Log Management
+- Created new RAW log file: WORK-SESSIONS-05-THREADS-06-NN-SUMMARY-2025-11-03.txt
+- Moved from crates/cds-index/.artifacts/ to correct location
+- Documented Thread 06 work comprehensively
+
+### 2. Metadata Updates
+- Updated metadata.yaml with Thread 06 completion
+- Updated session duration: ~10.1h active
+- Added commit hashes: 987596a, 5412ce7
+- Updated acceptance criteria status
+
+### 3. Git Notes & Verification
+- Added git notes to 3 commits: 5412ce7, 3d84899, da3ddb2
+- Ran ./.dev/scripts/validation/git-notes-check.sh
+- Result: ✅ 31/31 commits with notes (100% coverage)
+
+### 4. Research Q&A
+User asked about STOPWORDS implementation:
+- Verified stop_words.rs is actively used in tokenizer
+- Confirmed alignment with LocAgent's bm25s English stop words
+- Documented that both CDSAgent and LocAgent use same source (bm25s library)
+
+## Files Modified
+- .artifacts/spec-tasks-T-02-02-sparse-index/worklogs/raw/ (split + new file)
+- .artifacts/spec-tasks-T-02-02-sparse-index/metadata.yaml (Session 05 updates)
+
+## Metrics
+- Duration: ~0.4h (08:55-09:21 UTC)
+- Git notes added: 3
+- Git notes coverage: 31/31 (100%) ✅
+- RAW logs: 2 files (Threads 01-05, Threads 06+)
+
+## Thread 07 Conclusion
+Session management and documentation complete ✅
+
+================================================================================
+END OF THREAD 07
+================================================================================
+
+================================================================================
+THREAD 08: MULTI-REPO SMOKE SCAFFOLD
+================================================================================
+Time: 2025-11-03 09:21-09:32 UTC (~0.2h)
+Status: ✅ COMPLETE
+Phase: Phase 3 - Multi-Repo Validation Preparation
+
+## Context
+
+Prepared infrastructure for multi-repository validation testing to establish
+algorithmic parity baseline across diverse Python repositories.
+
+## Work Performed
+
+### 1. Cleanup Debug Artifacts
+Removed ad-hoc debug examples from overfitting tuning stage:
+- Deleted: crates/cds-index/examples/search_debug.rs
+- Deleted: crates/cds-index/examples/token_dump.rs
+- Reason: Artifacts from overfitting phase, no longer needed
+
+### 2. Multi-Repo Smoke Test Scaffold
+Added smoke_multi_repo.rs test infrastructure:
+- Location: crates/cds-index/tests/smoke_multi_repo.rs
+- Purpose: Ignored smoke test for cross-repo validation
+- Functionality:
+  * Builds graph + sparse index for repositories in SMOKE_REPO_PATHS
+  * Provides immediate hook for multi-repo validation
+  * Configurable via environment variable
+
+Test structure:
+```rust
+#[test]
+#[ignore]  // Run explicitly with: cargo test --test smoke_multi_repo -- --ignored
+fn smoke_test_multi_repo_indexing() {
+    // Reads SMOKE_REPO_PATHS env var (comma-separated paths)
+    // Builds graph + BM25 index for each repo
+    // Reports basic metrics (nodes, edges, entities)
+    // Validates no panics/errors during build
+}
+```
+
+### 3. Documentation Updates
+Updated scripts/README.md (line 90):
+- Documented how to run smoke test
+- Added example command:
+  ```bash
+  SMOKE_REPO_PATHS=/path/to/django,/path/to/scikit-learn \
+  cargo test --test smoke_multi_repo -- --ignored
+  ```
+- Explained purpose: cross-repo validation before closing critical issue
+
+### 4. Worklog Updates
+- Updated WORK-SESSIONS-05-THREADS-01-NN-SUMMARY-2025-11-02.txt (line 1486)
+- Advanced metadata.yaml with Thread 08 tracking
+- Updated CRITICAL_ISSUE_OVERFITTING.md status
+
+## Files Modified
+1. crates/cds-index/examples/ (deleted 2 files)
+   - search_debug.rs (removed)
+   - token_dump.rs (removed)
+
+2. crates/cds-index/tests/smoke_multi_repo.rs (NEW)
+   - Multi-repo smoke test scaffold
+
+3. scripts/README.md (line 90)
+   - Smoke test documentation
+
+4. .artifacts/spec-tasks-T-02-02-sparse-index/CRITICAL_ISSUE_OVERFITTING.md
+   - Status update with smoke test availability
+
+5. .artifacts/spec-tasks-T-02-02-sparse-index/metadata.yaml
+   - Thread 08 tracking
+
+## Verification
+```bash
+$ cargo test -p cds-index
+✅ All existing tests passing (21/21)
+
+$ cargo test --test smoke_multi_repo -- --ignored --nocapture
+⚠️ Requires SMOKE_REPO_PATHS environment variable
+   (Designed to run when repos are cloned locally)
+```
+
+## Metrics
+- Duration: ~0.2h (09:21-09:32 UTC)
+- Files added: 1 (smoke_multi_repo.rs)
+- Files deleted: 2 (debug examples)
+- Files modified: 3 (README, CRITICAL_ISSUE, metadata)
+- Tests: 21/21 passing ✅
+
+## Next Steps
+
+### Immediate (Once Repos Cloned):
+1. Clone target Python repositories:
+   - Django (large framework)
+   - scikit-learn (ML library)
+   - pytest (testing framework)
+   - matplotlib (visualization)
+   - requests (HTTP library)
+
+2. Run smoke test:
+   ```bash
+   SMOKE_REPO_PATHS=~/repos/django,~/repos/scikit-learn,~/repos/pytest \
+   cargo test --test smoke_multi_repo -- --ignored --nocapture
+   ```
+
+3. Capture metrics for each repo:
+   - Graph size (nodes, edges)
+   - Entity count (functions, classes)
+   - Index build time
+   - Any build errors or warnings
+
+4. Document results in CRITICAL_ISSUE_OVERFITTING.md
+
+### Follow-Up (Multi-Repo Parity):
+- Extend smoke test to run sample searches
+- Compare overlap@10 across repos (target: ≥75% average)
+- Establish baseline for "algorithmic parity"
+- Close critical issue with multi-repo validation evidence
+
+## Thread 08 Conclusion
+
+Multi-repo smoke test infrastructure complete ✅
+- Debug artifacts cleaned up
+- Smoke test scaffold ready
+- Documentation updated
+- Waiting for local repo clones to run validation
+
+Thread 08 Status: ✅ COMPLETE
+
+================================================================================
+END OF THREAD 08
+================================================================================
+
+Total Session 05 Duration: 2025-11-02 07:43 UTC → 2025-11-03 09:32 UTC (~10.5h)
+Threads Complete: 01-06, 07-08
+Active Phase: Phase 3 (BM25 Integration & Parity Validation + Multi-Repo Preparation)
+Next Thread: 09 (Multi-repo validation execution after cloning target repos)
 
 ================================================================================

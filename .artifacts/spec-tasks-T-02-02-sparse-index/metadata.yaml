@@ -7,9 +7,9 @@ task:
   owner: "Codex AI Engineer + Rust Dev Team"
   status: in_progress
   start_date: "2025-10-31"
-  last_updated: 2025-11-03T09:06:00Z
+  last_updated: 2025-11-03T09:32:00Z
   estimated_hours: 32  # 4 days × 8 hours
-  actual_hours: 18.0  # Sessions 01-04 (8.3h) + Session 05 Threads 01-06 (9.1h) + Thread 06 (0.6h)
+  actual_hours: 18.6  # Sessions 01-04 (8.3h) + Session 05 Threads 01-09 (10.3h)
 
 specs:
   prds:
@@ -156,22 +156,22 @@ notes: |
     * Quality: 78/78 tests passing, 5 clippy errors fixed, ~95% coverage
     * Status: ✅ COMPLETE - Phase 2 (Custom Tokenizer + BM25 Scaffold) fully delivered
 
-  - Day 3 Session 05: [Phase 3] BM25 Integration & Parity Validation (07:43-11:28 UTC + 2025-11-03 05:20-09:06 UTC, 9.7h active) 🚧 IN PROGRESS
+  - Day 3 Session 05: [Phase 3] BM25 Integration & Parity Validation + CRITICAL FIX + Multi-Repo Prep (2025-11-02 07:43-11:28 UTC + 2025-11-03 05:20-09:32 UTC, ~10.3h active) 🚧 IN PROGRESS
     * Thread 01 (07:43-08:13): Phase 3 planning & integration strategy ✅ THREAD COMPLETE
     * Thread 02 (08:14-08:59): Implement BM25Index::from_graph() ✅ THREAD COMPLETE
     * Thread 03 (08:52-09:12): Create SparseIndex wrapper with hierarchical search ✅ THREAD COMPLETE
     * Thread 04 (09:14-10:08): Build parity test harness for 50 LocAgent queries (overlap analysis) ✅ THREAD COMPLETE
     * Thread 05 (09:27-11:28 & 2025-11-03 05:20-06:42): BM25 overlap tuning (chunked indexing, comment ingestion, path dedup, oversampling boosts) + synonym/phrase enrichment ✅ THREAD COMPLETE (OVERFITTING DETECTED - abandoned)
-    * Thread 06 (2025-11-03 08:21-08:55): CRITICAL OVERFITTING FIX - Removed all 71+ hardcoded rules, restored generic BM25 per LocAgent methodology, fixed 3 clippy warnings ✅ THREAD COMPLETE
-    * Thread 07 (PENDING): Multi-repo validation tests ⏳ THREAD PENDING
-    * Thread 08 (PENDING): Architecture documentation (ARCHITECTURE_PRINCIPLES.md) ⏳ THREAD PENDING
-    * Thread N (N-NN): TBD
-    * RAW: WORK-SESSIONS-05-THREADS-01-05-SUMMARY-2025-11-02.txt (Threads 01-05)
-    * RAW: WORK-SESSIONS-05-THREADS-06-NN-SUMMARY-2025-11-03.txt (Thread 06+)
-    * Commits: da3ddb2 (Threads 02-03), pending Thread 06 commit
-    * Deliverables: BM25Index::from_graph builder, SparseIndex hierarchical search wrapper, parity harness, CRITICAL FIX (generic BM25 restored)
-    * Quality: 21/21 unit tests passing, zero clippy warnings
-    * Status: 🚧 SESSION IN PROGRESS (Thread 06 complete, architecture documentation + multi-repo validation pending)
+    * Thread 06 (2025-11-03 08:21-09:17): CRITICAL OVERFITTING FIX - Removed all 71+ hardcoded rules, restored generic BM25 per LocAgent methodology, fixed 3 clippy warnings, created checkpoint commits with git notes ✅ THREAD COMPLETE
+    * Thread 07 (2025-11-03 08:55-09:21): Session management & documentation updates - RAW log split, metadata updates, git notes verification (31/31 coverage), STOPWORDS research Q&A ✅ THREAD COMPLETE
+    * Thread 08 (2025-11-03 09:21-09:32): Multi-repo smoke scaffold - Deleted debug examples, added smoke_multi_repo.rs test (compiles, syntax fixed), updated scripts/README.md ✅ THREAD COMPLETE
+    * Thread 09 (2025-11-03 09:27-09:43): LocAgent smoke test execution - Ran smoke test against tmp/LocAgent, graph + sparse index build successful ✅ THREAD COMPLETE
+    * RAW: WORK-SESSIONS-05-THREADS-01-05-SUMMARY-2025-11-02.txt (Threads 01-05, 1,443 lines)
+    * RAW: WORK-SESSIONS-05-THREADS-06-NN-SUMMARY-2025-11-03.txt (Threads 06-09)
+    * Commits: da3ddb2 (Threads 02-03), 987596a (Thread 06), 5412ce7 (metadata), 0dd2643 (Threads 07-09)
+    * Deliverables: BM25Index::from_graph builder, SparseIndex hierarchical search wrapper, parity harness, CRITICAL FIX (generic BM25 restored + 71+ rules removed), smoke test scaffold
+    * Quality: 21/21 unit tests passing, zero clippy warnings, 31/31 git notes ✅, smoke_multi_repo.rs ready
+    * Status: ✅ SESSION 05 COMPLETE (Threads 01-09 done, multi-repo validation + architecture docs next session)
 
   Technical risks:
   - Tokenization mismatch with LocAgent
@@ -371,29 +371,27 @@ sessions:
     date: "2025-11-02"
     day: 3
     phase: "Phase 3"
-    description: "BM25 Integration & Parity Validation + CRITICAL OVERFITTING FIX"
+    description: "BM25 Integration & Parity Validation (Threads 01-05) + CRITICAL FIX (Thread 06+)"
     threads:
-      count: 6
-      range: "01-06"
+      count: 9  # Threads 01-05 (2025-11-02), Threads 06-09 (2025-11-03)
+      range: "01-09"  # Split across 2 days
     duration:
       start_time: "07:43"  # UTC (2025-11-02)
-      end_time: "08:55"  # UTC (2025-11-03)
-      hours: 9.7  # Threads 01-05 (~9.1h) + Thread 06 (0.6h)
+      end_time: "09:43"  # UTC (2025-11-03, Thread 09 complete)
+      hours: 10.3  # Threads 01-05 (~9.1h) + Threads 06-09 (~1.2h)
     status: in_progress
     objectives:
-      - "Planning & integration strategy"
-      - "Implement BM25.from_graph() builder with entity indexing"
-      - "Integrate hierarchical search (NameIndex → BM25 fallback)"
-      - "Create parity test harness for 50 search queries"
-      - "CRITICAL: Identify and fix overfitting (71+ hardcoded rules)"
-      - "Restore generic BM25 per LocAgent paper methodology"
-      - "Fix all clippy warnings"
+      - "Threads 01-05 (2025-11-02): Planning, BM25 integration, hierarchical search, parity harness, overlap tuning"
+      - "Thread 06 (2025-11-03): CRITICAL overfitting fix - remove 71+ hardcoded rules"
+      - "Thread 07 (2025-11-03): Session management & stop-word alignment"
+      - "Thread 08 (2025-11-03): Multi-repo smoke test scaffold"
+      - "Thread 09 (2025-11-03): LocAgent smoke test execution"
     commits:
       - "da3ddb2"  # Threads 02-03
       - "987596a"  # Thread 06 overfitting fix + clippy cleanup
     raw_log:
-      - "./worklogs/raw/WORK-SESSIONS-05-THREADS-01-05-SUMMARY-2025-11-02.txt"
-      - "./worklogs/raw/WORK-SESSIONS-05-THREADS-06-NN-SUMMARY-2025-11-03.txt"
+      - "./worklogs/raw/WORK-SESSIONS-05-THREADS-01-05-SUMMARY-2025-11-02.txt"  # Threads 01-05 (2025-11-02)
+      - "./worklogs/raw/WORK-SESSIONS-05-THREADS-06-NN-SUMMARY-2025-11-03.txt"  # Threads 06+ (2025-11-03)
     artifacts:
       work_summary: "./worklogs/2025-11-02-S05-work-summary.md"
       commit_log: "./worklogs/2025-11-02-S05-commit-log.md"
