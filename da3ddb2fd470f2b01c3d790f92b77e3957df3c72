@@ -1,0 +1,18 @@
+spec-tasks/T-02-02-sparse-index
+Day: 3
+Date: 2025-11-02
+Session: 05
+Threads: 02-03
+Duration: 2.3h
+Worklog: .artifacts/spec-tasks-T-02-02-sparse-index/worklogs/raw/WORK-SESSIONS-05-THREADS-01-NN-SUMMARY-2025-11-02.txt
+Status: BM25 integration complete, parity harness scaffolded
+
+Summary:
+- Implemented BM25Index::from_graph() builder with entity indexing
+- Created SparseIndex hierarchical search wrapper (NameIndex → BM25 fallback)
+- Added 2 integration tests + parity harness scaffold
+- NOTE: This commit contained initial overfitting (fixed in 987596a)
+
+Files: 10 files (+2,692/-220 lines)
+Tests: 21/21 passing
+Clippy: Zero warnings
