@@ -1,0 +1,18 @@
+spec-tasks/T-02-02-sparse-index
+Day: 3 (continued)
+Date: 2025-11-03
+Session: 05
+Thread: 06 (user work)
+Duration: 0.3h
+Worklog: .artifacts/spec-tasks-T-02-02-sparse-index/worklogs/raw/WORK-SESSIONS-05-THREADS-06-NN-SUMMARY-2025-11-03.txt
+Status: Critical issue identified - overfitting violation
+
+Summary:
+- User discovered 71+ hardcoded rules violating LocAgent methodology
+- Created CRITICAL_ISSUE_OVERFITTING.md documenting the violation
+- Updated metadata.yaml and worklogs with issue tracking
+
+Files: 3 files (+263/-4 lines)
+- CRITICAL_ISSUE_OVERFITTING.md (NEW)
+- metadata.yaml
+- WORK-SESSIONS-05 RAW log
