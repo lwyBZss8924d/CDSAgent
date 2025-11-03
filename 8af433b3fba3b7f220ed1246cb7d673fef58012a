@@ -1,0 +1,11 @@
+spec-tasks/T-02-02-sparse-index
+Day: 3
+Date: 2025-11-03
+Sessions: 05 (Threads 07-08)
+Duration: 0.6h
+Worklog: .artifacts/spec-tasks-T-02-02-sparse-index/worklogs/raw/WORK-SESSIONS-05-THREADS-06-NN-SUMMARY-2025-11-03.txt
+Status: Smoke test SCAFFOLD complete (compiles, NOT executed) + RAW logs restored
+Files: 6 files (+261/-1412), smoke_multi_repo.rs (new)
+Tests: 21/21 lib tests passing, smoke test compiles but NOT RUN
+Next: Clone Python repos → Set SMOKE_REPO_PATHS → Run actual validation
+Fix: Restored WORK-SESSIONS-05-THREADS-01-NN (Thread 01-02) that was accidentally overwritten
