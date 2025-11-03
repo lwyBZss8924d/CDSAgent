@@ -344,3 +344,59 @@ Contact the Architecture Review team or escalate to Project Management immediate
 - Removed all repository-specific synonym/phrase/custom boost tables from the Rust sparse index implementation (`bm25.rs`, `sparse_index.rs`).
 - Restored acceptance criteria to algorithmic parity (average overlap ≥75%) and kept the parity harness ignored pending multi-repo validation.
 - Next: align stemming/stop-word behavior with bm25s defaults and add cross-repository smoke tests before closing the issue.
+
+## Resolution Update (2025-11-03 09:32 UTC)
+
+✅ **Architecture Principles Documented** (Required Action #8)
+
+Created comprehensive architecture documentation: `.dev/workflows/ARCHITECTURE_PRINCIPLES.md` (586 lines)
+
+**Key Deliverables**:
+
+1. **6 Core Principles** codified:
+   - Generality over single-repo metrics (≥75% avg across ≥3 repos)
+   - Zero hardcoded repository-specific rules (71+ violations removed)
+   - Algorithmic parity vs output parity (BM25 design, not exact outputs)
+   - Standard industry parameters (k1=1.5, b=0.75, English stemmer)
+   - Multi-repository validation (6 test repos before production)
+   - Regression testing for overfitting (CI checks + code review checklist)
+
+2. **3 Anti-Patterns** documented with bad/good examples:
+   - Single-repo optimization (removed Thread 06)
+   - Synonym injection (removed Thread 06)
+   - File-type-specific boosting (removed Thread 06)
+
+3. **Design Decisions** explained:
+   - BM25 vs TF-IDF rationale
+   - Hierarchical search architecture
+   - Generic chunking (80-line blocks, 20-line overlap)
+
+4. **3-Phase Validation Strategy**:
+   - Phase 1: Single-repo parity (LocAgent baseline) ✅ COMPLETE
+   - Phase 2: Multi-repo validation (≥3 diverse repos) ⏳ PENDING
+   - Phase 3: Production readiness (edge cases) ⏳ PENDING
+
+5. **Regression Prevention**:
+   - CI pipeline checks (detect hardcoded rules)
+   - Code review checklist (4 checkpoints)
+   - Pre-commit hooks (block violations)
+
+**References**:
+
+- LocAgent paper methodology (Section 4.2, 5.1)
+- Thread 05-06 history (documents "what not to do")
+- Session 05 RAW logs (complete tuning narrative)
+
+**Status**:
+
+- ✅ COMPLETE: Architecture principles documented
+- ✅ COMPLETE: Smoke test infrastructure ready (smoke_multi_repo.rs)
+- ⏳ PENDING: Multi-repo validation (requires cloning Django, sklearn, pytest)
+- ⏳ PENDING: Acceptance criteria redefinition in metadata.yaml
+
+**Next Actions**:
+
+1. Clone external repositories (Django, scikit-learn, pytest, matplotlib, requests)
+2. Run multi-repo smoke test validation
+3. Establish ≥75% average overlap baseline across ≥3 repos
+4. Close this critical issue with evidence of generalizability
