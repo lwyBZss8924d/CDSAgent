@@ -1,0 +1,11 @@
+spec-tasks/T-02-02-sparse-index
+Day: 3
+Date: 2025-11-03
+Sessions: 05 (Threads 07-08)
+Duration: 0.6h
+Worklog: .artifacts/spec-tasks-T-02-02-sparse-index/worklogs/raw/WORK-SESSIONS-05-THREADS-06-NN-SUMMARY-2025-11-03.txt
+Status: Smoke test SCAFFOLD complete + RAW logs FULLY RESTORED
+Files: 5 files (+253/-15), smoke_multi_repo.rs (new)
+Tests: 21/21 lib tests passing, smoke test compiles but NOT RUN
+Fix: Restored complete Thread 01-06 record (1,882 lines) including overfitting work (Thread 04-05)
+Note: Thread 04-05 documents the parity tuning work that led to 71+ hardcoded rules (later removed in Thread 06)
