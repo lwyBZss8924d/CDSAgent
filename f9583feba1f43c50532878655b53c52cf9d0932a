@@ -1,0 +1,37 @@
+spec-tasks/T-02-02-sparse-index
+Day: 4
+Date: 2025-11-04
+Session: 05 (continued)
+Thread: 17
+Duration: 1.0h (06:12-07:12 UTC)
+Phase: Baseline Stabilization & Diagnostic Infrastructure
+
+Worklog: .artifacts/spec-tasks-T-02-02-sparse-index/worklogs/raw/WORK-SESSIONS-05-THREADS-16-NN-SUMMARY-2025-11-04.txt
+
+Status: VANILLA BASELINE ESTABLISHED
+
+Summary:
+- Committed vanilla BM25 configuration (all boosts = None)
+- Documented baseline performance: 62.29% global overlap (vs 58.16% Thread-16)
+- Proved Thread-16 boosts were NET HARMFUL (+4.13% regression)
+- Removed comment extraction overfitting heuristics
+- Added infrastructure for future controlled experiments
+
+Baseline Metrics:
+- LocAgent: 70.02% | requests: 92.50% | pytest: 64.50%
+- django: 53.71% | matplotlib: 58.49% | scikit-learn: 34.51%
+- Global: 62.29% (target: 75-85%)
+
+Files: 2 files (+328/-44 lines)
+- bm25.rs: Vanilla BM25 with boost infrastructure (unused)
+- THREAD-17-BASELINE-ANALYSIS.md: Comprehensive comparative analysis (NEW)
+
+Quality:
+- Tests: All passing ✅
+- Clippy: Zero warnings ✅
+- Coverage: 97.20% maintained
+
+Next Steps:
+- Graph parity diagnostics (11-15h)
+- Per-query attribution framework (3-5h)
+- Env-driven config knobs for experimentation
