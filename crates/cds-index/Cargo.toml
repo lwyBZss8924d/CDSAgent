@@ -9,6 +9,14 @@ license = "MIT OR Apache-2.0"
 name = "cds-index-service"
 path = "src/bin/cds-index-service.rs"
 
+[features]
+# Thread-21: Selective LLM Re-Ranking Integration
+# Enable this feature to use LLM re-ranking for SEVERE entity queries (15-25% of queries)
+# Requires: scripts/llm_reranker.sh (Claude Code CLI headless mode)
+# Expected impact: +2-3% global overlap, $20-40/month cost
+# Default: OFF (opt-in only)
+llm-reranking = []
+
 [dependencies]
 # Workspace dependencies
 tokio = { workspace = true }

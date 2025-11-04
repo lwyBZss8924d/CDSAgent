@@ -3,14 +3,22 @@
 //! The `SparseIndex` provides a two-tier search architecture:
 //! - **Upper tier**: Fast exact/prefix matching via `NameIndex` (<1μs)
 //! - **Lower tier**: Full-text BM25 search for complex queries (<10ms expected)
+//! - **Optional**: LLM re-ranking for SEVERE queries (Thread-21, feature-flagged)
 //!
 //! Search strategy (hierarchical fallback):
 //! 1. Try exact_match() → return immediately if limit satisfied
 //! 2. Try prefix_match() → merge results, return if limit satisfied
 //! 3. Try BM25 search() → fill remaining slots
+//! 4. [Optional] Apply selective LLM re-ranking (15-25% of queries)
 //!
 //! This design optimizes for common patterns (name-based queries) while
 //! maintaining semantic search capability for complex queries.
+
+// Thread-21: Selective LLM Integration (sub-modules)
+mod classifier;
+
+#[cfg(feature = "llm-reranking")]
+mod llm_reranker;
 
 use anyhow::Result;
 use std::collections::{HashMap, HashSet};
@@ -20,6 +28,11 @@ use crate::graph::{DependencyGraph, NodeKind};
 
 use super::bm25::{AnalyzerConfig, Bm25Index};
 use super::name_index::NameIndex;
+
+use classifier::QueryClassifier;
+
+#[cfg(feature = "llm-reranking")]
+use llm_reranker::LlmReranker;
 
 /// Unified search result combining upper and lower index results
 #[derive(Clone, Debug)]
@@ -49,10 +62,18 @@ impl From<super::bm25::SearchResult> for SearchResult {
 }
 
 /// Two-tier sparse index combining name-based and BM25 search
+/// Thread-21: Extended with optional LLM re-ranking (feature-flagged)
 pub struct SparseIndex {
     graph: DependencyGraph,
     upper: NameIndex,
     lower: Bm25Index,
+
+    // Thread-21: Query classification for selective LLM application
+    classifier: QueryClassifier,
+
+    // Thread-21: Optional LLM re-ranker (feature-gated)
+    #[cfg(feature = "llm-reranking")]
+    llm_reranker: Option<LlmReranker>,
 }
 
 impl SparseIndex {
@@ -88,10 +109,20 @@ impl SparseIndex {
         let bm25_path = base.join("bm25");
         let lower = Bm25Index::from_graph(&graph, &bm25_path, config)?;
 
+        // Thread-21: Initialize query classifier (always enabled)
+        let classifier = QueryClassifier::new();
+
+        // Thread-21: Initialize optional LLM re-ranker (feature-gated)
+        #[cfg(feature = "llm-reranking")]
+        let llm_reranker = LlmReranker::new().ok(); // Graceful fallback if script not found
+
         Ok(Self {
             graph,
             upper,
             lower,
+            classifier,
+            #[cfg(feature = "llm-reranking")]
+            llm_reranker,
         })
     }
 
@@ -224,6 +255,31 @@ impl SparseIndex {
                 Self::insert_or_update(&mut results, &mut seen_ids, &mut path_index, result, limit);
                 if results.len() >= limit {
                     break;
+                }
+            }
+        }
+
+        // Phase 4 (Optional): Selective LLM re-ranking (Thread-21)
+        // Only apply if feature enabled AND classifier determines it's beneficial
+        #[cfg(feature = "llm-reranking")]
+        if !results.is_empty() && self.llm_reranker.is_some() {
+            // Calculate BM25 statistics for classification
+            let bm25_top_score = results.first().map(|r| r.score).unwrap_or(0.0);
+            let bm25_score_gap = if results.len() >= 10 {
+                bm25_top_score - results.get(9).map(|r| r.score).unwrap_or(0.0)
+            } else {
+                bm25_top_score
+            };
+
+            // Query classifier: should we apply LLM re-ranking?
+            if self.classifier.should_rerank(query, bm25_top_score, bm25_score_gap, results.len()) {
+                // Apply LLM re-ranking (graceful fallback on error)
+                if let Some(ref reranker) = self.llm_reranker {
+                    if let Ok(reranked) = reranker.rerank(query, &results) {
+                        // Update results with LLM-adjusted scores
+                        results = reranked;
+                    }
+                    // On error, silently fall back to BM25 results (already logged in reranker)
                 }
             }
         }
@@ -387,6 +443,58 @@ mod tests {
             unique_ids.len(),
             "Results should not contain duplicates"
         );
+
+        Ok(())
+    }
+
+    #[test]
+    fn sparse_index_initializes_classifier() -> Result<()> {
+        // Thread-21: Verify that SparseIndex initializes with classifier
+        let mut graph = DependencyGraph::new();
+
+        // Add minimal entity for index construction
+        let user = GraphNode::entity(
+            "repo::test.py::TestClass".to_string(),
+            NodeKind::Class,
+            "TestClass".to_string(),
+            PathBuf::from("test.py"),
+            Some(SourceRange::new(1, 10)),
+        );
+        graph.add_node(user);
+
+        let dir = tempdir()?;
+        let index = SparseIndex::from_graph(graph, dir.path(), AnalyzerConfig::default())?;
+
+        // Verify search works (classifier is initialized internally)
+        let results = index.search("TestClass", 10, None)?;
+        assert_eq!(results.len(), 1, "Should find the test class");
+        assert_eq!(results[0].entity_id, "repo::test.py::TestClass");
+
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(not(feature = "llm-reranking"))]
+    fn sparse_index_works_without_llm_feature() -> Result<()> {
+        // Thread-21: Verify SparseIndex works WITHOUT llm-reranking feature
+        let mut graph = DependencyGraph::new();
+
+        let user = GraphNode::entity(
+            "repo::test.py::TestFunc".to_string(),
+            NodeKind::Function,
+            "TestFunc".to_string(),
+            PathBuf::from("test.py"),
+            Some(SourceRange::new(1, 10)),
+        );
+        graph.add_node(user);
+
+        let dir = tempdir()?;
+        let index = SparseIndex::from_graph(graph, dir.path(), AnalyzerConfig::default())?;
+
+        // Search should work normally without LLM
+        let results = index.search("TestFunc", 10, None)?;
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].entity_id, "repo::test.py::TestFunc");
 
         Ok(())
     }
