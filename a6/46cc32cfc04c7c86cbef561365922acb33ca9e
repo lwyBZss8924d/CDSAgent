@@ -1,0 +1,19 @@
+spec-tasks/T-02-02-sparse-index
+Day: 4
+Date: 2025-11-04
+Sessions: 05 (Thread 23)
+Duration: ~2.5h
+Phase: Thread-23 (Graph Parity Analysis - Setup Infrastructure)
+Worklog: .artifacts/spec-tasks-T-02-02-sparse-index/worklogs/2025-11-04-S05-*
+Status: ✅ THREAD 23 INFRASTRUCTURE COMPLETE
+Files: 6 files (+1,374 lines)
+  - crates/cds-index/src/graph/mod.rs (+82 lines): JSON export methods
+  - crates/cds-index/tests/graph_export_tests.rs (NEW, 173 lines): Integration tests
+  - scripts/export_graph_to_locagent.py (NEW, 234 lines): Conversion script
+  - scripts/compare_graphs.py (NEW, 330 lines): Comparison harness
+  - scripts/test_graph_export.py (NEW, 148 lines): Pipeline test
+  - THREAD-22-GAP-ANALYSIS.md (NEW, 358 lines): Optimization roadmap
+Tests: 27/27 passing (100%), 4 new graph export tests
+Export: ✅ LocAgent graph (658 nodes, 1,744 edges) exported successfully
+Next: Export all 6 fixtures → Compare → Identify top 10 gaps → Design fixes
+Impact: Infrastructure ready for +3-5% overlap improvement (RETRIEVAL_GAP fix)
