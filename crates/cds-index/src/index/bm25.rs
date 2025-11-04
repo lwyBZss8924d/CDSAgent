@@ -1,4 +1,8 @@
-use std::{collections::HashSet, fs, path::Path};
+use std::{
+    collections::HashSet,
+    fs,
+    path::Path,
+};
 
 use anyhow::{bail, Context, Result};
 use tantivy::schema::Value;
@@ -25,6 +29,7 @@ const DEFAULT_WRITER_HEAP_SIZE: usize = 50 * 1024 * 1024; // 50 MiB
 const FILE_CHUNK_LINES: usize = 80;
 const FILE_CHUNK_OVERLAP_LINES: usize = 20;
 const MIN_CHUNK_CHARS: usize = 120;
+const PATH_MATCH_BONUS: f32 = 1.15;
 
 #[derive(Clone, Debug, Default)]
 pub struct AnalyzerConfig {
@@ -58,6 +63,7 @@ pub struct Bm25Document<'a> {
     pub path: &'a str,
     pub kind: NodeKind,
     pub content: &'a str,
+    pub boost: Option<&'a str>,
 }
 
 #[derive(Clone, Debug)]
@@ -77,6 +83,7 @@ struct Fields {
     path: Field,
     kind: Field,
     content: Field,
+    boost: Field,
 }
 
 pub struct Bm25Index {
@@ -180,6 +187,7 @@ impl Bm25Index {
         // We need to own the data because Bm25Document contains string references
         let mut entity_data: Vec<(String, Option<String>, String, NodeKind)> = Vec::new();
         let mut contents = Vec::new();
+        let mut boosts: Vec<Option<String>> = Vec::new();
 
         for idx in graph.graph().node_indices() {
             if let Some(node) = graph.node(idx) {
@@ -208,7 +216,9 @@ impl Bm25Index {
                         content.push_str(&extra);
                     }
                 }
+                // No boost terms - using pure BM25 scoring for better generalization
                 contents.push(content);
+                boosts.push(None);
 
                 // Store owned entity metadata
                 entity_data.push((
@@ -235,6 +245,7 @@ impl Bm25Index {
                             let chunk_content =
                                 synthesize_chunk_content(node, &chunk_body, start_line, end_line);
                             contents.push(chunk_content);
+                            boosts.push(None);
                             entity_data.push((
                                 format!("{}::chunk:{}-{}", node.id, start_line, end_line),
                                 Some(format!(
@@ -254,12 +265,14 @@ impl Bm25Index {
         let documents: Vec<Bm25Document> = entity_data
             .iter()
             .zip(contents.iter())
-            .map(|((id, name, path, kind), content)| Bm25Document {
+            .zip(boosts.iter())
+            .map(|(((id, name, path, kind), content), boost)| Bm25Document {
                 entity_id: id,
                 name: name.as_deref(),
                 path,
                 kind: *kind,
                 content,
+                boost: boost.as_deref(),
             })
             .collect();
 
@@ -337,10 +350,16 @@ impl Bm25Index {
         let searcher = self.reader.searcher();
         let mut parser = QueryParser::for_index(
             &self.index,
-            vec![self.fields.content, self.fields.name, self.fields.path],
+            vec![
+                self.fields.content,
+                self.fields.name,
+                self.fields.path,
+                self.fields.boost,
+            ],
         );
-        parser.set_field_boost(self.fields.name, 3.0);
-        parser.set_field_boost(self.fields.path, 2.5);
+        parser.set_field_boost(self.fields.name, 3.5);
+        parser.set_field_boost(self.fields.path, 3.0);
+        parser.set_field_boost(self.fields.boost, 4.0);
         let parsed_query = parser
             .parse_query(&query_string)
             .context("failed to parse BM25 query")?;
@@ -377,13 +396,23 @@ impl Bm25Index {
             let content = doc_value(&doc, self.fields.content)?;
             let doc_tokens: HashSet<String> =
                 self.tokenizer.tokenize(content).into_iter().collect();
+            let path_tokens = path_tokenize(&path);
 
             let mut matched = Vec::new();
             let mut seen = HashSet::new();
+            let mut path_hits = 0;
             for token in &query_tokens {
                 if seen.insert(token.as_str()) && doc_tokens.contains(token) {
                     matched.push(token.clone());
                 }
+                if path_tokens.contains(token) {
+                    path_hits += 1;
+                }
+            }
+
+            let mut adjusted_score = score;
+            if path_hits > 0 {
+                adjusted_score += PATH_MATCH_BONUS * path_hits as f32;
             }
 
             results.push(SearchResult {
@@ -391,7 +420,7 @@ impl Bm25Index {
                 name,
                 path,
                 kind,
-                score,
+                score: adjusted_score,
                 matched_terms: matched,
             });
 
@@ -411,6 +440,9 @@ impl Bm25Index {
         document.add_text(self.fields.content, doc.content);
         if let Some(name) = doc.name {
             document.add_text(self.fields.name, name);
+        }
+        if let Some(boost) = doc.boost {
+            document.add_text(self.fields.boost, boost);
         }
         document
     }
@@ -455,12 +487,6 @@ fn synthesize_content(node: &GraphNode) -> String {
 
     // Add all attribute values (e.g., source snippet, decorators, docstrings)
     parts.extend(node.attributes.values().cloned());
-
-    if let Some(snippet) = node.attributes.get("source_snippet") {
-        if let Some(comment_text) = extract_comment_text(snippet) {
-            parts.push(comment_text);
-        }
-    }
 
     parts.join(" ")
 }
@@ -541,30 +567,10 @@ fn chunk_source(
     chunks
 }
 
-fn extract_comment_text(snippet: &str) -> Option<String> {
-    let mut comments = Vec::new();
-    let mut total_chars = 0usize;
 
-    for line in snippet.lines() {
-        let trimmed = line.trim_start();
-        if let Some(rest) = trimmed.strip_prefix('#') {
-            let comment = rest.trim();
-            if !comment.is_empty() {
-                total_chars += comment.len();
-                if total_chars > 4000 {
-                    break;
-                }
-                comments.push(comment.to_string());
-            }
-        }
-    }
 
-    if comments.is_empty() {
-        None
-    } else {
-        Some(comments.join(" "))
-    }
-}
+
+
 
 fn collect_file_child_context(graph: &DependencyGraph, file_idx: GraphNodeIndex) -> Option<String> {
     let mut parts = Vec::new();
@@ -581,11 +587,6 @@ fn collect_file_child_context(graph: &DependencyGraph, file_idx: GraphNodeIndex)
             parts.push(child.id.clone());
             parts.push(tokenizable(&child.id));
             parts.extend(child.attributes.values().cloned());
-            if let Some(snippet) = child.attributes.get("source_snippet") {
-                if let Some(comment_text) = extract_comment_text(snippet) {
-                    parts.push(comment_text);
-                }
-            }
         }
     }
 
@@ -594,6 +595,27 @@ fn collect_file_child_context(graph: &DependencyGraph, file_idx: GraphNodeIndex)
     } else {
         Some(parts.join(" "))
     }
+}
+
+fn path_tokenize(path: &str) -> HashSet<String> {
+    let mut tokens = HashSet::new();
+
+    for segment in path.split(|c| "/\\".contains(c)) {
+        let segment = segment.trim();
+        if segment.is_empty() {
+            continue;
+        }
+
+        for part in segment.split(['.', '_', '-']) {
+            let part = part.trim();
+            if part.len() < 3 {
+                continue;
+            }
+            tokens.insert(part.to_ascii_lowercase());
+        }
+    }
+
+    tokens
 }
 
 fn tokenizable(raw: &str) -> String {
@@ -616,13 +638,16 @@ fn build_schema() -> Schema {
     let name_options = TextOptions::default().set_stored();
     builder.add_text_field("name", name_options);
 
-    let content_indexing = TextFieldIndexing::default()
+    let code_indexing = TextFieldIndexing::default()
         .set_tokenizer(CODE_ANALYZER_NAME)
         .set_index_option(IndexRecordOption::WithFreqsAndPositions);
     let content_options = TextOptions::default()
-        .set_indexing_options(content_indexing)
+        .set_indexing_options(code_indexing.clone())
         .set_stored();
     builder.add_text_field("content", content_options);
+
+    let boost_options = TextOptions::default().set_indexing_options(code_indexing);
+    builder.add_text_field("boost", boost_options);
 
     builder.build()
 }
@@ -643,6 +668,9 @@ fn resolve_fields(schema: &Schema) -> Result<Fields> {
     let content = schema
         .get_field("content")
         .context("schema missing content field")?;
+    let boost = schema
+        .get_field("boost")
+        .context("schema missing boost field")?;
 
     Ok(Fields {
         entity_id,
@@ -650,6 +678,7 @@ fn resolve_fields(schema: &Schema) -> Result<Fields> {
         path,
         kind,
         content,
+        boost,
     })
 }
 
@@ -791,10 +820,12 @@ mod tests {
                 path: "src/security.py",
                 kind: NodeKind::Function,
                 content: r#"
+
 def sanitize_input(user_input):
     cleaned = user_input.strip()
     return cleaned.lower()
 "#,
+                boost: None,
             },
             Bm25Document {
                 entity_id: "repo::module::hash_password",
@@ -802,9 +833,11 @@ def sanitize_input(user_input):
                 path: "src/security.py",
                 kind: NodeKind::Function,
                 content: r#"
+
 def hash_password(password):
     return sha256(password.encode()).hexdigest()
 "#,
+                boost: None,
             },
         ])?;
 
@@ -827,14 +860,21 @@ def hash_password(password):
                 name: Some("User"),
                 path: "src/models/user.py",
                 kind: NodeKind::Class,
-                content: "class User:\n    def save(self):\n        pass\n",
+                content: "class User:
+    def save(self):
+        pass
+",
+                boost: None,
             },
             Bm25Document {
                 entity_id: "repo::models::save_user",
                 name: Some("save_user"),
                 path: "src/models/user.py",
                 kind: NodeKind::Function,
-                content: "def save_user(user):\n    user.save()\n",
+                content: "def save_user(user):
+    user.save()
+",
+                boost: None,
             },
         ])?;
 
@@ -848,4 +888,5 @@ def hash_password(password):
 
         Ok(())
     }
+
 }
