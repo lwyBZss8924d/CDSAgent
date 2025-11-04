@@ -221,3 +221,86 @@ impl GraphEdge {
         Self { kind, alias }
     }
 }
+
+// ========================================
+// Thread-23: Graph Export for Parity Analysis
+// ========================================
+
+/// Serializable representation of a graph edge for JSON export
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SerializableEdge {
+    pub source: String,
+    pub target: String,
+    pub kind: EdgeKind,
+    pub alias: Option<String>,
+}
+
+/// Serializable representation of the entire dependency graph
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SerializableGraph {
+    pub nodes: Vec<GraphNode>,
+    pub edges: Vec<SerializableEdge>,
+}
+
+impl DependencyGraph {
+    /// Exports the graph to a JSON-serializable format for parity analysis (Thread-23)
+    ///
+    /// # Returns
+    /// A SerializableGraph containing all nodes and edges with string-based references
+    ///
+    /// # Example
+    /// ```no_run
+    /// let graph = DependencyGraph::new();
+    /// let serializable = graph.to_serializable();
+    /// let json = serde_json::to_string_pretty(&serializable)?;
+    /// std::fs::write("graph.json", json)?;
+    /// ```
+    pub fn to_serializable(&self) -> SerializableGraph {
+        // Collect all nodes
+        let nodes: Vec<GraphNode> = self
+            .graph
+            .node_indices()
+            .filter_map(|idx| self.graph.node_weight(idx).cloned())
+            .collect();
+
+        // Collect all edges
+        let edges: Vec<SerializableEdge> = self
+            .graph
+            .edge_indices()
+            .filter_map(|edge_idx| {
+                let (source_idx, target_idx) = self.graph.edge_endpoints(edge_idx)?;
+                let source_node = self.graph.node_weight(source_idx)?;
+                let target_node = self.graph.node_weight(target_idx)?;
+                let edge_data = self.graph.edge_weight(edge_idx)?;
+
+                Some(SerializableEdge {
+                    source: source_node.id.clone(),
+                    target: target_node.id.clone(),
+                    kind: edge_data.kind,
+                    alias: edge_data.alias.clone(),
+                })
+            })
+            .collect();
+
+        SerializableGraph { nodes, edges }
+    }
+
+    /// Exports the graph to JSON format
+    ///
+    /// # Errors
+    /// Returns error if serialization fails
+    pub fn to_json(&self) -> serde_json::Result<String> {
+        let serializable = self.to_serializable();
+        serde_json::to_string_pretty(&serializable)
+    }
+
+    /// Exports the graph to a JSON file
+    ///
+    /// # Errors
+    /// Returns error if serialization or file write fails
+    pub fn export_to_json(&self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
+        let json = self.to_json()?;
+        std::fs::write(path, json)?;
+        Ok(())
+    }
+}
