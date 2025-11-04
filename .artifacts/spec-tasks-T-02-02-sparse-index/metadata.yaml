@@ -7,10 +7,9 @@ task:
   owner: "Codex AI Engineer + Rust Dev Team"
   status: in_progress
   start_date: "2025-10-31"
-  last_updated: 2025-11-03T09:32:00Z
-  estimated_hours: 32  # 4 days × 8 hours
-  actual_hours: 18.6  # Sessions 01-04 (8.3h) + Session 05 Threads 01-09 (10.3h)
-
+  last_updated: 2025-11-04T06:20:03Z
+  estimated_hours: 32 # 4 days × 8 hours
+  actual_hours: 30.5 # Sessions 01-04 (8.3h) + Session 05 Threads 01-17 (22.2h)
 specs:
   prds:
     - spacs/prd/0.1.0-MVP-PRDs-v0/02-cds-index-service.md
@@ -18,12 +17,16 @@ specs:
     - spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md
   tasks:
     - spacs/tasks/0.1.0-mvp/02-index-core/T-02-02-sparse-index.md
-
 git:
   worktree: .worktrees/T-02-02-sparse-index
   branch: feat/task/T-02-02-sparse-index
   base_commit: 2a2ad34
   commits:
+    - hash: "f9583fe"
+      message: "feat(index): T-02-02 Thread 17 - establish vanilla BM25 baseline (62.29%)"
+      date: "2025-11-04"
+      files_changed: 2
+      notes: "Day 4 Session 05 Thread 17 (06:12-07:12 UTC, 1.0h): BASELINE ESTABLISHED - Committed vanilla BM25 configuration with all boosts = None. Previous Thread-17 iteration proved Thread-16 boosts were NET HARMFUL: vanilla 62.29% > boosts 58.16% (+4.13% improvement). Removed comment extraction overfitting. Added infrastructure for future experiments. Baseline metrics - LocAgent: 70.02%, requests: 92.50%, pytest: 64.50%, django: 53.71%, matplotlib: 58.49%, scikit-learn: 34.51%. Global: 62.29% (target: 75-85%). 2 files (+328/-44). ✅ VANILLA BASELINE LOCKED"
     - hash: "987596a"
       message: "fix(index): T-02-02 Thread 06 - CRITICAL overfitting fix + clippy cleanup"
       date: "2025-11-03"
@@ -59,13 +62,11 @@ git:
       date: "2025-10-31"
       files_changed: 8
       notes: "Day 1 (Pre-Session 02, ~0.1h): Worktree initialization - documentation structure with task-specific CLAUDE.md/AGENTS.md references, kanban analysis files (.tmp-kanban/), cleanup of local config. 8 files, +1,388/-562 lines."
-
   pr:
     number: null
     url: null
-    status: null  # draft | open | merged | closed
+    status: null # draft | open | merged | closed
     merged_at: null
-
 deliverables:
   - crates/cds-index/src/index/name_index.rs
   - crates/cds-index/src/index/bm25.rs
@@ -73,7 +74,6 @@ deliverables:
   - crates/cds-index/benches/search_bench.rs
   - crates/cds-index/tests/index_tests.rs
   - crates/cds-index/tests/search_parity_tests.rs
-
 acceptance_criteria:
   - criterion: "Upper index (name/ID HashMap) with prefix matching"
     status: completed
@@ -93,96 +93,14 @@ acceptance_criteria:
   - criterion: "Unit test coverage >95%"
     status: completed
     notes: "97.20% lines, 95.35% functions (Session 03 Thread 04)."
-
 dependencies:
   requires:
-    - T-02-01-graph-builder  # ✅ COMPLETED & MERGED (PR #6)
+    - T-02-01-graph-builder # ✅ COMPLETED & MERGED (PR #6)
   blocks:
     - T-02-03-service-layer
     - T-03-01-cli-commands
     - T-02-04-serialization
-
-notes: |
-  Implementation Phases Plan (technical stages, 6-8 days total):
-  - Phase 0: Planning & Analysis (Day 1)
-  - Phase 1: Upper Index - Name/ID HashMap (Day 1)
-  - Phase 2: Custom Tokenizer (Day 1)
-  - Phase 3: BM25 Lower Index - Tantivy or custom (Day 1)
-  - Phase 4: Hierarchical Search Strategy (Day 2)
-  - Phase 5: Parity & Benchmarking (Day 2)
-
-  Work Sessions (by day):
-  - Day 1 Session 01: [Phase 0] Planning & Analysis (Threads 01-03, 1.2h) ✅ COMPLETE
-    * Thread 01: Worktree initialization (0.05h)
-    * Thread 02: Documentation updates for M2 milestone (0.15h)
-    * Thread 03: Comprehensive tasks initial analysis, planning & implementation roadmap (0.75h, 986 lines)
-    * RAW: WORK-SESSIONS-01-THREADS-01-03-SUMMARY-2025-10-31.txt
-    * Commits: 4f834f6, 8abc915, d281dcc, d36ea10, 37cf911, 628724b
-    * Duration: 07:17-08:30 UTC (1.2h total)
-    * Status: ✅ COMPLETE - All planning and setup finished
-
-  - Day 1 Session 02: [Phase 0] re-analysis & planning for development (10:22-10:55 UTC, 0.55h)
-    * Thread 01 (10:22-10:30): Spec alignment & implementation gap analysis ✅
-    * Thread 02 (10:30-10:43): Parity assets + performance baselines review ✅
-    * Thread 03 (10:43-10:55): Implementation readiness checklist & roadmap ✅
-    * Key refs: spacs/prd/0.1.0-MVP-PRDs-v0/02, spacs/prd/0.1.0-MVP-PRDs-v0/06, spacs/tasks/0.1.0-mvp/TODO.yaml, spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md, tests/fixtures/parity/*
-    * Outputs: Phase 1 execution roadmap, tooling prep list, follow-up action items
-    * Deferred doc reviews (target Session 03): PRD-01, PRD-03–PRD-10, issues 00/01/03/04, tasks README/T-02-03/T-02-04
-    * RAW: WORK-SESSIONS-02-THREADS-01-03-SUMMARY-2025-10-31.txt (Session 02 complete @ 10:55 UTC)
-    * Status: ✅ COMPLETE (Phase 0 research baseline locked)
-
-  - Day 1 Session 03: [Phase 1] Upper Index Implementation (12:02-15:17 UTC, 3.3h) ✅ COMPLETE
-    * Thread 01 (12:02-12:13, 11min): Phase 1 kickoff & implementation planning
-    * Thread 02 (12:13-14:48, 2.6h): Upper Index core implementation + tests (exact_match, prefix_match, from_graph)
-    * Thread 03 (14:49-15:05, 16min): Validation & benchmarking (coverage 91.65%, performance measured)
-    * Thread 04 (15:14-15:17, 3min): Coverage hardening (97.20% lines, 95.35% functions)
-    * RAW: WORK-SESSIONS-03-THREADS-01-04-SUMMARY-2025-10-31.txt
-    * Commits: 7f390a7 (code), 7b624c4 (checkpoint)
-    * Deliverables: name_index.rs (+477), index_tests.rs (new, 83), search_bench.rs (+91)
-    * Performance: exact 68.42 ns, prefix 699.40 ns, build 2.287 ms (far exceeds targets)
-    * Status: ✅ COMPLETE - Phase 1 (Upper Index) fully delivered
-
-  - Day 2 Session 04: [Phase 2] Custom Tokenizer + BM25 Scaffold (01:39-12:45 UTC, 3.2h) ✅ COMPLETE
-    * Thread 01 (01:39-02:04): Phase 2 planning & spec alignment ✅
-    * Thread 02 (02:05-02:13): Tokenizer parity analysis & design ✅
-    * Thread 03 (02:14-02:22): Tokenizer module scaffolding ✅
-    * Thread 04 (02:22-02:46): Stop-word fixtures & parity harness prep ✅
-    * Thread 05 (02:47-03:30): Tantivy analyzer integration & offset plumbing ✅
-    * Thread 06 (11:15-12:05): BM25 index scaffold & search API ✅
-    * Thread 07 (12:25-12:45): BM25 persistence & benchmark planning ✅
-    * RAW: WORK-SESSIONS-04-THREADS-01-07-SUMMARY-2025-11-01.txt
-    * Commits: 414f7f2 (code)
-    * Deliverables: tokenizer.rs (387), bm25.rs (+442), stop_words.rs (180), export_stop_words.py (176), fixtures + tests
-    * Quality: 78/78 tests passing, 5 clippy errors fixed, ~95% coverage
-    * Status: ✅ COMPLETE - Phase 2 (Custom Tokenizer + BM25 Scaffold) fully delivered
-
-  - Day 3 Session 05: [Phase 3] BM25 Integration & Parity Validation + CRITICAL FIX + Multi-Repo Prep (2025-11-02 07:43-11:28 UTC + 2025-11-03 05:20-09:32 UTC, ~10.3h active) 🚧 IN PROGRESS
-    * Thread 01 (07:43-08:13): Phase 3 planning & integration strategy ✅ THREAD COMPLETE
-    * Thread 02 (08:14-08:59): Implement BM25Index::from_graph() ✅ THREAD COMPLETE
-    * Thread 03 (08:52-09:12): Create SparseIndex wrapper with hierarchical search ✅ THREAD COMPLETE
-    * Thread 04 (09:14-10:08): Build parity test harness for 50 LocAgent queries (overlap analysis) ✅ THREAD COMPLETE
-    * Thread 05 (09:27-11:28 & 2025-11-03 05:20-06:42): BM25 overlap tuning (chunked indexing, comment ingestion, path dedup, oversampling boosts) + synonym/phrase enrichment ✅ THREAD COMPLETE (OVERFITTING DETECTED - abandoned)
-    * Thread 06 (2025-11-03 08:21-09:17): CRITICAL OVERFITTING FIX - Removed all 71+ hardcoded rules, restored generic BM25 per LocAgent methodology, fixed 3 clippy warnings, created checkpoint commits with git notes ✅ THREAD COMPLETE
-    * Thread 07 (2025-11-03 08:55-09:21): Session management & documentation updates - RAW log split, metadata updates, git notes verification (31/31 coverage), STOPWORDS research Q&A ✅ THREAD COMPLETE
-    * Thread 08 (2025-11-03 09:21-09:32): Multi-repo smoke scaffold - Deleted debug examples, added smoke_multi_repo.rs test (compiles, syntax fixed), updated scripts/README.md ✅ THREAD COMPLETE
-    * Thread 09 (2025-11-03 09:27-09:43): LocAgent smoke test execution - Ran smoke test against tmp/LocAgent, graph + sparse index build successful ✅ THREAD COMPLETE
-    * RAW: WORK-SESSIONS-05-THREADS-01-05-SUMMARY-2025-11-02.txt (Threads 01-05, 1,443 lines)
-    * RAW: WORK-SESSIONS-05-THREADS-06-NN-SUMMARY-2025-11-03.txt (Threads 06-09)
-    * Commits: da3ddb2 (Threads 02-03), 987596a (Thread 06), 5412ce7 (metadata), 0dd2643 (Threads 07-09)
-    * Deliverables: BM25Index::from_graph builder, SparseIndex hierarchical search wrapper, parity harness, CRITICAL FIX (generic BM25 restored + 71+ rules removed), smoke test scaffold
-    * Quality: 21/21 unit tests passing, zero clippy warnings, 31/31 git notes ✅, smoke_multi_repo.rs ready
-    * Status: ✅ SESSION 05 COMPLETE (Threads 01-09 done, multi-repo validation + architecture docs next session)
-
-  Technical risks:
-  - Tokenization mismatch with LocAgent
-  - BM25 parameter tuning for 90% overlap
-  - Memory usage for large repos
-
-  Session/Thread/Phase definitions:
-  - Session: Work period (1-8 hours), one RAW log file
-  - Thread: Continuous work unit (30min-2h), numbered sequentially
-  - Phase: Implementation stage (Upper Index, Tokenizer, BM25, etc.)
-
+notes: "Implementation Phases Plan (technical stages, 6-8 days total):\n- Phase 0: Planning & Analysis (Day 1)\n- Phase 1: Upper Index - Name/ID HashMap (Day 1)\n- Phase 2: Custom Tokenizer (Day 1)\n- Phase 3: BM25 Lower Index - Tantivy or custom (Day 1)\n- Phase 4: Hierarchical Search Strategy (Day 2)\n- Phase 5: Parity & Benchmarking (Day 2)\n\nWork Sessions (by day):\n- Day 1 Session 01: [Phase 0] Planning & Analysis (Threads 01-03, 1.2h) ✅ COMPLETE\n  * Thread 01: Worktree initialization (0.05h)\n  * Thread 02: Documentation updates for M2 milestone (0.15h)\n  * Thread 03: Comprehensive tasks initial analysis, planning & implementation roadmap (0.75h, 986 lines)\n  * RAW: WORK-SESSIONS-01-THREADS-01-03-SUMMARY-2025-10-31.txt\n  * Commits: 4f834f6, 8abc915, d281dcc, d36ea10, 37cf911, 628724b\n  * Duration: 07:17-08:30 UTC (1.2h total)\n  * Status: ✅ COMPLETE - All planning and setup finished\n\n- Day 1 Session 02: [Phase 0] re-analysis & planning for development (10:22-10:55 UTC, 0.55h)\n  * Thread 01 (10:22-10:30): Spec alignment & implementation gap analysis ✅\n  * Thread 02 (10:30-10:43): Parity assets + performance baselines review ✅\n  * Thread 03 (10:43-10:55): Implementation readiness checklist & roadmap ✅\n  * Key refs: spacs/prd/0.1.0-MVP-PRDs-v0/02, spacs/prd/0.1.0-MVP-PRDs-v0/06, spacs/tasks/0.1.0-mvp/TODO.yaml, spacs/issues/04-0.1.0-mvp/02-index-core/02-sparse-index.md, tests/fixtures/parity/*\n  * Outputs: Phase 1 execution roadmap, tooling prep list, follow-up action items\n  * Deferred doc reviews (target Session 03): PRD-01, PRD-03–PRD-10, issues 00/01/03/04, tasks README/T-02-03/T-02-04\n  * RAW: WORK-SESSIONS-02-THREADS-01-03-SUMMARY-2025-10-31.txt (Session 02 complete @ 10:55 UTC)\n  * Status: ✅ COMPLETE (Phase 0 research baseline locked)\n\n- Day 1 Session 03: [Phase 1] Upper Index Implementation (12:02-15:17 UTC, 3.3h) ✅ COMPLETE\n  * Thread 01 (12:02-12:13, 11min): Phase 1 kickoff & implementation planning\n  * Thread 02 (12:13-14:48, 2.6h): Upper Index core implementation + tests (exact_match, prefix_match, from_graph)\n  * Thread 03 (14:49-15:05, 16min): Validation & benchmarking (coverage 91.65%, performance measured)\n  * Thread 04 (15:14-15:17, 3min): Coverage hardening (97.20% lines, 95.35% functions)\n  * RAW: WORK-SESSIONS-03-THREADS-01-04-SUMMARY-2025-10-31.txt\n  * Commits: 7f390a7 (code), 7b624c4 (checkpoint)\n  * Deliverables: name_index.rs (+477), index_tests.rs (new, 83), search_bench.rs (+91)\n  * Performance: exact 68.42 ns, prefix 699.40 ns, build 2.287 ms (far exceeds targets)\n  * Status: ✅ COMPLETE - Phase 1 (Upper Index) fully delivered\n\n- Day 2 Session 04: [Phase 2] Custom Tokenizer + BM25 Scaffold (01:39-12:45 UTC, 3.2h) ✅ COMPLETE\n  * Thread 01 (01:39-02:04): Phase 2 planning & spec alignment ✅\n  * Thread 02 (02:05-02:13): Tokenizer parity analysis & design ✅\n  * Thread 03 (02:14-02:22): Tokenizer module scaffolding ✅\n  * Thread 04 (02:22-02:46): Stop-word fixtures & parity harness prep ✅\n  * Thread 05 (02:47-03:30): Tantivy analyzer integration & offset plumbing ✅\n  * Thread 06 (11:15-12:05): BM25 index scaffold & search API ✅\n  * Thread 07 (12:25-12:45): BM25 persistence & benchmark planning ✅\n  * RAW: WORK-SESSIONS-04-THREADS-01-07-SUMMARY-2025-11-01.txt\n  * Commits: 414f7f2 (code)\n  * Deliverables: tokenizer.rs (387), bm25.rs (+442), stop_words.rs (180), export_stop_words.py (176), fixtures + tests\n  * Quality: 78/78 tests passing, 5 clippy errors fixed, ~95% coverage\n  * Status: ✅ COMPLETE - Phase 2 (Custom Tokenizer + BM25 Scaffold) fully delivered\n\n- Day 3 Session 05: [Phase 3] BM25 Integration & Parity Validation + CRITICAL FIX + Multi-Repo Prep (2025-11-02 07:43-11:28 UTC + 2025-11-03 05:20-12:10 UTC, ~13.0h active) \U0001F6A7 IN PROGRESS\n  * Thread 01 (07:43-08:13): Phase 3 planning & integration strategy ✅ THREAD COMPLETE\n  * Thread 02 (08:14-08:59): Implement BM25Index::from_graph() ✅ THREAD COMPLETE\n  * Thread 03 (08:52-09:12): Create SparseIndex wrapper with hierarchical search ✅ THREAD COMPLETE\n  * Thread 04 (09:14-10:08): Build parity test harness for 50 LocAgent queries (overlap analysis) ✅ THREAD COMPLETE\n  * Thread 05 (09:27-11:28 & 2025-11-03 05:20-06:42): BM25 overlap tuning (chunked indexing, comment ingestion, path dedup, oversampling boosts) + synonym/phrase enrichment ✅ THREAD COMPLETE (OVERFITTING DETECTED - abandoned)\n  * Thread 06 (2025-11-03 08:21-09:17): CRITICAL OVERFITTING FIX - Removed all 71+ hardcoded rules, restored generic BM25 per LocAgent methodology, fixed 3 clippy warnings, created checkpoint commits with git notes ✅ THREAD COMPLETE\n  * Thread 07 (2025-11-03 08:55-09:21): Session management & documentation updates - RAW log split, metadata updates, git notes verification (31/31 coverage), STOPWORDS research Q&A ✅ THREAD COMPLETE\n  * Thread 08 (2025-11-03 09:21-09:32): Multi-repo smoke scaffold - Deleted debug examples, added smoke_multi_repo.rs test (compiles, syntax fixed), updated scripts/README.md ✅ THREAD COMPLETE\n  * Thread 09 (2025-11-03 09:32-10:05): External repo validation setup - verified requests/pytest/scikit-learn clones, captured canonical SMOKE_REPO_PATHS ✅ THREAD COMPLETE\n  * Thread 10 (2025-11-03 10:05-11:15): Multi-repo smoke runs - executed LocAgent + requests + pytest + scikit-learn harness, all green ✅ THREAD COMPLETE\n  * Thread 11 (2025-11-03 11:15-11:55): Artifact updates - refreshed metadata, CRITICAL issue status, RAW log ✅ THREAD COMPLETE\n  * Thread 12 (2025-11-03 11:55-12:10): Cloned Django & matplotlib repos into tmp/smoke, recorded absolute paths for future smoke/overlap runs ✅ THREAD COMPLETE\n  * Thread 13 (2025-11-03 12:10-13:45): Extended smoke harness with overlap reporting, ran LocAgent+5 repo sweep (LocAgent avg_overlap=69.20%), captured warnings + metrics for follow-up ✅ THREAD COMPLETE\n  * Thread 14 (2025-11-03 13:45-IN PROGRESS): Added per-query diagnostics, deduplicated docstring boosts, reran LocAgent overlap (69.10%), executed smoke builds for requests/pytest, recorded partial runs for django/scikit-learn \U0001F6A7 THREAD IN PROGRESS\n  * Thread n (n-NN): TBD\n  * RAW: WORK-SESSIONS-05-THREADS-01-05-SUMMARY-2025-11-02.txt (Threads 01-05, 1,443 lines)\n  * RAW: WORK-SESSIONS-05-THREADS-06-NN-SUMMARY-2025-11-03.txt (Threads 06-NN, 700+ lines)\n  * Commits: da3ddb2 (Threads 02-03), 987596a (Thread 06)  # Documentation updates pending commit\n  * Deliverables: BM25Index::from_graph builder, SparseIndex hierarchical search wrapper, parity harness, CRITICAL FIX (generic BM25 restored + 71+ rules removed), smoke test scaffold + diagnostics + multi-repo validation evidence\n  * Quality: 21/21 unit tests passing, zero clippy warnings, 31/31 git notes ✅, smoke_multi_repo.rs validated for LocAgent harness + requests + pytest (django/matplotlib/scikit-learn pending)\n  * Status: \U0001F6A7 SESSION 05 IN PROGRESS (Threads 01-14; overlap at 69.10%, remaining work: reach ≥75%, finish external smoke coverage, finalize guardrails)\n\nTechnical risks:\n- Tokenization mismatch with LocAgent\n- BM25 parameter tuning for 90% overlap\n- Memory usage for large repos\n\nSession/Thread/Phase definitions:\n- Session: Work period (1-8 hours), one RAW log file\n- Thread: Continuous work unit (30min-2h), numbered sequentially\n- Phase: Implementation stage (Upper Index, Tokenizer, BM25, etc.)\n"
 worklog:
   base_path: ".artifacts/spec-tasks-T-02-02-sparse-index/worklogs/"
   entries:
@@ -217,7 +135,6 @@ worklog:
       codereview: "worklogs/2025-11-02-S05-codereview.md" # Phase 3 Code review
       raw:
         - "./worklogs/raw/WORK-SESSIONS-05-THREADS-01-NN-SUMMARY-2025-11-02.txt"
-
 sessions:
   - id: "01"
     date: "2025-10-31"
@@ -245,9 +162,9 @@ sessions:
       - "628724b"
     raw_log: "./worklogs/raw/WORK-SESSIONS-01-THREADS-01-03-SUMMARY-2025-10-31.txt"
     artifacts:
-      work_summary: "./worklogs/2025-10-31-S01-S02-work-summary.md"  # Combined with Session 02
-      commit_log: "./worklogs/2025-10-31-S01-S02-commit-log.md"  # Combined with Session 02
-      notes: "./worklogs/2025-10-31-S01-S02-notes.md"  # Combined with Session 02
+      work_summary: "./worklogs/2025-10-31-S01-S02-work-summary.md" # Combined with Session 02
+      commit_log: "./worklogs/2025-10-31-S01-S02-commit-log.md" # Combined with Session 02
+      notes: "./worklogs/2025-10-31-S01-S02-notes.md" # Combined with Session 02
       codereview: null
     metrics:
       lines_added: 986
@@ -255,7 +172,6 @@ sessions:
       files_modified: 6
       tests_added: 0
       test_pass_rate: null
-
   - id: "02"
     date: "2025-10-31"
     day: 1
@@ -273,12 +189,12 @@ sessions:
       - "Spec alignment & implementation gap analysis"
       - "Parity assets + performance baselines review"
       - "Implementation readiness checklist & roadmap"
-    commits: []  # Planning session, no code commits
+    commits: [] # Planning session, no code commits
     raw_log: "./worklogs/raw/WORK-SESSIONS-02-THREADS-01-03-SUMMARY-2025-10-31.txt"
     artifacts:
-      work_summary: "./worklogs/2025-10-31-S01-S02-work-summary.md"  # Combined with Session 01
-      commit_log: "./worklogs/2025-10-31-S01-S02-commit-log.md"  # Combined with Session 01
-      notes: "./worklogs/2025-10-31-S01-S02-notes.md"  # Combined with Session 01
+      work_summary: "./worklogs/2025-10-31-S01-S02-work-summary.md" # Combined with Session 01
+      commit_log: "./worklogs/2025-10-31-S01-S02-commit-log.md" # Combined with Session 01
+      notes: "./worklogs/2025-10-31-S01-S02-notes.md" # Combined with Session 01
       codereview: null
     metrics:
       lines_added: 0
@@ -286,7 +202,6 @@ sessions:
       files_modified: 0
       tests_added: 0
       test_pass_rate: null
-
   - id: "03"
     date: "2025-10-31"
     day: 1
@@ -306,8 +221,8 @@ sessions:
       - "Validation & benchmarking (coverage 91.65%, performance measured)"
       - "Coverage hardening (97.20% lines, 95.35% functions)"
     commits:
-      - "7f390a7"  # Code commit
-      - "7b624c4"  # Checkpoint commit
+      - "7f390a7" # Code commit
+      - "7b624c4" # Checkpoint commit
     raw_log: "./worklogs/raw/WORK-SESSIONS-03-THREADS-01-04-SUMMARY-2025-10-31.txt"
     artifacts:
       work_summary: "./worklogs/2025-10-31-S03-work-summary.md"
@@ -318,7 +233,7 @@ sessions:
       lines_added: 716
       lines_deleted: 87
       files_modified: 8
-      tests_added: 1  # index_tests.rs (83 lines)
+      tests_added: 1 # index_tests.rs (83 lines)
       test_pass_rate: 1.0
       coverage:
         lines: 0.9720
@@ -327,7 +242,6 @@ sessions:
         exact_match_ns: 68.42
         prefix_match_ns: 699.40
         build_ms: 2.287
-
   - id: "04"
     date: "2025-11-01"
     day: 2
@@ -350,7 +264,7 @@ sessions:
       - "BM25 index scaffold & search API"
       - "BM25 persistence & benchmark planning"
     commits:
-      - "414f7f2"  # Code commit
+      - "414f7f2" # Code commit
     raw_log: "./worklogs/raw/WORK-SESSIONS-04-THREADS-01-07-SUMMARY-2025-11-01.txt"
     artifacts:
       work_summary: "./worklogs/2025-11-01-S04-work-summary.md"
@@ -361,60 +275,114 @@ sessions:
       lines_added: 2013
       lines_deleted: 108
       files_modified: 17
-      tests_added: 12  # 7 tokenizer, 2 BM25, 3 fixture
+      tests_added: 12 # 7 tokenizer, 2 BM25, 3 fixture
       test_pass_rate: 1.0
       total_tests: 78
       coverage_estimate: 0.95
       clippy_errors_fixed: 5
-
   - id: "05"
     date: "2025-11-02"
     day: 3
     phase: "Phase 3"
     description: "BM25 Integration & Parity Validation (Threads 01-05) + CRITICAL FIX (Thread 06+)"
     threads:
-      count: 9  # Threads 01-05 (2025-11-02), Threads 06-09 (2025-11-03)
-      range: "01-09"  # Split across 2 days
+      count: 13 # Threads 01-05 (2025-11-02), Threads 06-13 (2025-11-03)
+      range: "01-13" # Split across 2 days
     duration:
-      start_time: "07:43"  # UTC (2025-11-02)
-      end_time: "09:43"  # UTC (2025-11-03, Thread 09 complete)
-      hours: 10.3  # Threads 01-05 (~9.1h) + Threads 06-09 (~1.2h)
+      start_time: "07:43" # UTC (2025-11-02)
+      end_time: "13:45" # UTC (2025-11-03, Thread 13 complete)
+      hours: 14.6 # Threads 01-05 (~9.1h) + Threads 06-13 (~5.5h)
     status: in_progress
     objectives:
       - "Threads 01-05 (2025-11-02): Planning, BM25 integration, hierarchical search, parity harness, overlap tuning"
       - "Thread 06 (2025-11-03): CRITICAL overfitting fix - remove 71+ hardcoded rules"
       - "Thread 07 (2025-11-03): Session management & stop-word alignment"
       - "Thread 08 (2025-11-03): Multi-repo smoke test scaffold"
-      - "Thread 09 (2025-11-03): LocAgent smoke test execution"
+      - "Thread 09 (2025-11-03): External repo cloning + path validation"
+      - "Thread 10 (2025-11-03): Multi-repo smoke runs (LocAgent, requests, pytest, scikit-learn)"
+      - "Thread 11 (2025-11-03): Artifact updates (metadata, critical issue, raw log)"
+      - "Thread 06-15 (2025-11-03): ..."
+      - "Thread 16-NN (2025-11-04): TBD"
+      - "Thread n-NN (2025-11-dd): TBD"
     commits:
-      - "da3ddb2"  # Threads 02-03
-      - "987596a"  # Thread 06 overfitting fix + clippy cleanup
+      - "da3ddb2" # Threads 02-03
+      - "987596a" # Thread 06 overfitting fix + clippy cleanup
     raw_log:
-      - "./worklogs/raw/WORK-SESSIONS-05-THREADS-01-05-SUMMARY-2025-11-02.txt"  # Threads 01-05 (2025-11-02)
-      - "./worklogs/raw/WORK-SESSIONS-05-THREADS-06-NN-SUMMARY-2025-11-03.txt"  # Threads 06+ (2025-11-03)
+      - "./worklogs/raw/WORK-SESSIONS-05-THREADS-01-05-SUMMARY-2025-11-02.txt" # Threads 01-05 (2025-11-02)
+      - "./worklogs/raw/WORK-SESSIONS-05-THREADS-06-15-SUMMARY-2025-11-03.txt" # Threads 06-15 (2025-11-03)
+      - "./worklogs/raw/WORK-SESSIONS-05-THREADS-16-NN-SUMMARY-2025-11-04.txt" # Threads 16-NN (2025-11-04) TBD add new threads RAW file
     artifacts:
       work_summary: "./worklogs/2025-11-02-S05-work-summary.md"
       commit_log: "./worklogs/2025-11-02-S05-commit-log.md"
       notes: "./worklogs/2025-11-02-S05-notes.md"
       codereview: "./worklogs/2025-11-02-S05-codereview.md"
     metrics:
-      lines_added: 3087  # Will update after Thread 06 commit
-      lines_deleted: 220  # Will update after Thread 06 commit
-      files_modified: 16  # Will update after Thread 06 commit
+      lines_added: 3087 # Will update after Thread 06 commit
+      lines_deleted: 220 # Will update after Thread 06 commit
+      files_modified: 16 # Will update after Thread 06 commit
       tests_added: 3
       test_pass_rate: 1.0
-      clippy_warnings_fixed: 3  # Thread 06
-
+      clippy_warnings_fixed: 3 # Thread 06
+      smoke_repos_validated:
+        total: 6
+        names:
+          - LocAgent
+          - requests
+          - pytest
+          - scikit-learn
+          - django
+          - matplotlib
+        runtimes_seconds:
+          locagent: 1.60
+          requests: 1.38
+          pytest: 10.02
+          scikit_learn: 128.70
+          django: 244.10
+          matplotlib: 26.67
 metrics:
-  lines_added: 7267   # Sessions 01-05 (includes parity harness + BM25 tuning)
+  lines_added: 7267 # Sessions 01-05 (includes parity harness + BM25 tuning)
   lines_deleted: 1110 # Sessions 01-05 cumulative
-  files_modified: 49  # Includes SparseIndex + parity tuning assets
-  tests_added: 20     # Session 05 added 3 integration tests (1 parity harness)
+  files_modified: 49 # Includes SparseIndex + parity tuning assets
+  tests_added: 20 # Session 05 added 3 integration tests (1 parity harness)
   test_coverage: 0.972 # 97.20% lines, 95.35% functions (Session 03 baseline)
-
+  smoke_repos_validated: 6
+  smoke_repos_available: 6
+  smoke_repos_available_paths:
+    locagent: "./tmp/LocAgent"
+    requests: "./tmp/smoke/requests"
+    pytest: "./tmp/smoke/pytest"
+    scikit_learn: "./tmp/smoke/scikit-learn"
+    django: "./tmp/smoke/django"
+    matplotlib: "./tmp/smoke/matplotlib"
+  overlap_metrics:
+    last_run: 2025-11-04T07:12:00Z
+    test_config: "Vanilla BM25 (Thread-17 baseline, all boosts=None)"
+    target_pct: 75.0
+    global_average_pct: 62.29
+    thread_16_boosts_pct: 58.16
+    improvement_vs_thread_16: 4.13
+    repos:
+      locagent:
+        queries: 50
+        avg_overlap_pct: 70.02
+        vs_thread_16: 1.14
+      requests:
+        avg_overlap_pct: 92.50
+        vs_thread_16: -2.50
+      pytest:
+        avg_overlap_pct: 64.50
+        vs_thread_16: 1.50
+      scikit_learn:
+        avg_overlap_pct: 34.51
+        vs_thread_16: 6.91
+      django:
+        avg_overlap_pct: 53.71
+        vs_thread_16: -0.18
+      matplotlib:
+        avg_overlap_pct: 58.49
+        vs_thread_16: 17.87
 comments:
-  - .artifacts/spec-tasks-T-02-02-sparse-index/CRITICAL_ISSUE_OVERFITTING.md 
+  - .artifacts/spec-tasks-T-02-02-sparse-index/CRITICAL_ISSUE_OVERFITTING.md
   - .artifacts/spec-tasks-T-02-02-sparse-index/Research_250309089_Paper_and_LocAgent_demo.txt
-
-
 related_artifacts:
+  - .artifacts/spec-tasks-T-02-02-sparse-index/THREAD-17-BASELINE-ANALYSIS.md
