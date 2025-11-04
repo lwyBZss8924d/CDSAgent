@@ -1,0 +1,22 @@
+spec-tasks/T-02-02-sparse-index
+Day: 4
+Date: 2025-11-04
+Session: 05
+Threads: 21 (continuation, fix)
+Duration: ~15 min
+Phase: Thread-21 Dead Code Warning Fix
+Status: ✅ WARNINGS ELIMINATED
+Files: 2 files (+14/-5 lines)
+
+Fix Summary:
+- Made classifier module fully feature-gated (5 #[cfg] guards added)
+- Fixed test_synthesize_content to not require script existence
+- Eliminated all 3 dead code warnings in default build
+- Maintained 100% test pass rate (23/23 without feature, 28/28 with feature)
+
+Verification:
+- cargo check: Zero warnings (both modes)
+- cargo test: All tests passing (both modes)
+- Compilation time: <1s (both modes)
+
+Impact: Zero runtime cost when feature disabled
