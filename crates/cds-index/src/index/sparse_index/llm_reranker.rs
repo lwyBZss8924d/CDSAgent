@@ -268,7 +268,12 @@ mod tests {
 
     #[test]
     fn test_synthesize_content() {
-        let reranker = LlmReranker::new().unwrap();
+        // Create a test reranker without requiring script to exist
+        use std::path::PathBuf;
+        let reranker = LlmReranker {
+            script_path: PathBuf::from("/tmp/test_script.sh"),
+            timeout_secs: 10,
+        };
 
         let result = SearchResult {
             entity_id: "repo::file.py::MyClass".to_string(),

@@ -14,7 +14,8 @@
 //! This design optimizes for common patterns (name-based queries) while
 //! maintaining semantic search capability for complex queries.
 
-// Thread-21: Selective LLM Integration (sub-modules)
+// Thread-21: Selective LLM Integration (sub-modules, feature-gated)
+#[cfg(feature = "llm-reranking")]
 mod classifier;
 
 #[cfg(feature = "llm-reranking")]
@@ -29,6 +30,7 @@ use crate::graph::{DependencyGraph, NodeKind};
 use super::bm25::{AnalyzerConfig, Bm25Index};
 use super::name_index::NameIndex;
 
+#[cfg(feature = "llm-reranking")]
 use classifier::QueryClassifier;
 
 #[cfg(feature = "llm-reranking")]
@@ -68,7 +70,8 @@ pub struct SparseIndex {
     upper: NameIndex,
     lower: Bm25Index,
 
-    // Thread-21: Query classification for selective LLM application
+    // Thread-21: Query classification for selective LLM application (feature-gated)
+    #[cfg(feature = "llm-reranking")]
     classifier: QueryClassifier,
 
     // Thread-21: Optional LLM re-ranker (feature-gated)
@@ -109,10 +112,10 @@ impl SparseIndex {
         let bm25_path = base.join("bm25");
         let lower = Bm25Index::from_graph(&graph, &bm25_path, config)?;
 
-        // Thread-21: Initialize query classifier (always enabled)
+        // Thread-21: Initialize query classifier and LLM re-ranker (feature-gated)
+        #[cfg(feature = "llm-reranking")]
         let classifier = QueryClassifier::new();
 
-        // Thread-21: Initialize optional LLM re-ranker (feature-gated)
         #[cfg(feature = "llm-reranking")]
         let llm_reranker = LlmReranker::new().ok(); // Graceful fallback if script not found
 
@@ -120,6 +123,7 @@ impl SparseIndex {
             graph,
             upper,
             lower,
+            #[cfg(feature = "llm-reranking")]
             classifier,
             #[cfg(feature = "llm-reranking")]
             llm_reranker,
