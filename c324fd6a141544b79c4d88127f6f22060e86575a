@@ -1,0 +1,31 @@
+spec-tasks/T-02-02-sparse-index
+Day: 4
+Date: 2025-11-04
+Session: 05
+Threads: 21 (Thread 21 complete)
+Duration: ~3.5h
+Phase: Thread-21 Selective LLM Integration
+Worklog: .artifacts/spec-tasks-T-02-02-sparse-index/THREAD-21-FULLAUTO-REPORT.md
+Status: ✅ PHASE 1 COMPLETE (Modules, Integration, Tests)
+Files: 6 files (+1,443 lines)
+
+Thread-21 Summary:
+- Implemented selective LLM re-ranking (feature-flagged, OFF by default)
+- Created 3 new modules: classifier.rs (213L), llm_reranker.rs (293L), design docs (567L)
+- Modified sparse_index.rs (+81/-11L), Cargo.toml (+7L feature flag)
+- Added 6 unit tests (27/27 total passing, 100%)
+- Coverage: ~95% maintained
+- Clippy: 0 warnings (with feature), 3 dead code warnings (without, expected)
+
+Architecture:
+- QueryClassifier: Heuristic-based query classification (4 criteria, all must pass)
+- LlmReranker: Rust subprocess bridge to Claude CLI (timeout protection, graceful fallback)
+- SparseIndex: Integrated Phase 4 optional LLM logic in search() method
+
+Expected Impact:
+- +2-3% global overlap (conservative, validated by Thread-20 batch test)
+- -40/month cost (vs -90/month universal)
+- +2-3s average latency (vs +17s universal)
+- 15-25% application rate (SEVERE entity queries only)
+
+Next: Thread-22 Smoke Test Validation (1-2h)
