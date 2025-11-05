@@ -1,0 +1,29 @@
+spec-tasks/T-02-02-sparse-index
+Session: 05 (CHECKPOINT - COMPLETE)
+Date: 2025-11-05
+Days: 3 (2025-11-02 to 2025-11-04)
+Threads: 32 (01-05, 06-15, 16-32)
+Duration: 25.7h
+Phase: Phase 3 - BM25 Integration & Parity Validation (COMPLETE)
+Worklog: .artifacts/spec-tasks-T-02-02-sparse-index/worklogs/2025-11-02-S05-*
+Status: ✅ CHECKPOINT COMPLETE - ALL Session 05 work captured
+Files: 106 files (+5,348,908/-1,318)
+
+Worklog Artifacts:
+  - work-summary.md (504 lines) - Complete session narrative
+  - commit-log.md (352 lines) - All 12 commits documented
+  - notes.md (386 lines) - Technical decisions and research
+  - codereview.md (372 lines) - Code quality analysis
+  - metadata.yaml (corrected: +5,348,908/-1,318, 106 files)
+  - RAW logs: 3 files (3,867 lines total)
+
+Session 05 Work Products:
+  - Diagnostic data: 54 files in diag/ (query diagnostics, graph parity comparisons)
+  - Thread notes: 14 files in worklogs/2025-11-04-S05-17-32-notes/
+  - LLM re-ranking: llm_reranker.sh, test scripts, FEASIBILITY analysis
+  - Parity fixtures: golden inputs/outputs for 5 repos
+  - Graph parity: ast-graph-index-ranker.md, smoke_overlap.rs
+  - Python scripts: 7 new diagnostic/analysis/fixture scripts
+  - Documentation: parity/smoke playbooks
+
+Consistency: 100% (git reality matches all artifacts including metadata.yaml)
