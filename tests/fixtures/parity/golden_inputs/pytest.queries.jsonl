@@ -1,0 +1,10 @@
+{"query": "rewrite handles first expression numeric literal"}
+{"query": "_pytest.rewrite detect docstring constant"}
+{"query": "ModuleRewriter load_module docstring stripping"}
+{"query": "assertion rewrite when module starts with number"}
+{"query": "docstring detection using ast.Constant"}
+{"query": "tests for rewrite docstring misdetection"}
+{"query": "StatementInfo docstring flag"}
+{"query": "bytecode cache update in rewrite"}
+{"query": "ensure docstring nodes are strings"}
+{"query": "ast walk in _pytest/rewrite"}

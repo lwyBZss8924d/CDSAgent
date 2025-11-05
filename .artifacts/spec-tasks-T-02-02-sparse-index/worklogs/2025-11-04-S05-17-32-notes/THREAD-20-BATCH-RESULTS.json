@@ -1,0 +1,110 @@
+{
+  "summary": {
+    "total_queries": 8,
+    "successful_queries": 8,
+    "failed_queries": 0,
+    "avg_latency_seconds": 17,
+    "model": null,
+    "timestamp": "2025-11-04T08:32:59Z"
+  },
+  "results": [
+    {
+      "repo": "scikit-learn",
+      "query_id": 0,
+      "query_text": "RidgeClassifierCV store_cv_values parameter",
+      "baseline_overlap_at_10": 20.0,
+      "reranked_overlap_at_10": 60,
+      "improvement_percentage": 40.0,
+      "latency_seconds": 16,
+      "overlap_metrics": {
+        "overlap_at_10": 60,
+        "matches": 3,
+        "total": 5
+      }
+    },
+    {
+      "repo": "pytest",
+      "query_id": 1,
+      "query_text": "_pytest.rewrite detect docstring constant",
+      "baseline_overlap_at_10": 20.0,
+      "reranked_overlap_at_10": 100,
+      "improvement_percentage": 80.0,
+      "latency_seconds": 16,
+      "overlap_metrics": {
+        "overlap_at_10": 100,
+        "matches": 5,
+        "total": 5
+      }
+    },
+    {
+      "repo": "scikit-learn",
+      "query_id": 3,
+      "query_text": "RidgeClassifierCV cross-validation logic",
+      "baseline_overlap_at_10": 28.57,
+      "reranked_overlap_at_10": 42.857142857142854,
+      "improvement_percentage": 14.287142857142854,
+      "latency_seconds": 21,
+      "overlap_metrics": {
+        "overlap_at_10": 42.857142857142854,
+        "matches": 3,
+        "total": 7
+      }
+    },
+    {
+      "repo": "matplotlib",
+      "query_id": 2,
+      "query_text": "cbook get_versions helper",
+      "baseline_overlap_at_10": 28.57,
+      "reranked_overlap_at_10": 28.57142857142857,
+      "improvement_percentage": 0.00142857142857,
+      "latency_seconds": 17,
+      "overlap_metrics": {
+        "overlap_at_10": 28.57142857142857,
+        "matches": 2,
+        "total": 7
+      }
+    },
+    {
+      "repo": "django",
+      "query_id": 1,
+      "query_text": "TemporaryUploadedFile applies FILE_UPLOAD_PERMISSION",
+      "baseline_overlap_at_10": 57.14,
+      "reranked_overlap_at_10": 57.14285714285714,
+      "improvement_percentage": 0.00285714285714,
+      "latency_seconds": 19,
+      "overlap_metrics": {
+        "overlap_at_10": 57.14285714285714,
+        "matches": 4,
+        "total": 7
+      }
+    },
+    {
+      "repo": "matplotlib",
+      "query_id": 4,
+      "query_text": "build metadata for Matplotlib version",
+      "baseline_overlap_at_10": 60.0,
+      "reranked_overlap_at_10": 60,
+      "improvement_percentage": 0,
+      "latency_seconds": 15,
+      "overlap_metrics": {
+        "overlap_at_10": 60,
+        "matches": 6,
+        "total": 10
+      }
+    },
+    {
+      "repo": "pytest",
+      "query_id": 0,
+      "query_text": "rewrite handles first expression numeric literal",
+      "baseline_overlap_at_10": 83.33,
+      "reranked_overlap_at_10": 83.33333333333334,
+      "improvement_percentage": 0.00333333333334,
+      "latency_seconds": 19,
+      "overlap_metrics": {
+        "overlap_at_10": 83.33333333333334,
+        "matches": 5,
+        "total": 6
+      }
+    }
+  ]
+}

@@ -7,7 +7,7 @@
 
 use cds_index::graph::{DependencyGraph, GraphBuilder, GraphBuilderConfig, SerializableGraph};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// Find workspace root by walking up from crate directory
 fn find_workspace_root() -> PathBuf {

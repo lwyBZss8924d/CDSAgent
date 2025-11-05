@@ -34,26 +34,36 @@ def convert_node_id_to_locagent(cdsagent_id: str) -> str:
     """
     Convert CDSAgent node ID format to LocAgent format
 
-    CDSAgent: "repo::path/file.py::ClassName::method_name"
+    CDSAgent: "path/file.py::ClassName::method_name" (NO repo prefix in Thread-23 exports)
     LocAgent: "path/file.py:ClassName.method_name"
+
+    Special cases:
+        - Directory root: "." → "/"
+        - Files: "file.py" → "file.py" (no change)
+        - Functions: "file.py::func" → "file.py:func"
+        - Classes: "file.py::Class::method" → "file.py:Class.method"
     """
-    # Remove repo prefix
+    # Handle root directory special case
+    if cdsagent_id == ".":
+        return "/"
+
+    # Handle nodes with :: separators (classes and functions)
     if "::" in cdsagent_id:
         parts = cdsagent_id.split("::")
-        # First part is repo name, skip it
-        path_parts = parts[1:]
 
-        # File path (may contain multiple parts like "django/db/models.py")
-        file_path = path_parts[0]
+        # First part is file path (NOT repo name in Thread-23 exports!)
+        file_path = parts[0]
 
-        # Entity path (ClassName.method_name)
-        if len(path_parts) > 1:
-            entity_parts = path_parts[1:]
+        # Remaining parts are entity path (Class.method or just func)
+        if len(parts) > 1:
+            entity_parts = parts[1:]
             entity_path = ".".join(entity_parts)
             return f"{file_path}:{entity_path}"
         else:
+            # Shouldn't happen, but handle gracefully
             return file_path
     else:
+        # Files and non-root directories - return as-is
         return cdsagent_id
 
 
@@ -61,12 +71,20 @@ def convert_edge_kind_to_locagent(cdsagent_kind: str) -> str:
     """
     Convert CDSAgent edge kind to LocAgent edge type
 
-    CDSAgent "contain" → LocAgent "contains"
+    All edge types are pluralized in LocAgent format:
+        "contain" → "contains"
+        "import" → "imports"
+        "invoke" → "invokes"
+        "inherit" → "inherits"
     """
-    if cdsagent_kind == "contain":
-        return "contains"
-    else:
-        return cdsagent_kind
+    # LocAgent uses plural forms for all edge types
+    edge_mapping = {
+        "contain": "contains",
+        "import": "imports",
+        "invoke": "invokes",
+        "inherit": "inherits"
+    }
+    return edge_mapping.get(cdsagent_kind, cdsagent_kind)
 
 
 def convert_node_kind_to_locagent(cdsagent_kind: str) -> str:

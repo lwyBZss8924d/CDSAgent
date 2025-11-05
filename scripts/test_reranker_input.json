@@ -1,0 +1,67 @@
+{
+  "query": "linear_model ridge.py parameters",
+  "bm25_results": [
+    {
+      "path": "sklearn/linear_model/tests/test_bayes.py",
+      "score": 17.60,
+      "rank": 1
+    },
+    {
+      "path": "sklearn/linear_model/tests/test_ridge.py",
+      "score": 17.06,
+      "rank": 2
+    },
+    {
+      "path": "sklearn/linear_model/_ridge.py",
+      "score": 17.03,
+      "rank": 3
+    },
+    {
+      "path": "sklearn/kernel_ridge.py",
+      "score": 14.72,
+      "rank": 4
+    },
+    {
+      "path": "sklearn/linear_model/_bayes.py",
+      "score": 16.95,
+      "rank": 5
+    },
+    {
+      "path": "examples/linear_model/plot_bayesian_ridge_curvefit.py",
+      "score": 16.94,
+      "rank": 6
+    },
+    {
+      "path": "doc/api_reference.py",
+      "score": 14.28,
+      "rank": 7
+    },
+    {
+      "path": "sklearn/decomposition/_sparse_pca.py",
+      "score": 13.71,
+      "rank": 8
+    },
+    {
+      "path": "sklearn/linear_model/tests/test_huber.py",
+      "score": 15.93,
+      "rank": 9
+    },
+    {
+      "path": "sklearn/linear_model/tests/test_common.py",
+      "score": 15.82,
+      "rank": 10
+    }
+  ],
+  "ground_truth_top10": [
+    "examples/linear_model/plot_ridge_coeffs.py",
+    "sklearn/linear_model/_ridge.py",
+    "examples/linear_model/plot_poisson_regression_non_normal_loss.py",
+    "examples/linear_model/plot_bayesian_ridge_curvefit.py",
+    "examples/linear_model/plot_ridge_path.py",
+    "examples/linear_model/plot_huber_vs_ridge.py",
+    "examples/linear_model/plot_ols_ridge.py",
+    "benchmarks/bench_glm.py"
+  ],
+  "baseline_overlap_at_10": "25.0%",
+  "expected_improvement": "Move sklearn/linear_model/_ridge.py to rank 1, demote test files"
+}

@@ -1,0 +1,10 @@
+{"query": "Session.resolve_redirects copies original request"}
+{"query": "SessionRedirectMixin.resolve_redirects yield_requests flag"}
+{"query": "PreparedRequest copy method used in redirects"}
+{"query": "HTTPAdapter build_response redirect handling"}
+{"query": "response.history mutated when following redirects"}
+{"query": "Session.send preserves request method through redirects"}
+{"query": "resolve_redirects uses request.copy"}
+{"query": "hooks dispatch during redirect"}
+{"query": "requests.sessions redirect_cache logic"}
+{"query": "Session.prepare_request clones body"}

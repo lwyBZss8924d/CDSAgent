@@ -1,0 +1,10 @@
+{"query": "RidgeClassifierCV store_cv_values parameter"}
+{"query": "linear_model._ridge RidgeClassifierCV docstring"}
+{"query": "cv_values_ attribute description"}
+{"query": "RidgeClassifierCV cross-validation logic"}
+{"query": "multi_class option in RidgeClassifierCV"}
+{"query": "decision_function of RidgeClassifierCV"}
+{"query": "tests covering store_cv_values True"}
+{"query": "RidgeCV vs RidgeClassifierCV difference"}
+{"query": "warning about cv_values memory"}
+{"query": "linear_model ridge.py parameters"}

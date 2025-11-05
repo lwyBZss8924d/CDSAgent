@@ -61,3 +61,5 @@ coverage/
 
 # Claude settings
 .claude/settings.local.json
+# Diagnostic artifacts from parity analysis (Session 05)
+.artifacts/spec-tasks-T-02-02-sparse-index/diag/

@@ -1,6 +1,6 @@
 ======================================================================================
 T-02-02 SPARSE INDEX - PHASE 3: BM25 INTEGRATION & PARITY VALIDATION
-SESSION 05 - THREADS 01-NN - 2025-11-02
+SESSION 05 - THREADS 01-05 - 2025-11-02
 ======================================================================================
 
 TASK: T-02-02-sparse-index - Sparse Index - Name/ID + BM25 Search

@@ -7,8 +7,9 @@ use tempfile::TempDir;
 #[test]
 #[ignore = "Requires SMOKE_REPO_PATHS env var with comma-separated repo roots"]
 fn smoke_sparse_index_builds_for_external_repos() {
-    let paths = std::env::var("SMOKE_REPO_PATHS")
-        .expect("Set SMOKE_REPO_PATHS=/abs/path/to/repo1,/abs/path/to/repo2 to run this smoke test");
+    let paths = std::env::var("SMOKE_REPO_PATHS").expect(
+        "Set SMOKE_REPO_PATHS=/abs/path/to/repo1,/abs/path/to/repo2 to run this smoke test",
+    );
 
     for raw_path in paths.split(',') {
         let trimmed = raw_path.trim();

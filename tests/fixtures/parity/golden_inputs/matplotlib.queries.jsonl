@@ -1,0 +1,10 @@
+{"query": "matplotlib __version__ defined in __init__"}
+{"query": "top-level version banner text"}
+{"query": "cbook get_versions helper"}
+{"query": "version tuple formatting logic"}
+{"query": "build metadata for Matplotlib version"}
+{"query": "setuptools_scm integration"}
+{"query": "docstring showing Matplotlib version"}
+{"query": "backend version information"}
+{"query": "setup.py writing version.py"}
+{"query": "pyproject version hooks"}

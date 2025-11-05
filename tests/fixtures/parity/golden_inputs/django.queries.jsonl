@@ -1,0 +1,10 @@
+{"query": "FILE_UPLOAD_PERMISSION default value in settings"}
+{"query": "TemporaryUploadedFile applies FILE_UPLOAD_PERMISSION"}
+{"query": "FileSystemStorage file permission handling"}
+{"query": "memory storage FILE_UPLOAD_PERMISSION override"}
+{"query": "collectstatic default permission warning"}
+{"query": "file_storage tests for FILE_UPLOAD_PERMISSION"}
+{"query": "storage mixins reading FILE_UPLOAD_PERMISSION"}
+{"query": "docs mention chmod on uploaded files"}
+{"query": "staticfiles storage permissions discussion"}
+{"query": "file upload security permissions"}
